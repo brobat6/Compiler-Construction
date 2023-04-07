@@ -1866,8 +1866,15 @@ struct AST_NODE {
     // Look into UNION!
 };
 
-Ast_Node* generateAST(treeNode* curr) {
+Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
 
+    // Call generateAST on all children of curr
+
+    // Create new AST_node for curr based on rule no
+
+    // Free children nodes of curr, and unused AST nodes of children
+
+    // return newly created AST_node
 }
 
 // Driver
