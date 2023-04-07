@@ -75,19 +75,24 @@
     Pre_Order: new_list = create_list(type.node_syn);
     N2.list_head_inh = insert_at_end(new_list, id.addr);
     Post_Order: output_plist.list_head_syn = N2.list_head_syn;
+    // Same implementation as 11
 }
 15. <N2_1> -> COMMA ID COLON <type> <N2_2>
 {
     Pre_Order: N2_2.list_head_inh = insert_at_end(N2_1.list_head_inh, ID.addr);
     Post_Order: N2_1.list_head_syn = N2_2.list_head_syn;
+    // Same implementation as 12
 }
 16. <N2> -> @
 {
     Post_Order: N2.list_head_syn=N2.list_head_inh;
+    // Same implementation as 13
 }
 17. <dataType> -> ARRAY SQBO <range_arrays> SQBC OF <type>
 {
     Post_Order: dataType.node_syn = create_node("array", type.node_syn, range_arrays.node_syn);
+    // Either this or consider create_node("datatype") and make implementation similar to 19, 20, etc.
+    // Two children - type, range_arrays
 }
 18. <range_arrays> -> <index_arr_1> RANGEOP <index_arr_2>
 {
@@ -96,62 +101,77 @@
 19. <dataType> -> INTEGER
 {
     Post_Order: dataType.node_syn = INTEGER;
+    // create_node("datatype", Integer.token_info)
 }
 20. <dataType> -> REAL
 {
     Post_Order: dataType.node_syn = REAL;
+    // Similar to 19
 }
 21. <dataType> -> BOOLEAN
 {
     Post_Order: dataType.node_syn = BOOLEAN;
+    // Similar to 19
 }
 22. <type> -> INTEGER
 {
     Post_Order: type.node_syn = INTEGER;
+    // create_node("type", Integer.token_info)
 }
 23. <type> -> REAL
 {
     Post_Order: type.node_syn = REAL;
+    // Similar to 22
 }
 24. <type> -> BOOLEAN
 {
     Post_Order: type.node_syn = BOOLEAN;
+    // Similar to 22
 }
 25. <moduleDef> -> START <statements> END
 {
     Post_Order: moduleDef.node_syn = create_node("statements", statements.list_head_syn);
+    // Pointer to first statement child (head of linked list)
 }
 26. <statements_1> -> <statement> <statements_2>
 {
     Post_Order: statements_1.list_head_syn  = push_front(statements_2.list_head_syn,statement.node_syn);
+    // push front
 }
 27. <statements> -> @
 {
     Post_Order: statements.list_head_syn = NULL;
+    // create empty list
 }
 28. <statement> -> <ioStmt>
 {
     Post_Order: statement.node_syn = ioStmt.node_syn;
+    // copy node. CONSIDER changing header parameter of node (if needed) <--- DON'T!!!
 }
 29. <statement> -> <simpleStmt>
 {
    Post_Order:  statement.node_syn = simpleStmt.node_syn;
+   // copy node
 }
 30. <statement> -> <declareStmt>
 {
     Post_Order: statement.node_syn = declareStmt.node_syn;
+    // copy node
 }
 31. <statement> -> <conditionalStmt>
 {
     Post_Order: statement.node_syn = conditionalStmt.node_syn;
+    // copy node
 }
 32. <statement> -> <iterativeStmt>
 {
     Post_Order: statement.node_syn = iterativeStmt.node_syn;
+    // copy node
 }
 33. <ioStmt> -> GET_VALUE BO ID BC SEMICOL
 {
     Post_Order: ioStmt.node_syn = create_node("GET_VALUE",ID.addr);
+    // token_info of ID
 }
 34. <ioStmt> -> PRINT BO <var_print> BC SEMICOL
 {
@@ -160,6 +180,8 @@
 35. <N14> -> NUM
 {
     Post_Order: N14.node_syn=NUM.addr;
+    // In ANY production of the form <non-terminal> --> terminal, just create a new node, and pass it 
+    // token_info of terminal (create pointer to token_info, malloc, use (void*))
 }
 36. <N14> -> RNUM
 {
@@ -168,6 +190,8 @@
 37. <var_print> -> PLUS <N14>
 {
     Post_Order: var_print.node_syn=create_node("plus_var_print",N14.node_syn);
+    // See Rule 51, make these two similar.
+    // This COULD have been <sign> <N14>. Just make AST_Node's similar for uniformity.
 }
 38. <var_print> -> MINUS <N14>
 {
@@ -176,52 +200,76 @@
 39. <var_print> -> <N14>
 {
     Post_Order: var_print.node_syn=N14.node_syn;
+    // Just do "plus_var_print", same as rule 37
 }
 40. <var_print> -> ID <P1>
 {
     Pre_Order: P1.node_inh=ID.addr;
     Post_Order: var_print.node_syn=P1.node_syn;
+    /*
+    INORDER TRAVERSAL
+    create new node. Pass it token_info of ID. Then push node info down to P1. 
+    */
 }
 41. <var_print> -> <boolConstt>
 {
     Post_Order: var_print.node_syn=boolConstt.node_syn;
+    // Copy node.
 }
 42. <P1> -> SQBO <index_arr> SQBC
 {
     Post_Order: P1.node_syn = create_node("index_arr",P1.node_inh,index_arr.node_syn);
+    // I am already storing it lol, as "parent" pointer.
+    /*
+    UPD:
+    P1 needs token_info of ID (from parent node).
+    */
 }
 43. <P1> -> @
 {
     Post_Order: P1.node_syn = P1.node_inh;
+    // Do nothing. NULL.
 }
 44. <simpleStmt> -> <assignmentStmt>
 {
     Post_Order: simpleStmt.node_syn = assignmentStmt.node_syn;
+    // Copy.
 }
 45. <simpleStmt> -> <moduleReuseStmt>
 {
     Post_Order: simpleStmt.node_syn = moduleReuseStmt.node_syn;
+    // Copy. 
 }
 46. <assignmentStmt> -> ID <whichStmt>
 {
     Pre_Order: whichStmt.node_inh=ID.addr;
     Post_Order: assignmentStmt.node_syn = whichStmt.node_syn;
+    /*
+    Inorder traversal. 
+    create_node("assignment_statement", ID.token_info, ...)
+    now traverse to whichStmt
+    We will have to pass ID.token_info to whichStmt, it will be needed later down for type checking!
+    */
 }
 47. <whichStmt> -> <lvalueIDStmt>
 {
     Pre_Order: lvalueIDStmt.node_inh=whichStmt.node_inh;
     Post_Order: whichStmt.node_syn = lvalueIDStmt.node_syn;
+    // (Pre-order) First, Just do token_info = parent.token_info (pass parent's token info value downward)
+    // Then, ...
 }
 48. <whichStmt> -> <lvalueARRStmt>
 {
     Pre_Order: lvalueARRStmt.node_inh=whichStmt.node_inh;
     Post_Order: whichStmt.node_syn = lvalueARRStmt.node_syn;
+    // (Pre-order) First, Just do token_info = parent.token_info (pass parent's token info value downward)
 }
 49. <lvalueIDStmt> -> ASSIGNOP <expression> SEMICOL
 {
     Post_Order: lvalueIDStmt.node_syn = create_node("expression", 
     lvalueIDStmt.node_inh, 
     expression.node_syn);
+    // CHECK G PHOTOS
 }
 50. <lvalueARRStmt> -> SQBO <element_index_with_expressions> SQBC ASSIGNOP <expression> SEMICOL
 {
@@ -232,10 +280,16 @@
     lvalueARRStmt.node_inh, 
     element_index_with_expressions.node_syn, 
     expression.node_syn);
+    /*
+    create_node("arr_expression", ID.token_info (inherited), pointer to element_index_with_expressions ast_node, 
+    pointer to expression's ast_node)
+    */
 }
 51. <index_arr> -> <sign> <new_index>
 {
     Post_Order: index_arr.node_syn=create_node("index_arr", sign.node_syn, new_index.node_syn);
+    // create_node. Check Rule 37.
+    // Need not pass entire token_info of sign. Can just pass + or -. 
 }
 52. <new_index> -> NUM
 {
@@ -256,6 +310,7 @@
 56. <sign> -> @
 {
     Post_Order: sign.node_syn=NULL;
+    //
 }
 57. <moduleReuseStmt> -> <optional> USE MODULE ID WITH PARAMETERS <actual_para_list> SEMICOL
 {
@@ -263,34 +318,42 @@
     ID.addr, 
     optional.list_head_syn, 
     actual_para_list.list_head_syn);
+    // create_node. Children - ID, optional, actual_para_list.
 }
 58. <actual_para_list> -> <singular_para_list> <N12>
 {
     Post_Order: actual_para_list.list_head_syn=push_front(N12.list_head_syn,singular_para_list.node_syn);
+    // Normal list bs.
 }
 59. <N12_1> -> COMMA <singular_para_list> <N12_2>
 {
     Post_Order: N12_1.list_head_syn=push_front(N12_2.list_head_syn,singular_para_list.node_syn);
+    // Linked List.
 }
 60. <N12> -> @
 {
     Post_Order: N12.list_head_syn=create_list("singular_para_list");
+    // Create new list. 
 }
 61. <singular_para_list> -> <boolConstt>
 {
     Post_Order: singular_para_list.node_syn=create_node("singular_para_list",boolConstt.node_syn);
+    //
 }
 62. <singular_para_list> -> PLUS <N13>
 {
     Post_Order: singular_para_list.node_syn=create_node("singular_para_list",N13.node_syn,PLUS);
+    // Same as 64.
 }
 63. <singular_para_list> -> MINUS <N13>
 {
     Post_Order: singular_para_list.node_syn=create_node("singular_para_list",N13.node_syn,MINUS);
+    // 
 }
 64. <singular_para_list> -> <N13>
 {
     Post_Order: singular_para_list.node_syn=create_node("singular_para_list",N13.node_syn,NULL);
+    // Same as 62.
 }
 65. <N13> -> NUM
 {
@@ -304,6 +367,7 @@
 {
     Pre_Order: N11.node_inh=ID.addr;
     Post_Order: N13.node_syn=N11.node_syn;
+    // Inorder traversal (ID token_info needed for N11)
 }
 68. <N11> -> SQBO <element_index_with_expressions> SQBC
 {
@@ -337,6 +401,7 @@
 {
     Post_Order: N3.list_head_syn = N3.list_head_inh;
 }
+// Done till here
 75. <expression> -> <arithmeticOrBooleanExp>
 {
     Post_Order: expression.node_syn = arithmeticOrBooleanExp.node_syn;
@@ -345,32 +410,42 @@
 {
     Pre_Order: U.node_inh=expression.node_inh;
     Post_Order: expression.node_syn = U.node_syn;   
+    // Take the value (ID.token_info) from parent. Keep passing it down.
 }
 77. <U> -> <op1> <new_NT>
 {
     Post_Order: U.node_syn=create_node(op1.node_syn,U.node_inh,new_NT.node_syn);
+    // Keep passing value down. Pass to new_NT.
 }
 78. <new_NT> -> BO <arithmeticExpr> BC
 {
     Post_Order: new_NT.node_syn=arithmeticExpr.node_syn;
+    // Pass down value. Don't stop. Need to, for type checking.
 }
 79. <new_NT> -> <var_id_num>
 {
     Post_Order: new_NT.node_syn=var_id_num.node_syn;
+    // You know what to do. PASS IT DOWN.
 }
 80. <arithmeticOrBooleanExp> -> <AnyTerm> <N7>
 {
     Pre_Order: N7.node_inh=AnyTerm.node_syn;
     Post_Order: arithmeticOrBooleanExp.node_syn = N7.node_syn;
+    // Linked list, but inherited nodes are needed.
 }
 81. <N7_1> -> <logicalOp> <AnyTerm> <N7_2>
 {
     In_Order : N7_2.node_inh = create_node(logicalOp.node_syn, N7_1.node_inh, AnyTerm.node_syn);
     Post_Order: N7_1.node_syn = N7_2.node_syn;
+    // Linked List of AST Nodes. Push this to the back of the list. 
+    // Basically in "prev" pointer, add info about previous term.
 }
 82. <N7> -> @
 {
     Post_Order: N7.node_syn = N7.node_inh;
+    // There was a linked list at parent. 
+    // Now, create a new node here, and pass a pointer to the parent's linked list. 
+    // It will be pushed back up now.
 }
 83. <AnyTerm> -> <arithmeticExpr> <N8>
 {
@@ -455,11 +530,13 @@
 {
     Pre_Order: element_index_with_expressions.node_inh=ID.addr;
     Post_Order: array_element.node_syn=element_index_with_expressions.node_syn;
+    // Rule is useless. Never comes on right side. Ignore it.
 }
 100. <element_index_with_expressions> -> <arrExpr>
 {
     Pre_Order: arrExpr.node_inh=element_index_with_expressions.addr;
-    Post_Order: element_index_with_expressions.node_syn=arrExpr.node_syn;    
+    Post_Order: element_index_with_expressions.node_syn=arrExpr.node_syn; 
+    // Send token_info of identifier downward.   
 }
 101. <element_index_with_expressions> -> PLUS <new_index>
 {
@@ -575,10 +652,12 @@
 127. <relationalOp> -> NE
 {
     Post_Order: relationalOp.node_syn=NE;
+    // Done till here.
 }
 128. <declareStmt> -> DECLARE <idList> COLON <dataType> SEMICOL
 {
     Post_Order: declareStmt.node_syn = create_node("DECLARE",dataType.node_syn,idList.list_head_syn);
+    // 
 }
 129. <conditionalStmt> -> SWITCH BO ID BC START <caseStmts> <default> END
 {
