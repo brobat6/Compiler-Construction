@@ -39,7 +39,6 @@
 <var_print> -> <N14>
 <var_print> -> ID <P1>
 <var_print> -> <boolConstt>
-<array_element_for_print> -> ID SQBO <index_arr> SQBC
 <P1> -> SQBO <index_arr> SQBC
 <P1> -> @
 <simpleStmt> -> <assignmentStmt>
