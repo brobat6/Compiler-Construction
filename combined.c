@@ -451,6 +451,7 @@ struct token_info{
     int lineNumber;
     union Data value;
 };
+typedef struct token_info Token_Info;
 
 int BUFFSIZE;
 bool printErrors=true;
@@ -1850,6 +1851,23 @@ void deallocateFromParser () {
     delete_ht(terminal_ht);
     deallocateParseTable();
     deallocateGrammar();
+}
+
+// AST
+
+typedef struct AST_NODE Ast_Node;
+struct AST_NODE {
+    // Pointers within the tree.
+    Ast_Node* parent;
+    Ast_Node* next;
+    Ast_Node* prev;
+    Ast_Node* child; // first child of the node.
+    // Actual AST Data.
+    // Look into UNION!
+};
+
+Ast_Node* generateAST(treeNode* curr) {
+
 }
 
 // Driver
