@@ -17,6 +17,7 @@ llHead* initializeHead () {
     cur_head->data = NULL;
     cur_head->first_set[0] = 0ull;
     cur_head->first_set[1] = 0ull;
+    cur_head->grammar_rule = -1;
     return cur_head;
 }
 

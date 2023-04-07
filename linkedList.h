@@ -26,8 +26,9 @@ struct LL_HEAD {
     void* data;
     llNode* first_node;
     llNode* last_node;
-    int count;
+    int count; // Length of corresponding grammar rule
     unsigned long long first_set[2];
+    int grammar_rule;
 };
 
 llHead* initializeHead ();

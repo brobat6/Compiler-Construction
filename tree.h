@@ -21,6 +21,7 @@ typedef struct treeNode {
   struct treeNode* next;
   struct treeNode* prev;
   struct treeNode* parent;
+  int grammar_rule;
 } treeNode;
 
 treeNode* createTreeNode(grammar_symbol * gs, struct token_info token);

@@ -105,6 +105,7 @@ void readGrammarFile () {
                         cur_ll_head = initializeHead();
                         cur_ll_head->data = cur_node;
                         grammar[rule_count] = cur_ll_head;
+                        cur_ll_head->grammar_rule = rule_count;
                     }
                     else {
                         cur_ll_node = initializeNode();
@@ -485,6 +486,7 @@ treeNode* parseInputSourceCode (ht* lookup_table, FILE* fp, bool printError) {
                 else {
                     wasSemicol = false;
                     removeFromEnd(stack);
+                    cur_tree_node->grammar_rule = cur_rule->grammar_rule;
                     llNode* cur_node = cur_rule->last_node;
                     grammar_symbol* cur_grammar_symbol;
 

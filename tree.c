@@ -19,6 +19,7 @@ treeNode* createTreeNode(grammar_symbol * gs, struct token_info token)
     new->next=NULL;
     new->prev=NULL;
     new->parent=NULL;
+    new->grammar_rule=-1;
     return new;
 }
 
