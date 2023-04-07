@@ -1,0 +1,655 @@
+1. <program> -> <moduleDeclarations> <otherModules_1> <driverModule> <otherModules_2>
+{
+    Post_Order: program.node_syn = create_node("program", moduleDeclarations.list_head_syn,
+    otherModules_1.list_head_syn, 
+    driverModule.node_syn, 
+    otherModules_2.list_head_syn);
+}
+2. <moduleDeclarations_1> -> <moduleDeclaration><moduleDeclarations_2>
+{
+    Post_Order: moduleDeclarations_1.list_head_syn = push_front(moduleDeclarations_2.list_head_syn, moduleDeclaration.node_syn);
+}
+3. <moduleDeclarations> -> @
+{
+    Post_Order: moduleDeclarations.list_head_syn = create_node("moduleDeclarations", create_list(EMPTY));
+}
+4. <moduleDeclaration> -> DECLARE MODULE ID SEMICOL
+{
+    moduleDeclaration.node = create_node("moduleDeclaration", ID.token_info)
+    Post_Order: moduleDeclaration.node_syn = ID.addr; // 
+}
+5. <otherModules_1> -> <module> <otherModules_2>
+{
+    Post_Order: otherModules_1.list_head_syn = push_front(otherModules_2.list_head_syn, module.node_syn);
+}
+6. <otherModules> -> @
+{
+    Post_Order: otherModules.list_head_syn = NULL; // create empty list node
+}
+7. <driverModule> -> DRIVERDEF DRIVER PROGRAM DRIVERENDDEF <moduleDef>
+{
+    Post_Order: driverModule.node_syn = create_node("driverModule", moduleDef.node_syn); // Basically, inside driverModule's ast_node, keep a pointer to moduleDef's ast_node
+}
+8. <module> -> DEF MODULE ID ENDDEF TAKES INPUT SQBO <input_plist> SQBC SEMICOL <ret> <moduleDef>
+{
+    Post_Order: module.node_syn = create_node("module",
+    ID.addr, 
+    input_plist.list_head_syn, 
+    ret.node_syn, 
+    moduleDef.node_syn);
+    // "module", ID.token_info, head of input_plist's linked list, head of return_plist's linked list, pointer to moduleDef's ast_node 
+}
+9. <ret> -> RETURNS SQBO <output_plist> SQBC SEMICOL
+{
+    Post_Order: ret.node_syn = create_node("ret", output_plist.list_head_syn);
+}
+10. <ret> -> @
+{
+    Post_Order: ret.node_syn = create_node("ret", NULL);
+}
+11. <input_plist> -> ID COLON <dataType> <N1>
+{
+    In_Order : new_list = create_list(dataType.node_syn);
+    N1.list_head_inh = push_front(new_list, ID.addr);
+    Post_Order: input_plist.list_head_syn = N1.list_head_syn;
+    /*
+    REMOVE INHERITED ATTRIBUTE. 
+    N1 already has a list of ID/Datatype values. 
+    Just push_front current ID,Datatype to the list.
+    One node of the list - a token for ID and an AST_node of data type.
+    */
+}
+12. <N1_1> -> COMMA ID COLON <dataType> <N1_2>
+{
+    Pre_Order: N1_2.list_head_inh = insert_at_end(N1_1.list_head_inh, ID.addr);
+    Post_Order: N1_1.list_head_syn = N1_2.list_head_syn;
+    // Change accordingly based on rule 11
+}
+13. <N1> -> @
+{
+    Post_Order: N1.list_head_syn=N1.list_head_inh;
+    // Change accordingly based on rule 11
+}
+14. <output_plist> -> ID COLON <type> <N2>
+{
+    Pre_Order: new_list = create_list(type.node_syn);
+    N2.list_head_inh = insert_at_end(new_list, id.addr);
+    Post_Order: output_plist.list_head_syn = N2.list_head_syn;
+}
+15. <N2_1> -> COMMA ID COLON <type> <N2_2>
+{
+    Pre_Order: N2_2.list_head_inh = insert_at_end(N2_1.list_head_inh, ID.addr);
+    Post_Order: N2_1.list_head_syn = N2_2.list_head_syn;
+}
+16. <N2> -> @
+{
+    Post_Order: N2.list_head_syn=N2.list_head_inh;
+}
+17. <dataType> -> ARRAY SQBO <range_arrays> SQBC OF <type>
+{
+    Post_Order: dataType.node_syn = create_node("array", type.node_syn, range_arrays.node_syn);
+}
+18. <range_arrays> -> <index_arr_1> RANGEOP <index_arr_2>
+{
+    Post_Order: range_arrays.node_syn=create_node("range_array",index_arr_1.node_syn,index_arr_2.node_syn);
+}
+19. <dataType> -> INTEGER
+{
+    Post_Order: dataType.node_syn = INTEGER;
+}
+20. <dataType> -> REAL
+{
+    Post_Order: dataType.node_syn = REAL;
+}
+21. <dataType> -> BOOLEAN
+{
+    Post_Order: dataType.node_syn = BOOLEAN;
+}
+22. <type> -> INTEGER
+{
+    Post_Order: type.node_syn = INTEGER;
+}
+23. <type> -> REAL
+{
+    Post_Order: type.node_syn = REAL;
+}
+24. <type> -> BOOLEAN
+{
+    Post_Order: type.node_syn = BOOLEAN;
+}
+25. <moduleDef> -> START <statements> END
+{
+    Post_Order: moduleDef.node_syn = create_node("statements", statements.list_head_syn);
+}
+26. <statements_1> -> <statement> <statements_2>
+{
+    Post_Order: statements_1.list_head_syn  = push_front(statements_2.list_head_syn,statement.node_syn);
+}
+27. <statements> -> @
+{
+    Post_Order: statements.list_head_syn = NULL;
+}
+28. <statement> -> <ioStmt>
+{
+    Post_Order: statement.node_syn = ioStmt.node_syn;
+}
+29. <statement> -> <simpleStmt>
+{
+   Post_Order:  statement.node_syn = simpleStmt.node_syn;
+}
+30. <statement> -> <declareStmt>
+{
+    Post_Order: statement.node_syn = declareStmt.node_syn;
+}
+31. <statement> -> <conditionalStmt>
+{
+    Post_Order: statement.node_syn = conditionalStmt.node_syn;
+}
+32. <statement> -> <iterativeStmt>
+{
+    Post_Order: statement.node_syn = iterativeStmt.node_syn;
+}
+33. <ioStmt> -> GET_VALUE BO ID BC SEMICOL
+{
+    Post_Order: ioStmt.node_syn = create_node("GET_VALUE",ID.addr);
+}
+34. <ioStmt> -> PRINT BO <var_print> BC SEMICOL
+{
+    Post_Order: ioStmt.node_syn = create_node("PRINT",var_print.node_syn);
+}
+35. <N14> -> NUM
+{
+    Post_Order: N14.node_syn=NUM.addr;
+}
+36. <N14> -> RNUM
+{
+    Post_Order: N14.node_syn=RNUM.addr;
+}
+37. <var_print> -> PLUS <N14>
+{
+    Post_Order: var_print.node_syn=create_node("plus_var_print",N14.node_syn);
+}
+38. <var_print> -> MINUS <N14>
+{
+    Post_Order: var_print.node_syn=create_node("minus_var_print",N14.node_syn);
+}
+39. <var_print> -> <N14>
+{
+    Post_Order: var_print.node_syn=N14.node_syn;
+}
+40. <var_print> -> ID <P1>
+{
+    Pre_Order: P1.node_inh=ID.addr;
+    Post_Order: var_print.node_syn=P1.node_syn;
+}
+41. <var_print> -> <boolConstt>
+{
+    Post_Order: var_print.node_syn=boolConstt.node_syn;
+}
+42. <P1> -> SQBO <index_arr> SQBC
+{
+    Post_Order: P1.node_syn = create_node("index_arr",P1.node_inh,index_arr.node_syn);
+}
+43. <P1> -> @
+{
+    Post_Order: P1.node_syn = P1.node_inh;
+}
+44. <simpleStmt> -> <assignmentStmt>
+{
+    Post_Order: simpleStmt.node_syn = assignmentStmt.node_syn;
+}
+45. <simpleStmt> -> <moduleReuseStmt>
+{
+    Post_Order: simpleStmt.node_syn = moduleReuseStmt.node_syn;
+}
+46. <assignmentStmt> -> ID <whichStmt>
+{
+    Pre_Order: whichStmt.node_inh=ID.addr;
+    Post_Order: assignmentStmt.node_syn = whichStmt.node_syn;
+}
+47. <whichStmt> -> <lvalueIDStmt>
+{
+    Pre_Order: lvalueIDStmt.node_inh=whichStmt.node_inh;
+    Post_Order: whichStmt.node_syn = lvalueIDStmt.node_syn;
+}
+48. <whichStmt> -> <lvalueARRStmt>
+{
+    Pre_Order: lvalueARRStmt.node_inh=whichStmt.node_inh;
+    Post_Order: whichStmt.node_syn = lvalueARRStmt.node_syn;
+}
+49. <lvalueIDStmt> -> ASSIGNOP <expression> SEMICOL
+{
+    Post_Order: lvalueIDStmt.node_syn = create_node("expression", 
+    lvalueIDStmt.node_inh, 
+    expression.node_syn);
+}
+50. <lvalueARRStmt> -> SQBO <element_index_with_expressions> SQBC ASSIGNOP <expression> SEMICOL
+{
+    In_Order : expression.node_inh=create_node("expression",
+    lvalueARRStmt.node_inh,
+    element_index_with_expressions.node_syn);
+    Post_Order: lvalueARRStmt.node_syn = create_node("arr_expression",
+    lvalueARRStmt.node_inh, 
+    element_index_with_expressions.node_syn, 
+    expression.node_syn);
+}
+51. <index_arr> -> <sign> <new_index>
+{
+    Post_Order: index_arr.node_syn=create_node("index_arr", sign.node_syn, new_index.node_syn);
+}
+52. <new_index> -> NUM
+{
+    Post_Order: new_index.node_syn=NUM.addr;
+}
+53. <new_index> -> ID
+{
+    Post_Order: new_index.node_syn=ID.addr;
+}
+54. <sign> -> PLUS
+{
+    Post_Order: sign.node_syn=PLUS;
+}
+55. <sign> -> MINUS
+{
+    Post_Order: sign.node_syn=MINUS;
+}
+56. <sign> -> @
+{
+    Post_Order: sign.node_syn=NULL;
+}
+57. <moduleReuseStmt> -> <optional> USE MODULE ID WITH PARAMETERS <actual_para_list> SEMICOL
+{
+    Post_Order: moduleReuseStmt.node_syn = create_node("moduleReuseStmt", 
+    ID.addr, 
+    optional.list_head_syn, 
+    actual_para_list.list_head_syn);
+}
+58. <actual_para_list> -> <singular_para_list> <N12>
+{
+    Post_Order: actual_para_list.list_head_syn=push_front(N12.list_head_syn,singular_para_list.node_syn);
+}
+59. <N12_1> -> COMMA <singular_para_list> <N12_2>
+{
+    Post_Order: N12_1.list_head_syn=push_front(N12_2.list_head_syn,singular_para_list.node_syn);
+}
+60. <N12> -> @
+{
+    Post_Order: N12.list_head_syn=create_list("singular_para_list");
+}
+61. <singular_para_list> -> <boolConstt>
+{
+    Post_Order: singular_para_list.node_syn=create_node("singular_para_list",boolConstt.node_syn);
+}
+62. <singular_para_list> -> PLUS <N13>
+{
+    Post_Order: singular_para_list.node_syn=create_node("singular_para_list",N13.node_syn,PLUS);
+}
+63. <singular_para_list> -> MINUS <N13>
+{
+    Post_Order: singular_para_list.node_syn=create_node("singular_para_list",N13.node_syn,MINUS);
+}
+64. <singular_para_list> -> <N13>
+{
+    Post_Order: singular_para_list.node_syn=create_node("singular_para_list",N13.node_syn,NULL);
+}
+65. <N13> -> NUM
+{
+    Post_Order: N13.node_syn=NUM.addr;
+}
+66. <N13> -> RNUM
+{
+    Post_Order: N13.node_syn=RNUM.addr;
+}
+67. <N13> -> ID <N11>
+{
+    Pre_Order: N11.node_inh=ID.addr;
+    Post_Order: N13.node_syn=N11.node_syn;
+}
+68. <N11> -> SQBO <element_index_with_expressions> SQBC
+{
+    Pre_Order: element_index_with_expressions.node_inh=N11.node_inh;
+    Post_Order: N11.node_syn=element_index_with_expressions.node_syn;
+}
+69. <N11> -> @
+{
+    Post_Order: N11.node_syn=NULL;
+}
+70. <optional> -> SQBO <idList> SQBC ASSIGNOP
+{
+    Post_Order: optional.list_head_syn = idList.list_head_syn
+}
+71. <optional> -> @
+{
+    Post_Order: optional.list_head_syn = NULL;
+}
+72. <idList> -> ID <N3>
+{
+    Pre_Order: new_list = create_list(ID.addr);
+    N3.list_head_inh=new_list;
+    Post_Order: idList.list_head_syn = N3.list_head_syn;
+}
+73. <N3_1> -> COMMA ID <N3_2>
+{
+    Pre_Order: N3_2.list_head_inh = insert_at_end(N3_1.list_head_inh, ID.addr);
+    Post_Order: N3_1.list_head_syn = N3_2.list_head_syn;
+}
+74. <N3> -> @
+{
+    Post_Order: N3.list_head_syn = N3.list_head_inh;
+}
+75. <expression> -> <arithmeticOrBooleanExp>
+{
+    Post_Order: expression.node_syn = arithmeticOrBooleanExp.node_syn;
+}
+76. <expression> -> <U>
+{
+    Pre_Order: U.node_inh=expression.node_inh;
+    Post_Order: expression.node_syn = U.node_syn;   
+}
+77. <U> -> <op1> <new_NT>
+{
+    Post_Order: U.node_syn=create_node(op1.node_syn,U.node_inh,new_NT.node_syn);
+}
+78. <new_NT> -> BO <arithmeticExpr> BC
+{
+    Post_Order: new_NT.node_syn=arithmeticExpr.node_syn;
+}
+79. <new_NT> -> <var_id_num>
+{
+    Post_Order: new_NT.node_syn=var_id_num.node_syn;
+}
+80. <arithmeticOrBooleanExp> -> <AnyTerm> <N7>
+{
+    Pre_Order: N7.node_inh=AnyTerm.node_syn;
+    Post_Order: arithmeticOrBooleanExp.node_syn = N7.node_syn;
+}
+81. <N7_1> -> <logicalOp> <AnyTerm> <N7_2>
+{
+    In_Order : N7_2.node_inh = create_node(logicalOp.node_syn, N7_1.node_inh, AnyTerm.node_syn);
+    Post_Order: N7_1.node_syn = N7_2.node_syn;
+}
+82. <N7> -> @
+{
+    Post_Order: N7.node_syn = N7.node_inh;
+}
+83. <AnyTerm> -> <arithmeticExpr> <N8>
+{
+    Pre_Order: N8.node_inh=arithmeticExpr.node_syn;
+    Post_Order: AnyTerm.node_syn=N8.node_syn;
+}
+84. <boolConstt> -> TRUE
+{
+    Post_Order: boolConstt.node_syn=TRUE;
+}
+85. <boolConstt> -> FALSE
+{
+    Post_Order: boolConstt.node_syn=FALSE;
+}
+86. <N8> -> <relationalOp> <arithmeticExpr>
+{
+    Post_Order: N8.node_syn = create_node("N8",
+    relationalOp.node_syn,
+    N8.node_inh,
+    arithmeticExpr.node_syn);
+}
+87. <N8> -> @
+{
+    Post_Order: N8.node_syn = N8.node_inh;
+}
+88. <arithmeticExpr> -> <term> <N4>
+{
+    Pre_Order: N4.node_inh=term.node_syn;
+    Post_Order: arithmeticExpr.node_syn=N4.node_syn;
+}
+89. <N4_1> -> <op1> <term> <N4_2>
+{
+    In_Order : N4_2.node_inh=create_node("N4",
+    op1.node_syn,
+    N4_1.node_inh,
+    term.node_syn);
+    Post_Order: N4_1.node_syn = N4_2.node_syn;
+}
+90. <N4> -> @
+{
+    Post_Order: N4.node_syn = N4.node_inh;
+}
+91. <term> -> <factor> <N5>
+{
+    Pre_Order : N5.node_inh=factor.node_syn;
+    Post_Order: term.node_syn=N5.node_syn;    
+}
+92. <N5_1> -> <op2> <factor> <N5_2>
+{
+    In_Order : N5_2.node_inh=create_node("N4",
+    op1.node_syn,
+    N5_1.node_inh,
+    term.node_syn);
+    Post_Order: N5_1.node_syn = N5_2.node_syn;    
+}
+93. <N5> -> @
+{
+    Post_Order: N5.node_syn = N5.node_inh;    
+}
+94. <factor> -> NUM
+{
+    Post_Order: factor.node_syn=NUM.addr;
+}
+95. <factor> -> <boolConstt>
+{
+    Post_Order: factor.node_syn=boolConstt.node_syn;
+}
+96. <factor> -> ID <N11>
+{
+    Pre_Order: N11.node_inh=ID.addr;
+    Post_Order: factor.node_syn=N11.node_syn;
+}
+97. <factor> -> RNUM
+{
+    Post_Order: factor.node_syn=RNUM.addr;
+}
+98. <factor> -> BO <arithmeticOrBooleanExp> BC
+{
+    Post_Order: factor.node_syn=boolConstt.node_syn;
+}
+99. <array_element> -> ID SQBO <element_index_with_expressions> SQBC
+{
+    Pre_Order: element_index_with_expressions.node_inh=ID.addr;
+    Post_Order: array_element.node_syn=element_index_with_expressions.node_syn;
+}
+100. <element_index_with_expressions> -> <arrExpr>
+{
+    Pre_Order: arrExpr.node_inh=element_index_with_expressions.addr;
+    Post_Order: element_index_with_expressions.node_syn=arrExpr.node_syn;    
+}
+101. <element_index_with_expressions> -> PLUS <new_index>
+{
+    Post_Order: element_index_with_expressions.node_syn=create_node("element_index_with_expressions",PLUS,new_index.node_syn);
+}
+102. <element_index_with_expressions> -> MINUS <new_index>
+{
+    Post_Order: element_index_with_expressions.node_syn=create_node("element_index_with_expressions",MINUS,new_index.node_syn);
+}
+103. <arrExpr> -> <arrTerm> <arr_N4> 
+{
+    Pre_Order: arr_N4.node_inh=arrTerm.node_syn;
+    Post_Order: arrExpr.node_syn=arr_N4.node_syn;
+}
+104. <arr_N4_1> -> <op1> <arrTerm> <arr_N4_2>
+{
+    In_Order: arr_N4_2.node_inh=create_node("arr_N4",
+    op1.node_syn,
+    arr_N4_1.node_inh,
+    arrTerm.node_syn);
+    Post_Order: arr_N4_1.node_syn = arr_N4_2.node_syn;   
+}
+105. <arr_N4> -> @
+{
+    Post_Order: arr_N4.node_syn = arr_N4.node_inh; 
+}
+106. <arrTerm> -> <arrFactor> <arr_N5>
+{
+    Pre_Order: arr_N5.node_inh=arrFactor.node_syn;
+    Post_Order: arrTerm.node_syn=arr_N5.node_syn;
+}
+107. <arr_N5_1> -> <op2> <arrFactor> <arr_N5_2>
+{
+    In_Order: arr_N5_2.node_inh=create_node("arr_N4",op2.node_syn,arr_N5_1.node_inh,arrFactor.node_syn);
+    Post_Order: arr_N5_1.node_syn = arr_N5_2.node_syn;   
+}
+108. <arr_N5> -> @
+{
+    Post_Order: arr_N5.node_syn = arr_N5.node_inh; 
+}
+109. <arrFactor> -> ID
+{
+    Post_Order: arrFactor.node_syn=ID.addr;
+}
+110. <arrFactor> -> NUM
+{
+    Post_Order: arrFactor.node_syn=NUM.addr;
+}
+111. <arrFactor> -> <boolConstt>
+{
+    Post_Order: arrFactor.node_syn=boolConstt.node_syn;
+}
+112. <arrFactor> -> BO <arrExpr> BC
+{
+    Post_Order: arrFactor.node_syn=arrExpr.node_syn;
+}
+113. <var_id_num> -> ID
+{
+    Post_Order: var_id_num.node_syn=ID.addr;
+}
+114. <var_id_num> -> NUM
+{
+    Post_Order: var_id_num.node_syn=NUM.addr;
+}
+115. <var_id_num> -> RNUM
+{
+    Post_Order: var_id_num.node_syn=RNUM.addr;
+}
+116. <op1> -> PLUS
+{
+    Post_Order: op1.node_syn=PLUS;
+}
+117. <op1> -> MINUS
+{
+    Post_Order: op1.node_syn=MINUS;
+}
+118. <op2> -> MUL
+{
+    Post_Order: op2.node_syn=MUL;
+}
+119. <op2> -> DIV
+{
+    Post_Order: op2.node_syn=DIV;
+}
+120. <logicalOp> -> AND
+{
+    Post_Order: logicalOp.node_syn=DIV;
+}
+121. <logicalOp> -> OR
+{
+    Post_Order: logicalOp.node_syn=OR;
+}
+122. <relationalOp> -> LT
+{
+    Post_Order: relationalOp.node_syn=LT;
+}
+123. <relationalOp> -> LE
+{
+    Post_Order: relationalOp.node_syn=LE;
+}
+124. <relationalOp> -> GT
+{
+    Post_Order: relationalOp.node_syn=GT;
+}
+125. <relationalOp> -> GE
+{
+    Post_Order: relationalOp.node_syn=GE;
+}
+126. <relationalOp> -> EQ
+{
+    Post_Order: relationalOp.node_syn=EQ;
+}
+127. <relationalOp> -> NE
+{
+    Post_Order: relationalOp.node_syn=NE;
+}
+128. <declareStmt> -> DECLARE <idList> COLON <dataType> SEMICOL
+{
+    Post_Order: declareStmt.node_syn = create_node("DECLARE",dataType.node_syn,idList.list_head_syn);
+}
+129. <conditionalStmt> -> SWITCH BO ID BC START <caseStmts> <default> END
+{
+    Post_Order: conditionalStmt.node_syn = create_node("conditionalStmt",
+    ID.addr, 
+    caseStmts.list_head_syn,
+    default.node_syn);
+}
+130. <caseStmts> -> CASE <value> COLON <statements> BREAK SEMICOL <N9>
+{
+    Post_Order: new_case_statement=create_list("CASE",value.node_syn,statements.list_head_syn);
+    caseStmts.list_head_syn=push_front(N9.list_head_syn,new_case_statement);
+}
+131. <N9_1> -> CASE <value> COLON <statements> BREAK SEMICOL <N9_2>
+{
+    Post_Order: new_case_statement=create_list("CASE",value.node_syn,statements.list_head_syn);
+    N9_1.list_head_syn=push_front(N9_2.list_head_syn,new_case_statement);
+}
+132. <N9> -> @
+{
+    Post_Order: N9.node_syn = create_list("statements"); 
+}
+133. <value> -> NUM
+{
+    Post_Order: value.node_syn=NUM.addr;
+}
+134. <value> -> TRUE
+{
+    Post_Order: value.node_syn=TRUE;
+}
+135. <value> -> FALSE
+{
+    Post_Order: value.node_syn=FALSE;
+}
+136. <default> -> DEFAULT COLON <statements> BREAK SEMICOL
+{
+    Post_Order: default.node_syn = create_node("default",statements.list_head_syn);
+}
+137. <default> -> @
+{
+    Post_Order: default.node_syn = NULL;
+}
+138. <iterativeStmt> -> FOR BO ID IN <range_for_loop> BC START <statements> END
+{
+    Post_Order: iterativeStmt.node_syn =  create_node("FOR",ID.addr,range_for_loop.node_syn,statements.list_head_syn);
+}
+139. <iterativeStmt> -> WHILE BO <arithmeticOrBooleanExp> BC START <statements> END
+{
+    Post_Order: iterativeStmt.node_syn =  create_node("WHILE",arithmeticOrBooleanExp.node_syn,statements.list_head_syn);
+}
+140. <range_for_loop> -> <index_for_loop_1> RANGEOP <index_for_loop_2>
+{
+    Post_Order: range_for_loop.node_syn = create_node("range_for_loop",index_for_loop_1.node_syn,index_for_loop_2.node_syn);
+}
+141. <index_for_loop> -> <sign_for_loop> <new_index_for_loop>
+{
+    Post_Order: index_for_loop.node_syn=create_node("index_for_loop",sign_for_loop.node_syn,new_index_for_loop.node_syn);
+}
+142. <new_index_for_loop> -> NUM
+{
+    Post_Order: new_index_for_loop.node_syn=NUM.addr;
+}
+143. <sign_for_loop> -> PLUS
+{
+    Post_Order: sign_for_loop.node_syn=PLUS;
+}
+144. <sign_for_loop> -> MINUS
+{
+    Post_Order: sign_for_loop.node_syn=MINUS;
+}
+145. <sign_for_loop> -> @
+{
+    Post_Order: sign_for_loop.node_syn=NULL;
+}
