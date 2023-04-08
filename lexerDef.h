@@ -87,6 +87,7 @@ struct token_info{
     int lineNumber;
     union Data value;
 };
+typedef struct token_info Token_Info;
 
 extern const char* const tokenToString[];
 
