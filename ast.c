@@ -97,7 +97,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
 
     treeNode* temp;
 
-    printf("%d\n", rule_no);
+    fprintf(ast_test_file_pointer, "%d\n", rule_no);
 
     switch (rule_no)
     {

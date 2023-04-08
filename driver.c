@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
             start_lexer(fp, atoi(argv[3]),true);
             treeNode* parseTreeRoot = parseInputSourceCode(lookup_table, fp, true);
             printParseTree(parseTreeRoot,argv[2]);
-            FILE* lmao = fopen("ast.out", "w+");
+            ast_test_file_pointer = fopen("ast.out", "w+");
             Ast_Node* ast_root = generateAST(parseTreeRoot->firstchild, NULL);
         }
         else if(choice==4)
