@@ -1866,6 +1866,7 @@ struct AST_NODE {
     int type;
     Ast_Node* syn_next; // Useful if the node is a part of a linkedlist. If it is not, or it is the end, make it NULL. Used for syn attributes.
     Ast_Node* inh_next; // Used for inherited attributes.
+    Ast_Node* inh_1; // ^^^^ Above attribute might be useless. Used in Rule 40.
     Token_Info* token_data; // Useful for nodes of the form <non-terminal> --> terminal. Helps with compression.
     Ast_Node* child_1; // In case of linked list, child_1 contains data of the node.
     Ast_Node* child_2;
@@ -1879,6 +1880,7 @@ Ast_Node* createASTNode() {
     root->type = 0;
     root->syn_next = NULL;
     root->inh_next = NULL;
+    root->inh_1 = NULL;
     root->token_data = NULL;
     root->child_1 = NULL;
     root->child_2 = NULL;
@@ -1909,9 +1911,9 @@ const char* const ast_node_id[] = {
     "io_statement_get",  // 16
     "io_statement_print",  // 17
     "N14",  // 18
-    "",  // 19
-    "",  // 20
-    "",  // 21
+    "var_print",  // 19
+    "minus_var_print",  // 20
+    "P1",  // 21
     "",  // 22
     "",  // 23
     "",  // 24
@@ -2158,31 +2160,40 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         break;
     case 37:
     // 37. <var_print> -> PLUS <N14>
-        
+        root->type = 19;
+        root->child_1 = generateAST(curr->firstchild->next, NULL);
         break;
     case 38:
     // 38. <var_print> -> MINUS <N14>
-        
+        root->type = 20;
+        root->child_1 = generateAST(curr->firstchild->next, NULL);
         break;
     case 39:
     // 39. <var_print> -> <N14>
-        
+        root->type = 19;
+        root->child_1 = generateAST(curr->firstchild, NULL);
         break;
     case 40:
     // 40. <var_print> -> ID <P1>
-        
+        root->type = 19;
+        root->child_1 = generateAST(curr->firstchild, NULL);
+        root->child_2 = generateAST(curr->firstchild->next, root); // Inherited attibute
         break;
     case 41:
     // 41. <var_print> -> <boolConstt>
-        
+        root->type = 19;
+        root->child_1 = generateAST(curr->firstchild, NULL);
         break;
     case 42:
     // 42. <P1> -> SQBO <index_arr> SQBC
-        
+        root->type = 21;
+        assert(prev != NULL); // Rule 40.
+        root->inh_1 = prev->child_1;
+        root->child_1 = generateAST(curr->firstchild->next, NULL);
         break;
     case 43:
     // 43. <P1> -> @
-       
+       return_null = true;
         break;
     case 44:
     // 44. <simpleStmt> -> <assignmentStmt>
