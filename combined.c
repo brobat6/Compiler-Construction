@@ -1953,12 +1953,11 @@ Token_Info* createHeapTokenInfo(Token_Info old_token) {
     return new_token;
 }
 
-void printASTNode(Ast_Node* root) {
-    FILE* f = fopen("ast.out", "w+");
+void printASTNode(Ast_Node* root, FILE* f) {
     if(root == NULL) {
         fprintf(f, "NULL");
     } else {
-        fprintf(f, "%s\n", ast_node_id[root->type]);
+        fprintf(f, "%d %s\n", root->type, ast_node_id[root->type]);
     }
 }
 
@@ -1974,6 +1973,8 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     rule_no++; // Remember one-based indexing!!!!!!!!
 
     treeNode* temp;
+
+    printf("%d\n", rule_no);
 
     switch (rule_no)
     {
@@ -2392,9 +2393,9 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     case 73:
     // 73. <N3> -> COMMA ID <N3>
         root->type = 33;
-        root->child_1 = generateAST(curr->firstchild, NULL);
+        root->child_1 = generateAST(curr->firstchild->next, NULL);
         root->inh_1 = prev;
-        root->syn_next = generateAST(curr->firstchild->next, prev);
+        root->syn_next = generateAST(curr->firstchild->next->next, prev);
         break;
     case 74:
     // 74. <N3> -> @
@@ -2819,7 +2820,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         assert(false);
     }
 
-    printASTNode(root);
+    // printASTNode(root);
 
     // Remember to FREE treenodes!!!
     free(curr);
@@ -2886,7 +2887,10 @@ int main(int argc, char *argv[]) {
             start_lexer(fp, atoi(argv[3]),true);
             treeNode* parseTreeRoot = parseInputSourceCode(lookup_table, fp, true);
             printParseTree(parseTreeRoot,argv[2]);
-            generateAST(parseTreeRoot, NULL);
+            // FILE* lmao = fopen("lmao.out", "w+");
+            // printNodeInfo(parseTreeRoot->firstchild, lmao);
+            FILE* lmao = fopen("ast.out", "w+");
+            Ast_Node* ast_root = generateAST(parseTreeRoot->firstchild, NULL);
         }
         else if(choice==4)
         {
