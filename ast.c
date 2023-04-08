@@ -74,6 +74,7 @@ Ast_Node* createASTNode() {
     root->child_2 = NULL;
     root->child_3 = NULL;
     root->child_4 = NULL;
+    root->child_5 = NULL;
 }
 
 void printASTNode(Ast_Node* root, FILE* f) {
@@ -248,7 +249,9 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     case 25:
     // 25. <moduleDef> -> START <statements> END
         root->type = 13;
-        root->child_1 = generateAST(curr->firstchild->next, NULL);
+        root->child_1 = generateAST(curr->firstchild, NULL);
+        root->child_2 = generateAST(curr->firstchild->next, NULL);
+        root->child_3 = generateAST(curr->firstchild->next->next, NULL);
         break;
     case 26:
     // 26. <statements> -> <statement><statements>
@@ -837,10 +840,14 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->type = 46;
         temp = curr->firstchild->next->next; 
         root->child_1 = generateAST(temp, NULL); // ID
-        temp = temp->next->next->next;
-        root->child_2 = generateAST(temp, NULL); // caseStmts
+        temp = temp->next->next;
+        root->child_2 = generateAST(temp, NULL); // START
         temp = temp->next;
-        root->child_3 = generateAST(temp, NULL); // default
+        root->child_3 = generateAST(temp, NULL); // caseStmts
+        temp = temp->next;
+        root->child_4 = generateAST(temp, NULL); // default
+        temp = temp->next;
+        root->child_5 = generateAST(temp, NULL); // END
         break;
     case 130:
     // 130. <caseStmts> -> CASE <value> COLON <statements> BREAK SEMICOL <N9>
@@ -897,16 +904,24 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->child_1 = generateAST(temp, NULL); // ID
         temp = temp->next->next;
         root->child_2 = generateAST(temp, NULL); // range_for_loop
-        temp = temp->next->next->next;
-        root->child_3 = generateAST(temp, NULL); // statements
+        temp = temp->next->next;
+        root->child_3 = generateAST(temp, NULL); // START
+        temp = temp->next;
+        root->child_4 = generateAST(temp, NULL); // statements
+        temp = temp->next;
+        root->child_5 = generateAST(temp, NULL); // END
         break;
     case 139:
     // 139. <iterativeStmt> -> WHILE BO <arithmeticOrBooleanExp> BC START <statements> END
         root->type = 49;
         temp = curr->firstchild->next->next; 
         root->child_1 = generateAST(temp, NULL); // arithmeticOrBooleanExp
-        temp = temp->next->next->next;
-        root->child_2 = generateAST(temp, NULL); // statements
+        temp = temp->next->next;
+        root->child_2 = generateAST(temp, NULL); // START
+        temp = temp->next;
+        root->child_3 = generateAST(temp, NULL); // statements
+        temp = temp->next;
+        root->child_4 = generateAST(temp, NULL); // END
         break;
     case 140:
     // 140. <range_for_loop> -> <index_for_loop> RANGEOP <index_for_loop>

@@ -12,7 +12,8 @@ struct AST_NODE {
     Ast_Node* child_1; // In case of linked list, child_1 contains data of the node.
     Ast_Node* child_2;
     Ast_Node* child_3;
-    Ast_Node* child_4; // Parameters of the node. Consider renaming them to something better, or adding more parameters to help with readability.
+    Ast_Node* child_4;
+    Ast_Node* child_5; // Parameters of the node. Consider renaming them to something better, or adding more parameters to help with readability.
 };
 
 extern const char* const ast_node_id[];
