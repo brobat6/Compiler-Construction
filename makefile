@@ -8,8 +8,8 @@
 CC=gcc				#compiler
 TARGET=stage1exe	#target file name
 
-all: driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c 
-	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c -o $(TARGET)
+all: driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c
+	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c -o $(TARGET)
 
 clean:
 	rm -rf $(TARGET)
