@@ -1863,20 +1863,34 @@ void deallocateFromParser () {
 
 typedef struct AST_NODE Ast_Node;
 struct AST_NODE {
-    // Pointers within the tree.
-    Ast_Node* parent;
-    Ast_Node* next;
-    Ast_Node* prev;
-    Ast_Node* child; // first child of the node.
-    // Actual AST Data.
-    // Look into UNION!
+    int type;
+    Ast_Node* syn_next; // Useful if the node is a part of a linkedlist. If it is not, or it is the end, make it NULL. Used for syn attributes.
+    Ast_Node* inh_next; // Used for inherited attributes.
+    Token_Info* token_info; // Useful for nodes of the form <non-terminal> --> terminal. Helps with compression.
+    Ast_Node* child_1;
+    Ast_Node* child_2;
+    Ast_Node* child_3; // Parameters of the node. Consider renaming them to something better, or adding more parameters to help with readability.
+    Ast_Node* temp; // Used only during AST construction, for passing values from one child to another. Should always be set to NULL at the end.
 };
 
-Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
+Ast_Node* createASTNode() {
+    Ast_Node* root = (Ast_Node*)malloc(sizeof(Ast_Node));
+    root->type = 0;
+    root->syn_next = NULL;
+    root->inh_next = NULL;
+    root->token_info = NULL;
+    root->child_1 = NULL;
+    root->child_2 = NULL;
+    root->child_3 = NULL;
+    root->temp = NULL;
+}
 
-    // Call generateAST on all children of curr
+Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
+    Ast_Node* root = createASTNode();
+    // Call generateAST on all children of curr. NOT IN CASE OF INHERITED!
 
     // Create new AST_node for curr based on rule no
+    
 
     // Free children nodes of curr, and unused AST nodes of children
 
