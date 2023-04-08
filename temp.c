@@ -1888,13 +1888,16 @@ Ast_Node* createASTNode() {
 }
 
 const char* const ast_node_id[] = {
-    "ERROR!",
-    "program",
-    "moduleDeclarations",
-    "moduleDeclaration",
-    "otherModules",
-    "module",
-
+    "ERROR!", // 0
+    "program", // 1
+    "moduleDeclarations", // 2
+    "moduleDeclaration", // 3
+    "otherModules", // 4
+    "driverModule", // 5
+    "module", // 6
+    "ret", // 7
+    "input_plist", // 8
+    "output_plist", // 9
 };
 
 // struct token_info{
@@ -1915,6 +1918,8 @@ Token_Info* createHeapTokenInfo(Token_Info old_token) {
 
 Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     Ast_Node* root = createASTNode();
+
+    bool return_null = false; // For productions like rule 3.
     
     // Handle case where curr == NULL here.
 
@@ -1945,12 +1950,16 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->syn_next = generateAST(curr->firstchild->firstchild, NULL);
         break;
     case 3:
-        return NULL;
+        return_null = true; // handle case accordingly in the end.
         break;
     case 4:
+    // 4. <moduleDeclaration> -> DECLARE MODULE ID SEMICOL
+    // Instead of making token, it is much better to just make an Ast_Node for ID.
+    // But we will have to handle a case for it. 
         root->type = 3;
-        Token_Info ID = curr->firstchild->next->next->token;
-        root->token_data = createHeapTokenInfo(ID);
+        root->child_1 = generateAST(curr->firstchild->next->next, NULL);
+        // Token_Info ID = curr->firstchild->next->next->token;
+        // root->token_data = createHeapTokenInfo(ID);
         break;
     case 5:
         root->type = 4;
@@ -1958,37 +1967,71 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->syn_next = generateAST(curr->firstchild->next, NULL);
         break;
     case 6:
-        return NULL;
+    // 6. <otherModules> -> @
+        return_null = true;
         break;
     case 7:
-
+    //  <driverModule> -> DRIVERDEF DRIVER PROGRAM DRIVERENDDEF <moduleDef>
+        root->type = 5;
+        root->child_1 = generateAST(curr->firstchild->next->next->next->next, NULL);
         break;
     case 8:
-
+    // <module> -> DEF MODULE ID ENDDEF TAKES INPUT SQBO <input_plist> SQBC SEMICOL <ret> <moduleDef>
+        root->type = 6;
+        treeNode* temp = curr->firstchild->next->next; 
+        root->child_1 = generateAST(temp, NULL); // ID
+        temp = temp->next->next->next->next->next;
+        root->child_2 = generateAST(temp, NULL); // input_plist
+        temp = temp->next->next->next;
+        root->child_3 = generateAST(temp, NULL); // ret
+        temp = temp->next;
+        root->child_4 = generateAST(temp, NULL); // moduleDef
         break;
     case 9:
-
+    // 9. <ret> -> RETURNS SQBO <output_plist> SQBC SEMICOL
+        root->type = 7;
+        root->child_1 = curr->firstchild->next->next;
         break;
     case 10:
-
+    // 10. <ret> -> @
+        return_null = true;
         break;
     case 11:
-
+    // 11. <input_plist> -> ID COLON <dataType> <N1>
+        root->type = 8;
+        root->child_1 = generateAST(curr->firstchild, NULL); // ID
+        root->child_2 = generateAST(curr->firstchild->next->next, NULL); // dataType
+        root->syn_next = generateAST(curr->firstchild->next->next->next, NULL); // N1
         break;
     case 12:
-
+    // 12. <N1_1> -> COMMA ID COLON <dataType> <N1_2>
+        root->type = 8; // This is a controversial decision. My thinking is that, for an AST, 
+        // N1 and input_plist are exactly the same. 
+        root->child_1 = generateAST(curr->firstchild->next, NULL); // ID
+        root->child_2 = generateAST(curr->firstchild->next->next->next, NULL); // dataType
+        root->syn_next = generateAST(curr->firstchild->next->next->next->next, NULL); // N1 
         break;
     case 13:
-
+    // 13. <N1> -> @
+        return_null = true;
         break;
     case 14:
-
+    // 14. <output_plist> -> ID COLON <type> <N2>
+        root->type = 9;
+        root->child_1 = generateAST(curr->firstchild, NULL); // ID
+        root->child_2 = generateAST(curr->firstchild->next->next, NULL); // type
+        root->syn_next = generateAST(curr->firstchild->next->next->next, NULL); // N2
         break;
     case 15:
-
+    // 15. <N2_1> -> COMMA ID COLON <type> <N2_2>
+        root->type = 9; // See comment on Rule 12.
+        root->child_1 = generateAST(curr->firstchild->next, NULL); // ID
+        root->child_2 = generateAST(curr->firstchild->next->next->next, NULL); // type
+        root->syn_next = generateAST(curr->firstchild->next->next->next->next, NULL); // N2 
         break;
     case 16:
-
+    // 16. <N2> -> @
+        return_null = true;
         break;
     case 17:
 
