@@ -1954,7 +1954,7 @@ Token_Info* createHeapTokenInfo(Token_Info old_token) {
 }
 
 void printASTNode(Ast_Node* root) {
-    const char* f = "ast.out";
+    FILE* f = fopen("ast.out", "w+");
     if(root == NULL) {
         fprintf(f, "NULL");
     } else {
@@ -2886,6 +2886,7 @@ int main(int argc, char *argv[]) {
             start_lexer(fp, atoi(argv[3]),true);
             treeNode* parseTreeRoot = parseInputSourceCode(lookup_table, fp, true);
             printParseTree(parseTreeRoot,argv[2]);
+            generateAST(parseTreeRoot, NULL);
         }
         else if(choice==4)
         {
