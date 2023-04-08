@@ -3,8 +3,6 @@
 #ifndef _AST_H
 #define _AST_H
 
-FILE* ast_test_file_pointer;
-
 Token_Info* createHeapTokenInfo(Token_Info old_token);
 
 Ast_Node* createASTNode();
