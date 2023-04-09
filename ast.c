@@ -85,6 +85,14 @@ void printASTNode(Ast_Node* root, FILE* f) {
     }
 }
 
+void printASTNodeSTDOUT(Ast_Node* root) {
+    if(root == NULL) {
+        printf("NULL\n");
+        return;
+    }
+    printf("%d %s\n", root->type, ast_node_id[root->type]);
+}
+
 Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     Ast_Node* root = createASTNode();
 
@@ -967,4 +975,26 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         return NULL;
     }
     return root;
+}
+
+void traverseAST(Ast_Node* root) {
+    printASTNodeSTDOUT(root);
+    if(root->child_1 != NULL) {
+        traverseAST(root->child_1);
+    }
+    if(root->child_2 != NULL) {
+        traverseAST(root->child_2);
+    }
+    if(root->child_3 != NULL) {
+        traverseAST(root->child_3);
+    }
+    if(root->child_4 != NULL) {
+        traverseAST(root->child_4);
+    }
+    if(root->child_5 != NULL) {
+        traverseAST(root->child_5);
+    }
+    if(root->syn_next != NULL) {
+        traverseAST(root->syn_next);
+    }
 }

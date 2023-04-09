@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
             treeNode* parseTreeRoot = parseInputSourceCode(lookup_table, fp, true);
             printParseTree(parseTreeRoot,argv[2]);
             Ast_Node* ast_root = generateAST(parseTreeRoot->firstchild, NULL);
+            // traverseAST(ast_root);
         }
         else if(choice==4)
         {

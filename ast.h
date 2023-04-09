@@ -11,4 +11,6 @@ void printASTNode(Ast_Node* root, FILE* f);
 
 Ast_Node* generateAST(treeNode* curr, Ast_Node* prev);
 
+void traverseAST(Ast_Node* root);
+
 #endif
