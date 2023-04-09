@@ -7,6 +7,8 @@ STTreeNode* createSTTreeNode();
 
 void addSTChild(STTreeNode *parent,STTreeNode *child);
 
+STEntry* createSTEntry(STEntry* prevEntry);
+
 STEntry* checkID(STTreeNode* node,char lexeme[]);
 
 STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t);

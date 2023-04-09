@@ -179,11 +179,13 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     case 7:
     //  <driverModule> -> DRIVERDEF DRIVER PROGRAM DRIVERENDDEF <moduleDef>
         root->type = 5;
+        root->token_data = createHeapTokenInfo(curr->firstchild->token); // Needed for symbol table start
         root->child_1 = generateAST(curr->firstchild->next->next->next->next, NULL);
         break;
     case 8:
     // <module> -> DEF MODULE ID ENDDEF TAKES INPUT SQBO <input_plist> SQBC SEMICOL <ret> <moduleDef>
         root->type = 6;
+        root->token_data = createHeapTokenInfo(curr->firstchild->token); // Needed for symbol table start
         temp = curr->firstchild->next->next; 
         root->child_1 = generateAST(temp, NULL); // ID
         temp = temp->next->next->next->next->next;

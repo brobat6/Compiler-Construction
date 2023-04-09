@@ -40,13 +40,15 @@ typedef struct STEntry{
             int value;
             char lexeme[21];
         }lower;
+        int lower_sign; // 1 or -1.
         union{
             int value;
             char lexeme[21];
         }upper;
+        int upper_sign;
     }range;
     int declarationLineNumber;
-    int width;
+    int width; // If any isDynamic is true, then this is not computed.
     int offset;
 }STEntry;
 
