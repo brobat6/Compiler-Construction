@@ -85,33 +85,40 @@ void printASTNode(Ast_Node* root, FILE* f) {
     }
 }
 
-void printASTNodeSTDOUT(Ast_Node* root) {
+void printASTNodeSTDOUT(Ast_Node* root, Ast_Node* prev) {
     if(root == NULL) {
-        printf("NULL\n");
-        return;
+        printf("NULL ");
+    } else {
+        printf("%d %s ; ", root->type, ast_node_id[root->type]);
     }
-    printf("%d %s\n", root->type, ast_node_id[root->type]);
+    
+    printf("Parent: ");
+    if(prev == NULL) {
+        printf("NULL\n");
+    } else {
+        printf("%d %s\n", prev->type, ast_node_id[prev->type]);
+    }
 }
 
-void traverseAST(Ast_Node* root) {
-    printASTNodeSTDOUT(root);
+void traverseAST(Ast_Node* root, Ast_Node* prev) {
+    printASTNodeSTDOUT(root, prev);
     if(root->child_1 != NULL) {
-        traverseAST(root->child_1);
+        traverseAST(root->child_1, root);
     }
     if(root->child_2 != NULL) {
-        traverseAST(root->child_2);
+        traverseAST(root->child_2, root);
     }
     if(root->child_3 != NULL) {
-        traverseAST(root->child_3);
+        traverseAST(root->child_3, root);
     }
     if(root->child_4 != NULL) {
-        traverseAST(root->child_4);
+        traverseAST(root->child_4, root);
     }
     if(root->child_5 != NULL) {
-        traverseAST(root->child_5);
+        traverseAST(root->child_5, root);
     }
     if(root->syn_next != NULL) {
-        traverseAST(root->syn_next);
+        traverseAST(root->syn_next, root);
     }
 }
 
@@ -127,8 +134,6 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     rule_no++; // Remember one-based indexing!!!!!!!!
 
     treeNode* temp;
-
-    printf("%d\n", rule_no);
 
     switch (rule_no)
     {
