@@ -1,78 +1,10 @@
-#include "ast.c"
+#include "symbolTable.h"
 
 #define DATASEGMENTOFFSET 1000
-
-typedef struct STTreeNode{
-    ht* hashTable;
-    int nestingLevel;
-    char moduleName[21];
-    struct{
-        int begin;
-        int end;
-    }lineNumber;
-    int offset;
-    int nodeWidth;
-    struct STTreeNode* parent;
-    struct STTreeNode* leftMostChild;
-    struct STTreeNode* rightMostChild;
-    struct STTreeNode* sibling;
-}STTreeNode; 
-
-typedef enum Type{
-    INTEGER,
-    REAL,
-    BOOLEAN,
-    UNDEFINED,
-    ERROR
-}Type; 
-
-typedef struct STEntry{
-    char variableName[21];
-    enum Type type;
-    bool isArray;
-    struct{
-        bool lower;
-        bool upper;
-    }isDynamic;
-    struct{
-        union{
-            int value;
-            char lexeme[21];
-        }lower;
-        union{
-            int value;
-            char lexeme[21];
-        }upper;
-    }range;
-    int declarationLineNumber;
-    int width;
-    int offset;
-}STEntry;
-
-typedef struct paramListNode{
-    STEntry* entry;
-    struct parameterListNode* next; 
-}paramListNode;
-
-typedef struct paramList{
-    int size;
-    paramListNode* first;
-    paramListNode* last;
-}paramList;
-
-typedef struct FunctionSTEntry{
-    char moduleName[21];
-    bool declared;
-    bool defined;
-    paramList* inputParamList;
-    paramList* outputParamList;
-}FunctionSTEntry;
-
-
 int curOffset=DATASEGMENTOFFSET;
 STTreeNode* curSTTreeNode=NULL;
 STTreeNode* globalSTRoot=NULL;
-
+enum Type currType = 3;
 
 STTreeNode* createSTTreeNode(){             ///can use current AST node for data;
     STTreeNode* newNode = (STTreeNode*)malloc(sizeof(STTreeNode));
@@ -114,8 +46,6 @@ STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t){         //confirm inp
     }
     return checkID(node,lexeme);
 }
-
-enum Type currType = 3;
 
 void generateST(STTreeNode* currSTNode, Ast_Node* root, Ast_Node* prev) {
     if(root->type == 49) {

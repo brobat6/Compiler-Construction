@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "symbolTableDef.h"
 
 #ifndef _ASTDEF_H
 #define _ASTDEF_H
@@ -14,7 +14,7 @@ struct AST_NODE {
     Ast_Node* child_3;
     Ast_Node* child_4;
     Ast_Node* child_5; // Parameters of the node. Consider renaming them to something better, or adding more parameters to help with readability.
-    
+    STTreeNode* symbol_table; // Pointer to the symbol table in the scope associated with this Ast_Node.
 };
 
 extern const char* const ast_node_id[];
