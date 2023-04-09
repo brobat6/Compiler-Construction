@@ -12,6 +12,7 @@ int TypeCheckingDFS(Ast_Node* root) {
             int left_type = TypeCheckingDFS(root->inh_1);
             if(right_type != left_type) {
                 // THROW AN ERROR.
+                return -1;
             }
             return left_type;
         }

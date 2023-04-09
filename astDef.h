@@ -14,6 +14,7 @@ struct AST_NODE {
     Ast_Node* child_3;
     Ast_Node* child_4;
     Ast_Node* child_5; // Parameters of the node. Consider renaming them to something better, or adding more parameters to help with readability.
+    
 };
 
 extern const char* const ast_node_id[];

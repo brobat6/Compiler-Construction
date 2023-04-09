@@ -949,6 +949,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     case 139:
     // 139. <iterativeStmt> -> WHILE BO <arithmeticOrBooleanExp> BC START <statements> END
         root->type = 49;
+        root->token_data = createHeapTokenInfo(curr->firstchild->token);
         temp = curr->firstchild->next->next; 
         root->child_1 = generateAST(temp, NULL); // arithmeticOrBooleanExp
         temp = temp->next->next;
