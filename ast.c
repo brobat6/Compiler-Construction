@@ -295,28 +295,28 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         break;
     case 28:
     // 28. <statement> -> <ioStmt>
-        root->type = 15;
-        root->child_1 = generateAST(curr->firstchild, NULL);
+        free(root);
+        root = generateAST(curr->firstchild, NULL);
         break;
     case 29:
     // 29. <statement> -> <simpleStmt>
-        root->type = 15;
-        root->child_1 = generateAST(curr->firstchild, NULL);
+        free(root);
+        root = generateAST(curr->firstchild, NULL);
         break;
     case 30:
     // 30. <statement> -> <declareStmt>
-        root->type = 15;
-        root->child_1 = generateAST(curr->firstchild, NULL);
+        free(root);
+        root = generateAST(curr->firstchild, NULL);
         break;
     case 31:
     // 31. <statement> -> <conditionalStmt>
-        root->type = 15;
-        root->child_1 = generateAST(curr->firstchild, NULL);
+        free(root);
+        root = generateAST(curr->firstchild, NULL);
         break;
     case 32:
     // 32. <statement> -> <iterativeStmt>
-        root->type = 15;
-        root->child_1 = generateAST(curr->firstchild, NULL);
+        free(root);
+        root = generateAST(curr->firstchild, NULL);
         break;
     case 33:
     // 33. <ioStmt> -> GET_VALUE BO ID BC SEMICOL
