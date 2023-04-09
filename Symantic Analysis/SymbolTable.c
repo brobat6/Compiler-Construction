@@ -48,9 +48,29 @@ typedef struct STEntry{
             char lexeme[21];
         }upper;
     }range;
+    int declarationLineNumber;
     int width;
     int offset;
 }STEntry;
+
+typedef struct paramListNode{
+    STEntry* entry;
+    struct parameterListNode* next; 
+}paramListNode;
+
+typedef struct paramList{
+    int size;
+    paramListNode* first;
+    paramListNode* last;
+}paramList;
+
+typedef struct FunctionSTEntry{
+    char moduleName[21];
+    bool declared;
+    bool defined;
+    paramList* inputParamList;
+    paramList* outputParamList;
+}FunctionSTEntry;
 
 
 int curOffset=DATASEGMENTOFFSET;
@@ -86,30 +106,30 @@ void* checkID(STTreeNode* node,char lexeme[]){      //confirm input parameter
     return ht_fetch(node->hashTable,lexeme);
 }
 
-void* recursiveCheckID(STTreeNode* node,char lexeme[]){         //confirm input parameter
+void* recursiveCheckID(STTreeNode* node,token_info* t){         //confirm input parameter
+    char lexeme[21];
+    strcpy(lexeme,t->lexeme);
     if(checkID(node,lexeme)==NULL&&node->parent!=NULL){
-        return recursiveCheckID(node->parent,lexeme);
+        return recursiveCheckID(node->parent,t);
+    }
+    else if(checkID(node,lexeme)!=NULL&&checkID(node,lexeme)->declarationLineNumber>t->lineNumber){
+        return recursiveCheckID(node->parent,t);
     }
     return checkID(node,lexeme);
 }
 
-enum Type getType(char lexeme[]){           ////check input parameter....lexeme[] or pointer to ASTNode
-    STEntry* entry=recursiveCheckID(lexeme);
-    if(entry!=NULL){
-        return  entry->type;
-    }
-    return undefined;
-}
-
-STTreeNode* generateSymbolTable(ASTnode* ASTRoot){      ////confirm input parameter;
+STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input parameter; INCOMPLETE
     STTreeNode* STRoot = createSTTreeNode();
     globalSTRoot=STRoot;
     STRoot->nestingLevel=-1;
+    strcpy(STRoot->moduleName,"ROOT");
+
 
 
 }
 
-void printSymbolTable(){
+void printSymbolTable(){            ////INCOMPLETE
     STTreeNode* temp=globalSTRoot;
     
 }
+
