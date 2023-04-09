@@ -13,7 +13,7 @@ int BUF_LIMIT = 101;
 int MAX_RULE_COUNT = 150;
 int MAXIMUM_OCCURENCES_ON_RHS = 20;
 bool errorPrint = true;
-
+int isError = 0;
 ht* terminal_ht = NULL;
 ht* nonterminal_ht = NULL;
 llHead** grammar = NULL;
@@ -394,7 +394,7 @@ treeNode* parseInputSourceCode (ht* lookup_table, FILE* fp, bool printError) {
 
     program_node->data = program_start;
     stack = insertAtEnd(stack, program_node);
-    int isError = 0;
+    isError = 0;
     errorPrint = printError;
     bool wasSemicol = false;
     while (stack->count > 0) {
@@ -605,6 +605,7 @@ void printTreeNode(treeNode* treenode, FILE* tree_fp)
 
 void printParseTree(treeNode* root, char* outputfile)
 {
+    if(isError) return ;
     FILE* tree_fp = fopen(outputfile, "w+");
     if (tree_fp == NULL) {
         printf("Output file doesn't exist!\n");
