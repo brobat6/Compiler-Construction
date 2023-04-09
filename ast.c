@@ -1,20 +1,20 @@
 #include "ast.h"
 
 const char* const ast_node_id[] = {
-    "ERROR!", // 0
+    "terminal", // 0
     "program", // 1
-    "moduleDeclarations", // 2
-    "moduleDeclaration", // 3
-    "otherModules", // 4
-    "driverModule", // 5
+    "module_declarations", // 2
+    "module_declaration", // 3
+    "other_modules", // 4
+    "driver_module", // 5
     "module", // 6
     "ret", // 7
     "input_plist", // 8
     "output_plist", // 9
-    "dataType", // 10
+    "datatype", // 10
     "range_arrays", // 11
     "type", // 12
-    "moduleDef", // 13
+    "module_def", // 13
     "statements",  // 14
     "statement",  // 15
     "io_statement_get",  // 16
