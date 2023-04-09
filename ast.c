@@ -862,8 +862,8 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     // 128. <declareStmt> -> DECLARE <idList> COLON <dataType> SEMICOL
         root->type = 45;
         // Take care!! Child order is reversed.
-        root->child_2 = generateAST(curr->firstchild->next->next->next, NULL);
-        root->child_2 = generateAST(curr->firstchild->next, root->child_2);
+        root->child_1 = generateAST(curr->firstchild->next->next->next, NULL);
+        root->child_2 = generateAST(curr->firstchild->next, root->child_1);
         break;
     case 129:
     // 129. <conditionalStmt> -> SWITCH BO ID BC START <caseStmts> <default> END
