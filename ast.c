@@ -163,6 +163,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     // Instead of making token, it is much better to just make an Ast_Node for ID.
     // But we will have to handle a case for it. 
         root->type = 3;
+        root->token_data = createHeapTokenInfo(curr->firstchild->token);
         root->child_1 = generateAST(curr->firstchild->next->next, NULL);
         // Token_Info ID = curr->firstchild->next->next->token;
         // root->token_data = createHeapTokenInfo(ID);

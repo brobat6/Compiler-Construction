@@ -65,7 +65,7 @@ typedef struct paramList{
 
 typedef struct FunctionSTEntry{
     char moduleName[21];
-    bool declared;
+    int declaration_line_no;
     bool defined;
     paramList* inputParamList;
     paramList* outputParamList;

@@ -5,6 +5,7 @@ int curOffset=DATASEGMENTOFFSET;
 STTreeNode* curSTTreeNode=NULL;
 STTreeNode* globalSTRoot=NULL;
 STEntry* tempEntry;
+ht* functionST;
 
 STTreeNode* createSTTreeNode(){             ///can use current AST node for data;
     STTreeNode* newNode = (STTreeNode*)malloc(sizeof(STTreeNode));
@@ -51,6 +52,10 @@ STEntry* checkID(STTreeNode* node,char lexeme[]){      //confirm input parameter
     return ht_fetch(node->hashTable,lexeme);
 }
 
+FunctionSTEntry* checkFunctionID(char lexeme[]) {
+    return ht_fetch(functionST, lexeme);
+}
+
 STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t){         //confirm input parameter
     char lexeme[21];
     strcpy(lexeme,t->lexeme);
@@ -61,6 +66,10 @@ STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t){         //confirm inp
         return recursiveCheckID(node->parent,t);
     }
     return checkID(node,lexeme);
+}
+
+void throw_function_already_exists_error(char module_name[], int line_no) {
+    printf("function %s already exists, declared at line %d!\n", module_name, line_no);
 }
 
 void throw_already_exists_error(Token_Info* token) {
@@ -99,7 +108,7 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root, Ast_Node* prev) {
     }
     if(root->type == 5) {
         // driver module
-        // REMEMBER TO ALSO ADD ENTRY IN MODULE SYMBOL TABLE!!!!
+        // 1. ID ST Table
         int start_line_no = root->token_data->lineNumber; // DRIVERDEF
         int end_line_no = root->child_1->child_3->token_data->lineNumber; // END
         STTreeNode* childSTNode = createSTTreeNode();
@@ -108,13 +117,43 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root, Ast_Node* prev) {
         (childSTNode->lineNumber).end = end_line_no;
         strcpy(childSTNode->moduleName, "driver");
         childSTNode->offset = curOffset;
+        // 2. Function ST Table
+        FunctionSTEntry* functionEntry = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+        strcpy(functionEntry->moduleName, "driver");
+        functionEntry->defined = true;
+        functionEntry->declaration_line_no = start_line_no;
+        if(checkFunctionID(functionEntry->moduleName) != NULL) {
+            // ERROR!!!!! 
+            throw_function_already_exists_error(functionEntry->moduleName, functionEntry->declaration_line_no);
+        } else {
+            ht_store(functionST, functionEntry->moduleName, functionEntry);
+        }
+        // 3. Call recursion downward.
         generateST(childSTNode, root->child_1, root);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
         return;
     }
+    if(root->type == 3) {
+        // module declaration
+        FunctionSTEntry* func = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+        strcpy(func->moduleName, root->child_1->token_data->lexeme);
+        func->defined = false;
+        func->declaration_line_no = root->token_data->lineNumber;
+        if(checkFunctionID(func->moduleName) != NULL) {
+            // ERROR!!!!! 
+            throw_function_already_exists_error(func->moduleName, func->declaration_line_no);
+        } else {
+            ht_store(functionST, func->moduleName, func);
+        }
+        return;
+    }
     if(root->type == 6) {
-        // module
+        // module definition
 
+    }
+    if(root->type == 48) {
+        // FOR
+        
     }
     if(root->type == 45) {
         Ast_Node* temp = root->child_1;
@@ -211,8 +250,7 @@ STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input param
     STRoot->nestingLevel=-1;
     tempEntry = (STEntry*)malloc(sizeof(STEntry));
     strcpy(STRoot->moduleName,"ROOT");
-
-
+    functionST = init_ht();
 
 }
 
