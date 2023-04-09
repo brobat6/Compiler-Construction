@@ -7,7 +7,7 @@ ID: 2020A7PS0980P			    Name: Mithil Shah
 ID: 2020A7PS0120P			    Name: Kshitij Garg
 */
 
-#include "ast.h"
+#include "typeCheck.h"
 
 ht* initialize () {
     readGrammarFile();
@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
             printParseTree(parseTreeRoot,argv[2]);
             Ast_Node* ast_root = generateAST(parseTreeRoot->firstchild, NULL);
             traverseAST(ast_root, NULL);
+            typecheckdfs(ast_root);
         }
         else if(choice==4)
         {

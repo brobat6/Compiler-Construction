@@ -23,7 +23,7 @@ Type checkType(Operator op, Type t1, Type t2){
             printf("Expression types of LHS RHS (Bool) dont match\n");
             return TYPE_ERROR;
         }
-    } else if(op==OP_ARR){
+    } else if(op==OP_ARR){ // Also add cases for Real and Boolean
         if(t1==t2 && t1==TYPE_INTEGER) return TYPE_INTEGER;
         else{
             printf("Expression types of LHS RHS (Arr) dont match\n");
@@ -52,34 +52,34 @@ Type typecheckdfs(Ast_Node* root){
     // ASSIGNMENT/ARITHMETIC/BOOLEAN/ARRAY TYPE CHECKING
     if(root->type==22){
         Type left_expr=typecheckdfs(root->child_1);
-        Type right_expr=typecheckdfs(root->syn_next);
+        Type right_expr=typecheckdfs(root->child_2);
         
         return checkType(OP_ASSIGN, left_expr, right_expr);
     }
 
-    else if(root->type==23 || root->type==31 || root->type==41 || root->type==42){
+    if(root->type==23 || root->type==41 || root->type==42){
         return typecheckdfs(root->child_1);
     } 
     
-    else if(root->type==35 || root->type == 38 || root->type==39 || root->type==43 || root->type==44){
-        if(root->child_2==NULL){
-            return typecheckdfs(root->child_1);
-        } else if(root->syn_next==NULL){
-            Type left_expr=typecheckdfs(root->inh_1);
-            Type right_expr=typecheckdfs(root->child_2);
-            Operator op=token_to_op(root->child_1->token_data->token);
-
-            return checkType(op, left_expr, right_expr);
-        } else{
-            Type left_expr=typecheckdfs(root->inh_1);
-            Type right_expr=typecheckdfs(root->syn_next);
-            Operator op=token_to_op(root->child_1->token_data->token);
-
-            return checkType(op, left_expr, right_expr);
+    if(root->type==35 || root->type == 38 || root->type==39 || root->type==43 || root->type==44) {
+        if(root->child_2==NULL) {
+            if(root->syn_next == NULL) {
+                return typecheckdfs(root->child_1);
+            }
+            return typecheckdfs(root->syn_next);
         }
+        Type left_expr = typecheckdfs(root->inh_1);
+        Operator op = token_to_op(root->child_1->token_data->token);
+        Type right_expr;
+        if(root->syn_next == NULL) {
+            right_expr = typecheckdfs(root->child_2);
+        } else {
+            right_expr = typecheckdfs(root->syn_next);
+        }
+        return checkType(op, left_expr, right_expr);
     }
 
-    else if(root->type==36){
+    if(root->type==36){
         if(root->child_2==NULL){
             return typecheckdfs(root->child_1);
         } else {
@@ -100,15 +100,34 @@ Type typecheckdfs(Ast_Node* root){
         if(root->child_2==NULL){
             return typecheckdfs(root->child_1);
         } else{
-            Type left_expr=typecheckdfs(root->child_1);
-            Type right_expr=typecheckdfs(root->child_2);
-
-            return checkType(OP_ARR, left_expr, right_expr);
+            // Type checking will happen at <N11>. 
+            return typecheckdfs(root->child_2);
         }
     }
 
+    else if(root->type == 31) {
+        // <N11>, type checking.
+        Type left_expr = typecheckdfs(root->inh_1);
+        Type right_expr = typecheckdfs(root->child_1);
+        
+        return checkType(OP_ARR, left_expr, right_expr);
+    }
+
     else if(root->type==0){
-        return TYPE_INTEGER;
+        if(root->token_data->token == ID) {
+            // Do this later with symbol table information.
+            return TYPE_INTEGER;
+        }
+        if(root->token_data->token == NUM) {
+            return TYPE_INTEGER;
+        }
+        if(root->token_data->token == RNUM) {
+            return TYPE_REAL;
+        }
+        if(root->token_data->token == BOOLEAN) {
+            return TYPE_BOOLEAN;
+        }
+        return TYPE_UNDEFINED;
     }
 
     else{
