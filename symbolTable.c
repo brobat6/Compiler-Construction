@@ -57,6 +57,23 @@ FunctionSTEntry* checkFunctionID(char lexeme[]) {
     return ht_fetch(functionST, lexeme);
 }
 
+// STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t) {
+//     /**
+//      * Successively goes in outward scopes until it finds a scope which has 
+//      * token t declared BEFORE the line number of t. It does NOT return any
+//      * node which is declared AFTER t. If there is no valid node, it returns
+//      * NULL.
+//     */
+
+//     if(node == NULL) return NULL;
+    
+//    if(checkID(node, t->lexeme) == NULL || checkID(node, t->lexeme)->declarationLineNumber > )
+
+//     if(node->parent != NULL) {
+
+//     }
+// }
+
 STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t){         //confirm input parameter
     char lexeme[21];
     strcpy(lexeme,t->lexeme);
@@ -482,9 +499,9 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
                 fprintf(fp, "[%d-", data->range.lower.value);
             }
             if(data->isDynamic.upper) {
-                fprintf(fp, "%s]\t\t", data->range.lower.lexeme);
+                fprintf(fp, "%s]\t\t", data->range.upper.lexeme);
             } else {
-                fprintf(fp, "%d]\t\t", data->range.lower.value);
+                fprintf(fp, "%d]\t\t", data->range.upper.value);
             }
         } else {
             fprintf(fp, "**\t\t");

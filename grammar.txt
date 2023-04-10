@@ -14,8 +14,8 @@
 <output_plist> -> ID COLON <type> <N2>
 <N2> -> COMMA ID COLON <type> <N2>
 <N2> -> @
-<dataType> -> ARRAY SQBO <range_arrays> SQBC OF <type>
 <range_arrays> -> <index_arr> RANGEOP <index_arr>
+<dataType> -> ARRAY SQBO <range_arrays> SQBC OF <type>
 <dataType> -> INTEGER
 <dataType> -> REAL
 <dataType> -> BOOLEAN

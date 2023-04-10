@@ -252,16 +252,16 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         return_null = true;
         break;
     case 17:
-    // 17. <dataType> -> ARRAY SQBO <range_arrays> SQBC OF <type>
-        root->type = 10;
-        root->child_1 = generateAST(curr->firstchild->next->next, NULL);
-        root->child_2 = generateAST(curr->firstchild->next->next->next->next->next, NULL);
-        break;
-    case 18:
     // 18. <range_arrays> -> <index_arr_1> RANGEOP <index_arr_2>
         root->type = 11;
         root->child_1 = generateAST(curr->firstchild, NULL);
         root->child_2 = generateAST(curr->firstchild->next->next, NULL);
+        break;
+    case 18:
+    // 17. <dataType> -> ARRAY SQBO <range_arrays> SQBC OF <type>
+        root->type = 10;
+        root->child_1 = generateAST(curr->firstchild->next->next, NULL);
+        root->child_2 = generateAST(curr->firstchild->next->next->next->next->next, NULL);
         break;
     case 19:
     // 19. <dataType> -> INTEGER
