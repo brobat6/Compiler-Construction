@@ -1,7 +1,7 @@
 #include "typeCheck.h"
 
 Type checkType(Operator op, Type t1, Type t2){
-    if(t1==TYPE_ERROR || t2==TYPE_ERROR) return TYPE_UNDEFINED;
+    if(t1==TYPE_ERROR || t2==TYPE_ERROR || t1==TYPE_UNDEFINED|| t2==TYPE_UNDEFINED) return TYPE_UNDEFINED;
 
     if(op==OP_ARITH){
         if(t1==t2 && (t1==TYPE_INTEGER || t1==TYPE_REAL)) return t1;
@@ -124,7 +124,7 @@ Type typecheckdfs(Ast_Node* root){
         if(root->token_data->token == RNUM) {
             return TYPE_REAL;
         }
-        if(root->token_data->token == BOOLEAN) {
+        if(root->token_data->token == TRUE || root->token_data->token == FALSE) {
             return TYPE_BOOLEAN;
         }
         return TYPE_UNDEFINED;
