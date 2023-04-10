@@ -31,6 +31,7 @@ typedef struct STEntry{
     char variableName[21];
     enum Type type;
     bool isArray;
+    bool is_for_loop_variable;
     struct{
         bool lower;
         bool upper;
@@ -52,23 +53,23 @@ typedef struct STEntry{
     int offset;
 }STEntry;
 
-typedef struct paramListNode{
+typedef struct ParamListNode {
     STEntry* entry;
-    struct parameterListNode* next; 
-}paramListNode;
+    struct ParamListNode* next;
+}ParamListNode;
 
-typedef struct paramList{
+typedef struct ParamList{
     int size;
-    paramListNode* first;
-    paramListNode* last;
-}paramList;
+    ParamListNode* first;
+    ParamListNode* last;
+}ParamList;
 
 typedef struct FunctionSTEntry{
     char moduleName[21];
     int declaration_line_no;
     bool defined;
-    paramList* inputParamList;
-    paramList* outputParamList;
+    ParamList* inputParamList;
+    ParamList* outputParamList;
 }FunctionSTEntry;
 
 #endif

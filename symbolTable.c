@@ -44,6 +44,7 @@ STEntry* createSTEntry(STEntry* prevEntry) {
         newNode->declarationLineNumber = prevEntry->declarationLineNumber;
         newNode->width = prevEntry->width;
         newNode->offset = prevEntry->offset;
+        newNode->is_for_loop_variable = prevEntry->is_for_loop_variable;
     }
     return newNode;
 }
@@ -68,42 +69,152 @@ STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t){         //confirm inp
     return checkID(node,lexeme);
 }
 
+ParamList* initialize_parameter_list() {
+    ParamList* pl = (ParamList*)malloc(sizeof(ParamList));
+    pl->size = 0;
+    return pl;
+}
+
+void add_to_parameter_list(ParamList* pl, STEntry* st) {
+    ParamListNode* pln = (ParamListNode*)malloc(sizeof(ParamListNode));
+    pln->entry = st;
+    pln->next = NULL;
+    pl->size++;
+    if(pl->first == NULL) {
+        pl->first = pl->last = pln;
+    } else {
+        pl->last->next = pln;
+        pl->last = pln;
+    }
+}
+
+Type get_entry_type(enum Token tokenType) {
+    if(tokenType == NUM) {
+        return TYPE_INTEGER;
+    } else if(tokenType == RNUM) {
+        return REAL;
+    } else if(tokenType == BOOLEAN) {
+        return BOOLEAN;
+    } else {
+        return TYPE_UNDEFINED;
+    }
+}
+
+int get_entry_width(Type type) {
+    if(type == TYPE_INTEGER) {
+        return 2;
+    } else if(type == TYPE_REAL) {
+        return 4;
+    } else if(type == TYPE_BOOLEAN) {
+        return 8;
+    }
+    return 0;
+}
+
+void populate_temporary_function_entry(Ast_Node* temp) {
+    /***
+     * Populate the global variable tempEntry with required <dataType> information, 
+     * to be entered into symbol table later.
+    */
+    assert(temp->type == 10 || temp->type == 12); // <dataType> or <type>
+    tempEntry->is_for_loop_variable = false;
+    if(temp->child_2 == NULL) {
+        enum Token tokenType = temp->child_1->token_data->token;
+        if(tokenType == NUM) {
+            tempEntry->type = TYPE_INTEGER;
+        } else if(tokenType == RNUM) {
+            tempEntry->type = REAL;
+        } else if(tokenType == BOOLEAN) {
+            tempEntry->type = BOOLEAN;
+        } else {
+            assert(false); // this should never happen.
+        }
+        tempEntry->isArray = false;
+    } else {
+        enum Token tokenType = temp->child_2->token_data->token;
+        if(tokenType == NUM) {
+            tempEntry->type = TYPE_INTEGER;
+        } else if(tokenType == RNUM) {
+            tempEntry->type = REAL;
+        } else if(tokenType == BOOLEAN) {
+            tempEntry->type = BOOLEAN;
+        } else {
+            assert(false); // this should never happen.
+        }
+        tempEntry->isArray = true;
+        temp = temp->child_1;
+        // Lower range
+        int temp_sign = 1;
+        if(temp->child_1->child_1->token_data->token == MINUS) {
+            temp_sign = -1;
+        }
+        if(temp->child_1->child_2->token_data->token == NUM) {
+            tempEntry->isDynamic.lower = false;
+            tempEntry->range.lower.value = temp->child_1->child_2->token_data->value.num * temp_sign;
+        } else {
+            tempEntry->isDynamic.lower = true;
+            strcpy(tempEntry->range.lower.lexeme, temp->child_1->child_2->token_data->lexeme);
+            tempEntry->range.lower_sign = temp_sign;
+        }
+        // Upper range
+        temp_sign = 1;
+        if(temp->child_2->child_1->token_data->token == MINUS) {
+            temp_sign = -1;
+        }
+        if(temp->child_2->child_2->token_data->token == NUM) {
+            tempEntry->isDynamic.upper = false;
+            tempEntry->range.upper.value = temp->child_2->child_2->token_data->value.num * temp_sign;
+        } else {
+            tempEntry->isDynamic.upper = true;
+            strcpy(tempEntry->range.upper.lexeme, temp->child_2->child_2->token_data->lexeme);
+            tempEntry->range.upper_sign = temp_sign;
+        }
+    }
+    if(tempEntry->type == TYPE_INTEGER) {
+        tempEntry->width = 2;
+    } else if(tempEntry->type == TYPE_REAL) {
+        tempEntry->width = 4;
+    } else if(tempEntry->type == TYPE_BOOLEAN) {
+        tempEntry->width = 8;
+    }
+    if(tempEntry->isArray == true) {
+        if(tempEntry->isDynamic.lower == false && tempEntry->isDynamic.upper == false) {
+            tempEntry->width *= (tempEntry->range.upper.value - tempEntry->range.lower.value + 1);
+            tempEntry->width++; // Because apparently, array name also takes 1 byte.
+        } else {
+            tempEntry->width = 0; // NEED TO CLARIFY THIS. DYNAMIC ARRAY!!!!! WIDTH, OFFSET HOW???
+        }
+    }
+}
+
 void throw_function_already_exists_error(char module_name[], int line_no) {
     printf("function %s already exists, declared at line %d!\n", module_name, line_no);
 }
 
-void throw_already_exists_error(Token_Info* token) {
-    printf("symbol table error at line %d\n", token->lineNumber);
+void throw_already_exists_error(char module_name[], int line_no) {
+    printf("Error - Line %d: identifier %s already exists\n", module_name, line_no);
 }
 
-void generateST(STTreeNode* currSTNode, Ast_Node* root, Ast_Node* prev) {
-    if(root->type == 49) {
-        // WHILE statement.
-        int start_line_no = root->token_data->lineNumber;
-        int end_line_no = root->child_4->token_data->lineNumber;
-        STTreeNode* childSTNode = createSTTreeNode();
-        addSTChild(currSTNode, childSTNode);
-        (childSTNode->lineNumber).begin = start_line_no;
-        (childSTNode->lineNumber).end = end_line_no;
-        strcpy(childSTNode->moduleName, currSTNode->moduleName);
-        childSTNode->offset = curOffset;
-        generateST(childSTNode, root->child_3, root);
-        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
-        return;
-    }
-    if(root->type == 46) {
-        // Conditional statement (SWITCH)
-        int start_line_no = root->child_1->token_data->lineNumber;
-        int end_line_no = root->child_5->token_data->lineNumber;
-        STTreeNode* childSTNode = createSTTreeNode();
-        addSTChild(currSTNode, childSTNode);
-        (childSTNode->lineNumber).begin = start_line_no;
-        (childSTNode->lineNumber).end = end_line_no;
-        strcpy(childSTNode->moduleName, currSTNode->moduleName);
-        childSTNode->offset = curOffset;
-        generateST(childSTNode, root->child_3, root);
-        generateST(childSTNode, root->child_4, root);
-        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+void throw_function_not_declared_error(char module_name[], int line_no) {
+    printf("Function %s is being defined at line %d, but it has not been declared!", module_name, line_no);
+}
+
+void generateST(STTreeNode* currSTNode, Ast_Node* root) {
+
+    root->symbol_table = currSTNode;
+
+    if(root->type == 3) {
+        // module declaration
+        FunctionSTEntry* func = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+        strcpy(func->moduleName, root->child_1->token_data->lexeme);
+        func->defined = false;
+        func->declaration_line_no = root->token_data->lineNumber;
+        if(checkFunctionID(func->moduleName) != NULL) {
+            // ERROR!!!!! 
+            throw_function_already_exists_error(func->moduleName, func->declaration_line_no);
+        } else {
+            ht_store(functionST, func->moduleName, func);
+        }
         return;
     }
     if(root->type == 5) {
@@ -129,112 +240,89 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root, Ast_Node* prev) {
             ht_store(functionST, functionEntry->moduleName, functionEntry);
         }
         // 3. Call recursion downward.
-        generateST(childSTNode, root->child_1, root);
+        generateST(childSTNode, root->child_1);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
-        return;
-    }
-    if(root->type == 3) {
-        // module declaration
-        FunctionSTEntry* func = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
-        strcpy(func->moduleName, root->child_1->token_data->lexeme);
-        func->defined = false;
-        func->declaration_line_no = root->token_data->lineNumber;
-        if(checkFunctionID(func->moduleName) != NULL) {
-            // ERROR!!!!! 
-            throw_function_already_exists_error(func->moduleName, func->declaration_line_no);
-        } else {
-            ht_store(functionST, func->moduleName, func);
-        }
         return;
     }
     if(root->type == 6) {
         // module definition
 
-    }
-    if(root->type == 48) {
-        // FOR
-        
+        // 1. Check that the function has been declared.
+        FunctionSTEntry* func = checkFunctionID(root->child_1->token_data->lexeme);
+        if(func == NULL) {
+            throw_function_not_declared_error(root->child_1->token_data->lexeme, root->token_data->lineNumber);
+            return;
+        }
+        func->defined = true;
+
+        // 2. Create child symbol table
+        int start_line_no = root->token_data->lineNumber; // DEF
+        int end_line_no = root->child_4->child_3->token_data->lineNumber; // <moduleDef> ---> END
+        STTreeNode* childSTNode = createSTTreeNode();
+        addSTChild(currSTNode, childSTNode);
+        (childSTNode->lineNumber).begin = start_line_no;
+        (childSTNode->lineNumber).end = end_line_no;
+        strcpy(childSTNode->moduleName, root->child_1->token_data->lexeme);
+        childSTNode->offset = curOffset;
+
+        // 3. Populate input_plist and output_plist
+        func->inputParamList = initialize_parameter_list();
+        func->outputParamList = initialize_parameter_list();
+
+        Ast_Node* temp = root->child_2;
+        while(temp != NULL) {
+            populate_temporary_function_entry(temp->child_2);
+            STEntry* entry = createSTEntry(tempEntry);
+            strcpy(entry->variableName, temp->child_1->token_data->lexeme);
+            entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
+            entry->offset = curOffset;
+            curOffset += entry->width;
+            // Currently adding input/output lists in CHILD symbol table.
+            // Change if necessary !!!!!!
+            if(checkID(childSTNode, entry->variableName) != NULL) {
+                throw_already_exists_error(entry->variableName, entry->declarationLineNumber);
+            } else {
+                ht_store(childSTNode->hashTable, entry->variableName, entry);
+                add_to_parameter_list(func->inputParamList, entry);
+            }
+            temp = temp->syn_next;
+        }
+        temp = root->child_3->child_1;
+        while(temp != NULL) {
+            populate_temporary_function_entry(temp->child_2);
+            STEntry* entry = createSTEntry(tempEntry);
+            strcpy(entry->variableName, temp->child_1->token_data->lexeme);
+            entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
+            entry->offset = curOffset;
+            curOffset += entry->width;
+            // Currently adding input/output lists in CHILD symbol table.
+            // Change if necessary !!!!!!
+            if(checkID(childSTNode, entry->variableName) != NULL) {
+                throw_already_exists_error(entry->variableName, entry->declarationLineNumber);
+            } else {
+                ht_store(childSTNode->hashTable, entry->variableName, entry);
+                add_to_parameter_list(func->outputParamList, entry);
+            }
+            temp = temp->syn_next;
+        }
+        generateST(childSTNode, root->child_4);
+        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        return;
     }
     if(root->type == 45) {
-        Ast_Node* temp = root->child_1;
-        if(temp->child_2 == NULL) {
-            enum Token tokenType = temp->child_1->token_data->token;
-            if(tokenType == NUM) {
-                tempEntry->type = TYPE_INTEGER;
-            } else if(tokenType == RNUM) {
-                tempEntry->type = REAL;
-            } else if(tokenType == BOOLEAN) {
-                tempEntry->type = BOOLEAN;
-            } else {
-                assert(false); // this should never happen.
-            }
-            tempEntry->isArray = false;
-        } else {
-            enum Token tokenType = temp->child_2->token_data->token;
-            if(tokenType == NUM) {
-                tempEntry->type = TYPE_INTEGER;
-            } else if(tokenType == RNUM) {
-                tempEntry->type = REAL;
-            } else if(tokenType == BOOLEAN) {
-                tempEntry->type = BOOLEAN;
-            } else {
-                assert(false); // this should never happen.
-            }
-            tempEntry->isArray = true;
-            temp = temp->child_1;
-            // Lower range
-            int temp_sign = 1;
-            if(temp->child_1->child_1->token_data->token == MINUS) {
-                temp_sign = -1;
-            }
-            if(temp->child_1->child_2->token_data->token == NUM) {
-                tempEntry->isDynamic.lower = false;
-                tempEntry->range.lower.value = temp->child_1->child_2->token_data->value.num * temp_sign;
-            } else {
-                tempEntry->isDynamic.lower = true;
-                strcpy(tempEntry->range.lower.lexeme, temp->child_1->child_2->token_data->lexeme);
-                tempEntry->range.lower_sign = temp_sign;
-            }
-            // Upper range
-            temp_sign = 1;
-            if(temp->child_2->child_1->token_data->token == MINUS) {
-                temp_sign = -1;
-            }
-            if(temp->child_2->child_2->token_data->token == NUM) {
-                tempEntry->isDynamic.upper = false;
-                tempEntry->range.upper.value = temp->child_2->child_2->token_data->value.num * temp_sign;
-            } else {
-                tempEntry->isDynamic.upper = true;
-                strcpy(tempEntry->range.upper.lexeme, temp->child_2->child_2->token_data->lexeme);
-                tempEntry->range.upper_sign = temp_sign;
-            }
-        }
-        temp = root->child_2;
+        // Declare statement.
+        populate_temporary_function_entry(root->child_1);
+        Ast_Node* temp = root->child_2;
         assert(temp != NULL); // i.e., idList is not empty.
         while(temp != NULL) {
             STEntry* newEntry = createSTEntry(tempEntry);
             strcpy(newEntry->variableName, temp->child_1->token_data->lexeme);
-            newEntry->declarationLineNumber = temp->child_1->token_data->lineNumber;
-            if(newEntry->type == TYPE_INTEGER) {
-                newEntry->width = 2;
-            } else if(newEntry->type == TYPE_REAL) {
-                newEntry->width = 4;
-            } else if(newEntry->type == TYPE_BOOLEAN) {
-                newEntry->width = 8;
-            }
-            if(newEntry->isArray == true) {
-                if(newEntry->isDynamic.lower == false && newEntry->isDynamic.upper == false) {
-                    newEntry->width *= (newEntry->range.upper.value - newEntry->range.lower.value + 1);
-                    newEntry->width++; // Because apparently, array name also takes 1 byte.
-                } else {
-                    newEntry->width = 0; // NEED TO CLARIFY THIS. DYNAMIC ARRAY!!!!! WIDTH, OFFSET HOW???
-                }
-            } 
+            newEntry->declarationLineNumber = temp->child_1->token_data->lineNumber; 
             newEntry->offset = curOffset;
             curOffset += newEntry->width;
             if(checkID(currSTNode, temp->child_1->token_data->lexeme) != NULL) {
                 // ERROR!!!!! 
-                throw_already_exists_error(temp->child_1->token_data);
+                throw_already_exists_error(newEntry->variableName, temp->child_1->token_data->lineNumber);
             } else {
                 ht_store(currSTNode->hashTable, newEntry->variableName, newEntry);
             }
@@ -242,6 +330,78 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root, Ast_Node* prev) {
         }
         return;
     }
+    if(root->type == 46) {
+        // Conditional statement (SWITCH)
+        int start_line_no = root->child_1->token_data->lineNumber;
+        int end_line_no = root->child_5->token_data->lineNumber;
+        STTreeNode* childSTNode = createSTTreeNode();
+        addSTChild(currSTNode, childSTNode);
+        (childSTNode->lineNumber).begin = start_line_no;
+        (childSTNode->lineNumber).end = end_line_no;
+        strcpy(childSTNode->moduleName, currSTNode->moduleName);
+        childSTNode->offset = curOffset;
+        generateST(childSTNode, root->child_3);
+        generateST(childSTNode, root->child_4);
+        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        return;
+    }
+    if(root->type == 48) {
+        // FOR
+
+        // 1. Create new symbol table
+        int start_line_no = root->token_data->lineNumber; // FOR
+        int end_line_no = root->child_5->token_data->lineNumber; // END
+        STTreeNode* childSTNode = createSTTreeNode();
+        addSTChild(currSTNode, childSTNode);
+        (childSTNode->lineNumber).begin = start_line_no;
+        (childSTNode->lineNumber).end = end_line_no;
+        strcpy(childSTNode->moduleName, currSTNode->moduleName);
+        childSTNode->offset = curOffset;
+
+        // 2. Add entry of ID in child table
+        STEntry* id_entry = createSTEntry(tempEntry);
+        id_entry->declarationLineNumber = start_line_no;
+        strcpy(id_entry->variableName, root->child_1->token_data->lexeme);
+        id_entry->is_for_loop_variable = true;
+        id_entry->type = TYPE_INTEGER;
+        id_entry->isArray = false;
+        id_entry->width = 2;
+        id_entry->offset = curOffset;
+        curOffset += 2;
+        ht_store(childSTNode->hashTable, id_entry->variableName, id_entry);
+
+        // 3. Call with child symbol table inside for loop
+        generateST(currSTNode, root->child_2); /*
+        1. Doing this for type checking etc later, as symbol table needs to be populated
+        2. What happens in case we have FOR X IN RANGE [X...3], i.e. range has same identifier declared previously?
+        Current ans. It would not give error, the X in range would be taken from outer scope. 
+        */
+        generateST(childSTNode, root->child_4);
+        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        return;
+    }
+    if(root->type == 49) {
+        // WHILE statement.
+        int start_line_no = root->token_data->lineNumber;
+        int end_line_no = root->child_4->token_data->lineNumber;
+        STTreeNode* childSTNode = createSTTreeNode();
+        addSTChild(currSTNode, childSTNode);
+        (childSTNode->lineNumber).begin = start_line_no;
+        (childSTNode->lineNumber).end = end_line_no;
+        strcpy(childSTNode->moduleName, currSTNode->moduleName);
+        childSTNode->offset = curOffset;
+        generateST(currSTNode, root->child_1); // Just done so that ast_node->symbol_table elements are populated (for easy type checking later)
+        generateST(childSTNode, root->child_3);
+        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        return;
+    }
+    
+    if(root->child_1 != NULL) generateST(currSTNode, root->child_1);
+    if(root->child_2 != NULL) generateST(currSTNode, root->child_2);
+    if(root->child_3 != NULL) generateST(currSTNode, root->child_3);
+    if(root->child_4 != NULL) generateST(currSTNode, root->child_4);
+    if(root->child_5 != NULL) generateST(currSTNode, root->child_5);
+    if(root->syn_next != NULL) generateST(currSTNode, root->syn_next);
 }
 
 STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input parameter; INCOMPLETE
@@ -252,6 +412,9 @@ STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input param
     strcpy(STRoot->moduleName,"ROOT");
     functionST = init_ht();
 
+    generateST(STRoot, ASTRoot);
+
+    return STRoot;
 }
 
 void printSymbolTable(){            ////INCOMPLETE

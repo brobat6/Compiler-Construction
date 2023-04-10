@@ -938,6 +938,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     case 138:
     // 138. <iterativeStmt> -> FOR BO ID IN <range_for_loop> BC START <statements> END
         root->type = 48;
+        root->token_data = createHeapTokenInfo(curr->firstchild->token);
         temp = curr->firstchild->next->next; 
         root->child_1 = generateAST(temp, NULL); // ID
         temp = temp->next->next;
