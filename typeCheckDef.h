@@ -1,4 +1,4 @@
-#include "ast.h"
+#include "symbolTable.h"
 
 #ifndef _TCDEF_H
 #define _TCDEF_H
