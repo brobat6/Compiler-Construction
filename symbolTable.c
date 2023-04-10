@@ -417,8 +417,53 @@ STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input param
     return STRoot;
 }
 
-void printSymbolTable(){            ////INCOMPLETE
-    STTreeNode* temp=globalSTRoot;
-    
+void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
+    ht_itr it = ht_iterator(root->hashTable);
+    while(ht_next_entry(&it)) {
+        STEntry* data = it.data;
+        fprintf(fp, "%s\t%s\t[%d-%d]\t", data->variableName, root->moduleName, data->declarationLineNumber, root->lineNumber.end);
+        char data_type[20];
+        if(data->type == TYPE_INTEGER) strcpy(data_type, "integer");
+        else if(data->type == TYPE_REAL) strcpy(data_type, "real");
+        else if(data_type == TYPE_BOOLEAN) strcpy(data_type, "boolean");
+        else strcpy(data_type, "error_type");
+        char is_array[10]; 
+        if(data->isArray) strcpy(is_array, "yes");
+        else strcpy(is_array, "no");
+        char array_type[10];
+        if(data->isArray) {
+            if(data->isDynamic.lower || data->isDynamic.upper) strcpy(array_type, "dynamic");
+            else strcpy(array_type, "static");
+        } else {
+            strcpy(array_type, "**");
+        }
+        fprintf(fp, "%s\t%s\t%s\t", data_type, is_array, array_type);
+        // Array Range
+        if(data->isArray) {
+            if(data->isDynamic.lower) {
+                fprintf(fp, "[%s-", data->range.lower.lexeme);
+            } else {
+                fprintf(fp, "[%d-", data->range.lower.value);
+            }
+            if(data->isDynamic.upper) {
+                fprintf(fp, "%s]\t", data->range.lower.lexeme);
+            } else {
+                fprintf(fp, "%d]\t", data->range.lower.value);
+            }
+        } else {
+            fprintf(fp, "**\t");
+        }
+        fprintf("%d\t%d\t%d\n", data->width, data->offset, root->nestingLevel);
+    }
+    STTreeNode* temp = root->leftMostChild;
+    while(temp != NULL) {
+        recursive_print_symbol_table(temp, fp);
+    }
+}
+
+void print_symbol_table(STTreeNode* root, FILE* fp) {
+    fprintf(fp, "variable name\tscope(module name)\tscope(line numbers)\ttype of element\t");
+    fprintf(fp, "is_array\tstatic/dynamic array\trange\twidth\toffset\tnesting level\n");
+    recursive_print_symbol_table(root, fp);
 }
 
