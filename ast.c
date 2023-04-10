@@ -53,6 +53,7 @@ const char* const ast_node_id[] = {
     "WHILE", // 49
     "range_for_loop", // 50
     "index_for_loop", // 51
+    "default" // 52
 };
 
 Token_Info* createHeapTokenInfo(Token_Info old_token) {
@@ -881,31 +882,33 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         temp = temp->next->next;
         root->child_2 = generateAST(temp, NULL); // START
         temp = temp->next;
-        root->child_3 = generateAST(temp, NULL); // caseStmts
+        root->child_3 = generateAST(temp, root->child_1); // caseStmts
         temp = temp->next;
-        root->child_4 = generateAST(temp, NULL); // default
+        root->child_4 = generateAST(temp, root->child_1); // default
         temp = temp->next;
         root->child_5 = generateAST(temp, NULL); // END
         break;
     case 130:
     // 130. <caseStmts> -> CASE <value> COLON <statements> BREAK SEMICOL <N9>
         root->type = 47;
+        root->inh_1 = prev;
         temp = curr->firstchild->next; 
         root->child_1 = generateAST(temp, NULL); // value
         temp = temp->next->next;
         root->child_2 = generateAST(temp, NULL); // statements
         temp = temp->next->next->next;
-        root->child_3 = generateAST(temp, NULL); // N9
+        root->child_3 = generateAST(temp, prev); // N9
         break;
     case 131:
     // 131. <N9> -> CASE <value> COLON <statements> BREAK SEMICOL <N9>
         root->type = 47;
+        root->inh_1 = prev;
         temp = curr->firstchild->next; 
         root->child_1 = generateAST(temp, NULL); // value
         temp = temp->next->next;
         root->child_2 = generateAST(temp, NULL); // statements
         temp = temp->next->next->next;
-        root->child_3 = generateAST(temp, NULL); // N9
+        root->child_3 = generateAST(temp, prev); // N9
         break;
     case 132:
     // 132. <N9> -> @
@@ -928,8 +931,10 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         break;
     case 136:
     // 136. <default> -> DEFAULT COLON <statements> BREAK SEMICOL
-        free(root);
-        root = generateAST(curr->firstchild->next->next, NULL);
+        root->type = 52;
+        root->inh_1 = prev;
+        root->token_data = createHeapTokenInfo(curr->firstchild->token);
+        root->child_1 = generateAST(curr->firstchild->next->next, NULL);
         break;
     case 137:
     // 137. <default> -> @
