@@ -72,6 +72,8 @@ STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t){         //confirm inp
 ParamList* initialize_parameter_list() {
     ParamList* pl = (ParamList*)malloc(sizeof(ParamList));
     pl->size = 0;
+    pl->first = NULL;
+    pl->last = NULL;
     return pl;
 }
 
@@ -81,8 +83,10 @@ void add_to_parameter_list(ParamList* pl, STEntry* st) {
     pln->next = NULL;
     pl->size++;
     if(pl->first == NULL) {
-        pl->first = pl->last = pln;
+        pl->first = pln;
+        pl->last = pln;
     } else {
+        assert(pl->last != NULL);
         pl->last->next = pln;
         pl->last = pln;
     }
@@ -199,6 +203,9 @@ void throw_function_redefinition_error(char module_name[], int line_no) {
 }
 
 void generateST(STTreeNode* currSTNode, Ast_Node* root) {
+
+    assert(root != NULL);
+    assert(currSTNode != NULL);
 
     root->symbol_table = currSTNode;
 

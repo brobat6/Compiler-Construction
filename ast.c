@@ -80,7 +80,7 @@ Ast_Node* createASTNode() {
 
 void printASTNode(Ast_Node* root) {
     if(root == NULL) {
-        fprintf(stdout, "NULL");
+        fprintf(stdout, "NULL\n");
     } else {
         fprintf(stdout, "%d %s\n", root->type, ast_node_id[root->type]);
     }
