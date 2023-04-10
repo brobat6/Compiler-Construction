@@ -41,7 +41,7 @@ start
 	while(k AND x<=m[11] OR false)
 	start
 		declare p, u:integer;
-		declare bool1: beeolean;
+		declare bool1: boolean;
 		declare b: array[2..20] of integer;
 		declare b5, b6: array[35..50] of real;
 		b:= m;
@@ -49,7 +49,7 @@ start
 		b[2]:= u+m[25];			   **ERROR: element of array m is out of bound** 
 		p:= b[18]*18.56E+2;		   **ERROR: type mismatch **
 		declare v3:integer;
-		[v1, u, b7, n]:=use module function1 with parameters b4, v2, p, v3, u;	**ERROR: input parameter type mismatch **			
+		[v1, u, b7, n]:=use module function1 with parameters b4, v2, p, v3, u;	**ERROR: input parameter type mismatch, UPD: the type mismatch for output parameter v3 and for input parameter b7 **			
 	end					   **ERROR: none of the conditional variables k, x, and m is assigned any value in scope 41-52**
         n:= a - p*b;				   **ERROR: types of p and b are different**
 	b:= b+3;

@@ -21,7 +21,7 @@ start
 		declare r: boolean;		
 		get_value(b);
 		q:= 18;
-		r:= b+q*a+x < 100 AND w OR m;   	**not an error as r, w, m, a and x are found in the static parent scope**   
+		r:= b+q*a+x < 100 AND w OR m;   	**not an error as r, w, m, a and x are found in the static parent scope, UPD: w, m and x are found in the static parent and r and a are local **   
 		print(a);
 		declare q,r: real;			** ERROR: variables q and r are re-declared**
 		print(r);
@@ -48,7 +48,7 @@ start
 	declare abc_1, pqr_2: integer;
 	pqr_2:= abc_1 + 6;
 	declare abc_1: real;					**ERROR: variable abc_1 is re-declared**
-	res_2_a:= -(a*b-c/pqr_2);				**ERROR: Type mismatch error**
+	res_2_a:= -(a*b-c/pqr_2);				**ERROR: Type mismatch error, UPD: type mismatch error.**
 	declare s: integer;					**Not an error as a local variable can shadow the input parameter**
 	declare q4, q5: real;
 	res_2__b:= (res_2_b + p)*12+22.34E-2*q5;		**ERROR variable p is not declared**
@@ -69,7 +69,7 @@ start
  				   s:= w1 + 54.24e-2+ q4;
 				   abc_1:=  w2 + a*pqr_2 - c*abc_1;
 				   break;	
-			case false: w1:= w1+59;  	       **w1 uses static parent definition 
+			case false: w1:= w1+59;  	       **w1 uses static parent definition** 
 				    s:= s*k;                   **ERROR: variable k is not declared, declaration of k in case true does not apply here**
 				    break;	
 		end
@@ -78,8 +78,8 @@ start
 		m:= abc_1<=pqr_2 OR res_1;
 		w1:= w2*a-s*k*c-pqr_2;                  	**ERROR: variable k is not declared**
 	end
-	m:= m OR (a <= b) AND (res_2 >= 30.65);
-	res_1:= (true AND c==b)OR(b>p AND (a<=d));		**ERROR: variable d is not declared**
+	m:= m OR (a <= b) AND (res_2 >= 30.65);			**UPD: undeclared variable res_2**
+	res_1:= (true AND c==b)OR(b>p AND (a<=d));		**ERROR: variable d and p is not declared**
 	declare new: integer;					**ERROR: variable new is re-declared**
 	new:= a<b;
 	print(res_1);
@@ -92,7 +92,7 @@ start
 	get_value(v_1_2_43);					**ERROR: variable v_1_2_43 is not declared**		
 	declare result_, v7, v9:integer;
 	declare u1:boolean;
-	[u1, result_, k]:=use module compute with parameters v_1_2_3, v7, v9;	**ERROR: variable k is not declared**
+	[u1, result_, k]:=use module compute with parameters v_1_2_3, v7, v9;	**ERROR: variable k is not declared, UPD: number of input parameters mismatch**
 	print(result_);
 	declare u1: real;					**ERROR: variable u1 is re-declared**
 end
