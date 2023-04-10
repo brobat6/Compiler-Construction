@@ -57,33 +57,21 @@ FunctionSTEntry* checkFunctionID(char lexeme[]) {
     return ht_fetch(functionST, lexeme);
 }
 
-// STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t) {
-//     /**
-//      * Successively goes in outward scopes until it finds a scope which has 
-//      * token t declared BEFORE the line number of t. It does NOT return any
-//      * node which is declared AFTER t. If there is no valid node, it returns
-//      * NULL.
-//     */
-
-//     if(node == NULL) return NULL;
-    
-//    if(checkID(node, t->lexeme) == NULL || checkID(node, t->lexeme)->declarationLineNumber > )
-
-//     if(node->parent != NULL) {
-
-//     }
-// }
-
-STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t){         //confirm input parameter
-    char lexeme[21];
-    strcpy(lexeme,t->lexeme);
-    if(checkID(node,lexeme)==NULL&&node->parent!=NULL){
-        return recursiveCheckID(node->parent,t);
+STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t) {
+    /**
+     * Successively goes in outward scopes until it finds a scope which has 
+     * token t declared BEFORE the line number of t. It does NOT return any
+     * node which is declared AFTER t. If there is no valid node, it returns
+     * NULL.
+     * Assumption : declaration of t and call of t are never in the same line 
+     * (solving for this case requires a lot of effort).
+    */
+    if(node == NULL) return NULL;
+    STEntry* check = checkID(node, t->lexeme);
+    if(check == NULL || check->declarationLineNumber > t->lineNumber) {
+        return recursiveCheckID(node->parent, t);
     }
-    else if(checkID(node,lexeme)!=NULL&&checkID(node,lexeme)->declarationLineNumber>t->lineNumber){
-        return recursiveCheckID(node->parent,t);
-    }
-    return checkID(node,lexeme);
+    return check;
 }
 
 ParamList* initialize_parameter_list() {
