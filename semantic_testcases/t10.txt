@@ -52,17 +52,17 @@ start
 			 B[12]:= k*20; 	                  	
 			 break;
 		case 20: A:= 12.90 + p;       		**ERROR: Case value is incorrect as condiiton variable type is boolean**
-			 get_value(Q);
+			 get_value(Q);			**Variable Q is not declared**
 			 for(m in 10..15)
 			 start
 				n:= n+m;
 			 end
-			 E[7]:= k+12 - Q*10;       
+			 E[7]:= k+12 - Q*10;       **Variable E is not declared**
 			 break;
 		case true: m:=m-n;
 			 print(m);			
 			 break;
-		default: E[9]:= B[15]+Q;	      **ERROR: presence of default statement is incorrect as condiiton variable type is boolean** 
+		default: E[9]:= B[15]+Q;	      **ERROR: presence of default statement is incorrect as condiiton variable type is boolean, UPD: Variable E is not declared** 
 			 break;			 	
 	end
 	

@@ -18,7 +18,7 @@ start
 	start
 		declare p, u:integer;
 		declare b: array[2..20] of integer;
-		b:= m;
+		b:= m;						**UPD: Type mismatch error as the arrays b and m are not structurally equivalent **
 		b[2]:= u+m[25];			   **ERROR: element of array m is out of bound** 
 		p:= b[18]*18.56E+2;		   **ERROR: type mismatch **
 	end					   **ERROR: none of the conditional variables k, x and m is assigned any value in scope of while at lines 17-24**
@@ -63,7 +63,7 @@ start
 				 get_value(Q);		      **ERROR: Q not declared**
 				 A[7]:= k+12 - D[12]*10+u;    **ERROR: Type mismatch error**    
 				 break;
-			default: E[9]:= B[15]+Q;	      **not an error**	       
+			default: E[9]:= B[15]+Q;	      **not an error, UPD: Variable E is not declared**	       
 				 break;			 	
 		end
 		x:=x + u*v- u<=v;                             **ERROR: Type mismatch error**
