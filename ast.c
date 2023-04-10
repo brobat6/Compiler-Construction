@@ -76,6 +76,7 @@ Ast_Node* createASTNode() {
     root->child_3 = NULL;
     root->child_4 = NULL;
     root->child_5 = NULL;
+    root->datatype = TYPE_UNDEFINED;
 }
 
 void printASTNode(Ast_Node* root) {

@@ -15,6 +15,7 @@ struct AST_NODE {
     Ast_Node* child_4;
     Ast_Node* child_5; // Parameters of the node. Consider renaming them to something better, or adding more parameters to help with readability.
     STTreeNode* symbol_table; // Pointer to the symbol table in the scope associated with this Ast_Node.
+    Type datatype;
 };
 
 extern const char* const ast_node_id[];
