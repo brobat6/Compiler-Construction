@@ -9,9 +9,9 @@ Ast_Node* createASTNode();
 
 void printASTNode(Ast_Node* root, FILE* f);
 
-void printASTNodeSTDOUT(Ast_Node* root, Ast_Node* prev);
+void printASTNodeSTDOUT(Ast_Node* root, Ast_Node* prev, FILE* fp);
 
-void traverseAST(Ast_Node* root, Ast_Node* prev);
+void traverseAST(Ast_Node* root, Ast_Node* prev, FILE* fp);
 
 Ast_Node* generateAST(treeNode* curr, Ast_Node* prev);
 

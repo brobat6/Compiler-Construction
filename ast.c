@@ -85,40 +85,40 @@ void printASTNode(Ast_Node* root, FILE* f) {
     }
 }
 
-void printASTNodeSTDOUT(Ast_Node* root, Ast_Node* prev) {
+void printASTNodeSTDOUT(Ast_Node* root, Ast_Node* prev, FILE* fp) {
     if(root == NULL) {
-        printf("NULL ");
+        fprintf(fp, "NULL ");
     } else {
-        printf("%d %s ; ", root->type, ast_node_id[root->type]);
+        fprintf(fp, "%d %s ; ", root->type, ast_node_id[root->type]);
     }
     
-    printf("Parent: ");
+    fprintf(fp, "Parent: ");
     if(prev == NULL) {
-        printf("NULL\n");
+        fprintf(fp, "NULL\n");
     } else {
-        printf("%d %s\n", prev->type, ast_node_id[prev->type]);
+        fprintf(fp, "%d %s\n", prev->type, ast_node_id[prev->type]);
     }
 }
 
-void traverseAST(Ast_Node* root, Ast_Node* prev) {
-    printASTNodeSTDOUT(root, prev);
+void traverseAST(Ast_Node* root, Ast_Node* prev, FILE* fp) {
+    printASTNodeSTDOUT(root, prev, fp);
     if(root->child_1 != NULL) {
-        traverseAST(root->child_1, root);
+        traverseAST(root->child_1, root, fp);
     }
     if(root->child_2 != NULL) {
-        traverseAST(root->child_2, root);
+        traverseAST(root->child_2, root, fp);
     }
     if(root->child_3 != NULL) {
-        traverseAST(root->child_3, root);
+        traverseAST(root->child_3, root, fp);
     }
     if(root->child_4 != NULL) {
-        traverseAST(root->child_4, root);
+        traverseAST(root->child_4, root, fp);
     }
     if(root->child_5 != NULL) {
-        traverseAST(root->child_5, root);
+        traverseAST(root->child_5, root, fp);
     }
     if(root->syn_next != NULL) {
-        traverseAST(root->syn_next, root);
+        traverseAST(root->syn_next, root, fp);
     }
 }
 
