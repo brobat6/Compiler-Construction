@@ -63,9 +63,21 @@ int main(int argc, char *argv[]) {
             start_lexer(fp, atoi(argv[3]),true);
             treeNode* parseTreeRoot = parseInputSourceCode(lookup_table, fp, true);
             printParseTree(parseTreeRoot,argv[2]);
+
+            // AST
             Ast_Node* ast_root = generateAST(parseTreeRoot->firstchild, NULL);
-            traverseAST(ast_root, NULL);
-            typecheckdfs(ast_root);
+            FILE *f_ast = fopen("ast.out", "w");
+            traverseAST(ast_root, NULL, f_ast);
+            fclose(f_ast);
+
+            // Symbol Table
+            STTreeNode* symbol_table_root = generateSymbolTable(ast_root);
+            FILE* f_st = fopen("st.out", "w");
+            print_symbol_table(symbol_table_root, f_st);
+            fclose(f_st);
+
+            // Type checking
+            // typecheckdfs(ast_root);
         }
         else if(choice==4)
         {

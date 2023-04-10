@@ -123,11 +123,11 @@ void populate_temporary_function_entry(Ast_Node* temp) {
         if(tokenType == NUM) {
             tempEntry->type = TYPE_INTEGER;
         } else if(tokenType == RNUM) {
-            tempEntry->type = REAL;
+            tempEntry->type = TYPE_REAL;
         } else if(tokenType == BOOLEAN) {
-            tempEntry->type = BOOLEAN;
+            tempEntry->type = TYPE_BOOLEAN;
         } else {
-            assert(false); // this should never happen.
+            tempEntry->type = TYPE_UNDEFINED; // this should never happen.
         }
         tempEntry->isArray = false;
     } else {
@@ -135,11 +135,11 @@ void populate_temporary_function_entry(Ast_Node* temp) {
         if(tokenType == NUM) {
             tempEntry->type = TYPE_INTEGER;
         } else if(tokenType == RNUM) {
-            tempEntry->type = REAL;
+            tempEntry->type = TYPE_REAL;
         } else if(tokenType == BOOLEAN) {
-            tempEntry->type = BOOLEAN;
+            tempEntry->type = TYPE_BOOLEAN;
         } else {
-            assert(false); // this should never happen.
+            tempEntry->type = TYPE_UNDEFINED; // this should never happen.
         }
         tempEntry->isArray = true;
         temp = temp->child_1;
@@ -192,7 +192,7 @@ void throw_function_already_exists_error(char module_name[], int line_no) {
 }
 
 void throw_already_exists_error(char module_name[], int line_no) {
-    printf("Error - Line %d: identifier %s already exists\n", module_name, line_no);
+    printf("Error - Line %d: identifier %s already exists\n", line_no, module_name);
 }
 
 void throw_function_not_declared_error(char module_name[], int line_no) {
@@ -425,7 +425,7 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
         char data_type[20];
         if(data->type == TYPE_INTEGER) strcpy(data_type, "integer");
         else if(data->type == TYPE_REAL) strcpy(data_type, "real");
-        else if(data_type == TYPE_BOOLEAN) strcpy(data_type, "boolean");
+        else if(data->type == TYPE_BOOLEAN) strcpy(data_type, "boolean");
         else strcpy(data_type, "error_type");
         char is_array[10]; 
         if(data->isArray) strcpy(is_array, "yes");
@@ -453,11 +453,12 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
         } else {
             fprintf(fp, "**\t");
         }
-        fprintf("%d\t%d\t%d\n", data->width, data->offset, root->nestingLevel);
+        fprintf(fp, "%d\t%d\t%d\n", data->width, data->offset, root->nestingLevel);
     }
     STTreeNode* temp = root->leftMostChild;
     while(temp != NULL) {
         recursive_print_symbol_table(temp, fp);
+        temp = temp->sibling;
     }
 }
 
