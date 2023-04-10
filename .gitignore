@@ -1,3 +1,4 @@
 *.out
 stage1exe
 .vscode
+*.exe

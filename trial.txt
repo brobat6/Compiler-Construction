@@ -1,7 +1,4 @@
 <<<driver program>>>
 start
-	declare a,b,c : integer;
-    a := 3 + (4 < (6 >= 7));
-    b := 4;
-    c := a + b;
+	
 end

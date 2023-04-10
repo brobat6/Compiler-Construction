@@ -39,6 +39,17 @@ Type checkType(Operator op, Type t1, Type t2){
     else return TYPE_ERROR;
 }
 
+int boundCheck(Token_Info* tk_data, STEntry* st_entry, int index){
+    int lower_bound=st_entry->range.lower.value;
+    int upper_bound=st_entry->range.upper.value;
+
+    if(index>=lower_bound && index<=upper_bound) return 1;
+    else{
+        printf("Line %d: Array %s out of bounds.\n", tk_data->lineNumber, tk_data->lexeme);
+        return 0;
+    }   
+}
+
 Operator token_to_op(Token t){
     if(t==PLUS || t==MINUS ||t==MUL ||t==DIV) return OP_ARITH;
     if(t==LT || t==LE || t==GT || t==GE || t==EQ || t==NE) return OP_REL;
@@ -92,7 +103,6 @@ Type typecheckdfs(Ast_Node* root){
         Type right_expr=typecheckdfs(root->child_2);
         Operator op=token_to_op(root->child_1->token_data->token);
 
-        //token to op
         return checkType(op, left_expr, right_expr);
     }
 
@@ -100,23 +110,41 @@ Type typecheckdfs(Ast_Node* root){
         if(root->child_2==NULL){
             return typecheckdfs(root->child_1);
         } else{
-            // Type checking will happen at <N11>. 
             return typecheckdfs(root->child_2);
         }
     }
 
     else if(root->type == 31) {
-        // <N11>, type checking.
         Type left_expr = typecheckdfs(root->inh_1);
         Type right_expr = typecheckdfs(root->child_1);
-        
-        return checkType(OP_ARR, left_expr, right_expr);
+        STEntry* st_entry=recursiveCheckID(root->symbol_table, root->inh_1->token_data);
+        if(!st_entry->isArray || (left_expr!=TYPE_INTEGER || left_expr!=TYPE_REAL)) return TYPE_ERROR;
+        else{
+            if(!st_entry->isDynamic.lower && !st_entry->isDynamic.upper){
+                int temp;
+                
+                if(root->child_1->type==42 && root->child_1->child_1->token_data->token==NUM){
+                    temp = root->child_1->child_1->token_data->value.num;
+                    temp*=-1;
+                } else if(root->child_1->type==41 && root->child_1->child_1->token_data->token==NUM){
+                    temp = root->child_1->child_1->token_data->value.num;
+                }
+
+                
+                if(boundCheck(root->inh_1->token_data, st_entry, temp)) return left_expr;
+                else return TYPE_ERROR;
+            }
+        }
     }
 
     else if(root->type==0){
         if(root->token_data->token == ID) {
             // Do this later with symbol table information.
-            return TYPE_INTEGER;
+            // return TYPE_INTEGER;
+
+            STEntry* st_entry=recursiveCheckID(root->symbol_table, root->token_data);
+            if(st_entry==NULL) return TYPE_ERROR;
+            return st_entry->type;
         }
         if(root->token_data->token == NUM) {
             return TYPE_INTEGER;
