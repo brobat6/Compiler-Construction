@@ -78,11 +78,11 @@ Ast_Node* createASTNode() {
     root->child_5 = NULL;
 }
 
-void printASTNode(Ast_Node* root, FILE* f) {
+void printASTNode(Ast_Node* root) {
     if(root == NULL) {
-        fprintf(f, "NULL");
+        fprintf(stdout, "NULL");
     } else {
-        fprintf(f, "%d %s\n", root->type, ast_node_id[root->type]);
+        fprintf(stdout, "%d %s\n", root->type, ast_node_id[root->type]);
     }
 }
 
@@ -123,6 +123,10 @@ void traverseAST(Ast_Node* root, Ast_Node* prev, FILE* fp) {
     }
 }
 
+
+/*
+DONT CALL THIS!!! CALL THE WRAPPER FUNCTION (AT THE END OF THE FILE)!!!!
+*/
 Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     Ast_Node* root = createASTNode();
 
@@ -143,6 +147,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->token_data = createHeapTokenInfo(curr->token);
         break;
     case 1:
+    // 1. <program> -> <moduleDeclarations> <otherModules_1> <driverModule> <otherModules_2>
         assert(prev == NULL); // i.e this case is only possible at root of program.
         root->type = 1;
         // post-order traversal
@@ -152,11 +157,13 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->child_4 = generateAST(curr->firstchild->next->next->next, NULL);
         break;
     case 2:
+    // 2. <moduleDeclarations_1> -> <moduleDeclaration><moduleDeclarations_2>
         root->type = 2;
         root->child_1 = generateAST(curr->firstchild, NULL);
-        root->syn_next = generateAST(curr->firstchild->firstchild, NULL);
+        root->syn_next = generateAST(curr->firstchild->next, NULL);
         break;
     case 3:
+    // 3. <moduleDeclarations> -> @
         return_null = true; // handle case accordingly in the end.
         break;
     case 4:
@@ -170,6 +177,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         // root->token_data = createHeapTokenInfo(ID);
         break;
     case 5:
+    // 5. <otherModules_1> -> <module> <otherModules_2>
         root->type = 4;
         root->child_1 = generateAST(curr->firstchild, NULL);
         root->syn_next = generateAST(curr->firstchild->next, NULL);
@@ -288,9 +296,18 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     case 25:
     // 25. <moduleDef> -> START <statements> END
         root->type = 13;
+        // printf("www\n");
         root->child_1 = generateAST(curr->firstchild, NULL);
+        // printf("xxx\n");
         root->child_2 = generateAST(curr->firstchild->next, NULL);
+        // printf("yyy\n");
+        // printf("%s\n", curr->symbol->name);
+        // printf("%s\n", curr->firstchild->symbol->name);
         root->child_3 = generateAST(curr->firstchild->next->next, NULL);
+        // printf("zzz\n");
+        // FILE *fp = fopen("pls.out", "a");
+        // printTreeNode(curr, fp);
+        // fclose(fp);
         break;
     case 26:
     // 26. <statements> -> <statement><statements>
@@ -1004,12 +1021,31 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     }
 
     // printASTNode(root);
+    // if(curr->parent != NULL)
+    // printf("Currently at %s\n", curr->symbol->name);
+    // printf("Now returning to %s\n", curr->parent->symbol->name);
 
     // Remember to FREE treenodes!!!
-    free(curr);
+    
+    treeNode* prev_child = curr->firstchild;
+    treeNode* next_child = NULL;
+    while(prev_child != NULL) {
+        next_child = prev_child->next;
+        free(prev_child);
+        prev_child = next_child;
+    }
+
     if(return_null) {
         free(root);
         return NULL;
     }
+
     return root;
+}
+
+
+Ast_Node* wrapper_create_AST(treeNode* parse_root) {
+    Ast_Node* ast_root = generateAST(parse_root, NULL);
+    free(parse_root);
+    return ast_root;
 }

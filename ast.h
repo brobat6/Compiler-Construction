@@ -7,12 +7,14 @@ Token_Info* createHeapTokenInfo(Token_Info old_token);
 
 Ast_Node* createASTNode();
 
-void printASTNode(Ast_Node* root, FILE* f);
+void printASTNode(Ast_Node* root);
 
 void printASTNodeSTDOUT(Ast_Node* root, Ast_Node* prev, FILE* fp);
 
 void traverseAST(Ast_Node* root, Ast_Node* prev, FILE* fp);
 
 Ast_Node* generateAST(treeNode* curr, Ast_Node* prev);
+
+Ast_Node* wrapper_create_AST(treeNode* parse_root);
 
 #endif

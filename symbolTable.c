@@ -117,6 +117,7 @@ void populate_temporary_function_entry(Ast_Node* temp) {
      * to be entered into symbol table later.
     */
     assert(temp->type == 10 || temp->type == 12); // <dataType> or <type>
+    tempEntry->isParameter = false;
     tempEntry->is_for_loop_variable = false;
     if(temp->child_2 == NULL) {
         enum Token tokenType = temp->child_1->token_data->token;
@@ -240,6 +241,7 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         // 3. Call recursion downward.
         generateST(childSTNode, root->child_1);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        functionEntry->function_width = childSTNode->nodeWidth;
         return;
     }
     if(root->type == 6) {
@@ -293,15 +295,16 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         while(temp != NULL) {
             populate_temporary_function_entry(temp->child_2);
             STEntry* entry = createSTEntry(tempEntry);
+            entry->isParameter = true;
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
             entry->offset = curOffset;
             curOffset += entry->width;
-            // Currently adding input/output lists in PARENT symbol table. (Specified by ma'am!!!!)
-            if(checkID(currSTNode, entry->variableName) != NULL) {
+            // Currently adding input/output lists in CHILD symbol table.
+            if(checkID(childSTNode, entry->variableName) != NULL) {
                 throw_already_exists_error(entry->variableName, entry->declarationLineNumber);
             } else {
-                ht_store(currSTNode->hashTable, entry->variableName, entry);
+                ht_store(childSTNode->hashTable, entry->variableName, entry);
                 add_to_parameter_list(func->inputParamList, entry);
             }
             temp = temp->syn_next;
@@ -311,6 +314,7 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         while(temp != NULL) {
             populate_temporary_function_entry(temp->child_2);
             STEntry* entry = createSTEntry(tempEntry);
+            entry->isParameter = true;
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
             entry->offset = curOffset;
@@ -327,6 +331,7 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         }
         generateST(childSTNode, root->child_4);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        func->function_width = childSTNode->nodeWidth;
         return;
     }
     if(root->type == 45) {
@@ -473,7 +478,12 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
         } else {
             fprintf(fp, "**\t\t");
         }
-        fprintf(fp, "%d\t\t%d\t\t%d\n", data->width, data->offset, root->nestingLevel);
+        fprintf(fp, "%d\t\t%d\t\t", data->width, data->offset);
+        int nest = root->nestingLevel;
+        if(data->isParameter) {
+            nest--;
+        }
+        fprintf(fp, "%d\n", nest);
     }
     STTreeNode* temp = root->leftMostChild;
     while(temp != NULL) {
