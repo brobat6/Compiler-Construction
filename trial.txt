@@ -1,4 +1,4 @@
 <<<driver program>>>
 start
-	
+    declare d: array[5..10] of integer;
 end

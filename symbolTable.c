@@ -136,7 +136,7 @@ void populate_temporary_function_entry(Ast_Node* temp) {
         }
         tempEntry->isArray = false;
     } else {
-        enum Token tokenType = temp->child_2->token_data->token;
+        enum Token tokenType = temp->child_2->child_1->token_data->token;
         if(tokenType == INTEGER) {
             tempEntry->type = TYPE_INTEGER;
         } else if(tokenType == REAL) {
@@ -148,9 +148,13 @@ void populate_temporary_function_entry(Ast_Node* temp) {
         }
         tempEntry->isArray = true;
         temp = temp->child_1;
+
+        // We are at <range_arrays> now
+        assert(temp->type == 11);
+
         // Lower range
         int temp_sign = 1;
-        if(temp->child_1->child_1->token_data->token == MINUS) {
+        if(temp->child_1->child_1 != NULL && temp->child_1->child_1->token_data->token == MINUS) {
             temp_sign = -1;
         }
         if(temp->child_1->child_2->token_data->token == NUM) {
@@ -163,7 +167,7 @@ void populate_temporary_function_entry(Ast_Node* temp) {
         }
         // Upper range
         temp_sign = 1;
-        if(temp->child_2->child_1->token_data->token == MINUS) {
+        if(temp->child_2->child_1 != NULL && temp->child_2->child_1->token_data->token == MINUS) {
             temp_sign = -1;
         }
         if(temp->child_2->child_2->token_data->token == NUM) {
