@@ -51,7 +51,7 @@ typedef struct STEntry{
     int declarationLineNumber;
     int width; // If any isDynamic is true, then this is not computed.
     int offset;
-    bool isParameter; // Since nesting level for parameters has to be -1. (fuv)
+    bool isOutputParameter; // Since nesting level for output parameters has to be -1. (fuv)
 }STEntry;
 
 typedef struct ParamListNode {

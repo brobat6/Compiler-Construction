@@ -45,6 +45,7 @@ STEntry* createSTEntry(STEntry* prevEntry) {
         newNode->width = prevEntry->width;
         newNode->offset = prevEntry->offset;
         newNode->is_for_loop_variable = prevEntry->is_for_loop_variable;
+        newNode->isOutputParameter = prevEntry->isOutputParameter;
     }
     return newNode;
 }
@@ -126,7 +127,7 @@ void populate_temporary_function_entry(Ast_Node* temp) {
      * to be entered into symbol table later.
     */
     assert(temp->type == 10 || temp->type == 12); // <dataType> or <type>
-    tempEntry->isParameter = false;
+    tempEntry->isOutputParameter = false;
     tempEntry->is_for_loop_variable = false;
     if(temp->child_2 == NULL) {
         enum Token tokenType = temp->child_1->token_data->token;
@@ -295,63 +296,91 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         // func->defined = true;
 
         // 2. Create child symbol table
+
+        // 2A. Create input parameter symbol table
         int start_line_no = root->token_data->lineNumber; // DEF
         int end_line_no = root->child_4->child_3->token_data->lineNumber; // <moduleDef> ---> END
-        STTreeNode* childSTNode = createSTTreeNode();
-        addSTChild(currSTNode, childSTNode);
-        (childSTNode->lineNumber).begin = start_line_no;
-        (childSTNode->lineNumber).end = end_line_no;
-        strcpy(childSTNode->moduleName, root->child_1->token_data->lexeme);
-        childSTNode->offset = curOffset;
+        STTreeNode* elder_child_st_node = createSTTreeNode();
+        addSTChild(currSTNode, elder_child_st_node);
+        elder_child_st_node->nestingLevel = currSTNode->nestingLevel;
+        (elder_child_st_node->lineNumber).begin = start_line_no;
+        (elder_child_st_node->lineNumber).end = end_line_no;
+        strcpy(elder_child_st_node->moduleName, root->child_1->token_data->lexeme);
+        elder_child_st_node->offset = curOffset;
+
+        // 2B. Create local symbol table
+        start_line_no = root->child_4->child_1->token_data->lineNumber; // <moduleDef> ---> START
+        STTreeNode* younger_child_st_node = createSTTreeNode();
+        addSTChild(elder_child_st_node, younger_child_st_node);
+        (younger_child_st_node->lineNumber).begin = start_line_no;
+        (younger_child_st_node->lineNumber).end = end_line_no;
+        strcpy(younger_child_st_node->moduleName, root->child_1->token_data->lexeme);
 
         // 3. Populate input_plist and output_plist
         func->inputParamList = initialize_parameter_list();
         func->outputParamList = initialize_parameter_list();
 
+        /**
+         * Input/output parameter specifications by ma'am:
+         * Local variables can shadow input parameters but NOT output parameters
+         * The nesting level of both input and output parameters must be 0
+         * Two input parameters with same ID but in seperate modules are allowed.
+         * 
+         * Solution implemented for the input/output parameter specifications:
+         * Input parameter lists are present in a separate symbol table which 
+         * is the parent of the local symbol table for the module. 
+         * Output parameter lists are present in the local symbol table, but 
+         * have the isOutputParameter flag set to TRUE, since their nesting level 
+         * must be -1 that of the local symbol table.
+        */
+
         Ast_Node* temp = root->child_2;
         while(temp != NULL) {
             populate_temporary_function_entry(temp->child_2);
             STEntry* entry = createSTEntry(tempEntry);
-            entry->isParameter = true;
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
             entry->offset = curOffset;
             curOffset += entry->width;
             // Currently adding input/output lists in CHILD symbol table.
-            if(checkID(childSTNode, entry->variableName) != NULL) {
+            if(checkID(elder_child_st_node, entry->variableName) != NULL) {
                 throw_already_exists_error(entry->variableName, entry->declarationLineNumber);
             } else {
-                ht_store(childSTNode->hashTable, entry->variableName, entry);
+                ht_store(elder_child_st_node->hashTable, entry->variableName, entry);
                 add_to_parameter_list(func->inputParamList, entry);
             }
             temp = temp->syn_next;
         }
         temp = root->child_3;
         if(temp != NULL) temp = temp->child_1;
+
+        younger_child_st_node->offset = curOffset;
+
         while(temp != NULL) {
             populate_temporary_function_entry(temp->child_2);
             STEntry* entry = createSTEntry(tempEntry);
-            entry->isParameter = true;
+            entry->isOutputParameter = true;
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
             entry->offset = curOffset;
             curOffset += entry->width;
             // Currently adding input/output lists in CHILD symbol table.
             // Change if necessary !!!!!!
-            if(checkID(childSTNode, entry->variableName) != NULL) {
+            if(checkID(younger_child_st_node, entry->variableName) != NULL) {
                 throw_already_exists_error(entry->variableName, entry->declarationLineNumber);
             } else {
-                ht_store(childSTNode->hashTable, entry->variableName, entry);
+                ht_store(younger_child_st_node->hashTable, entry->variableName, entry);
                 add_to_parameter_list(func->outputParamList, entry);
             }
             temp = temp->syn_next;
         }
-        generateST(childSTNode, root->child_1);
-        generateST(childSTNode, root->child_2);
-        generateST(childSTNode, root->child_3);
-        generateST(childSTNode, root->child_4);
-        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
-        func->function_width = childSTNode->nodeWidth;
+        generateST(currSTNode, root->child_1);
+        generateST(elder_child_st_node, root->child_2);
+        generateST(younger_child_st_node, root->child_3);
+        generateST(younger_child_st_node, root->child_4);
+        elder_child_st_node->nodeWidth = (curOffset - elder_child_st_node->offset);
+        younger_child_st_node->nodeWidth = (curOffset - younger_child_st_node->offset);
+        func->function_width = elder_child_st_node->nodeWidth;
         return;
     }
     if(root->type == 45) {
@@ -510,7 +539,7 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
         }
         fprintf(fp, "%d\t\t%d\t\t", data->width, data->offset);
         int nest = root->nestingLevel;
-        if(data->isParameter) {
+        if(data->isOutputParameter) {
             nest--;
         }
         fprintf(fp, "%d\n", nest);
