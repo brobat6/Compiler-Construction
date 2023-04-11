@@ -1,42 +1,57 @@
 #include "typeCheck.h"
 
-Type checkType(Operator op, Type t1, Type t2){
+//Check if the operation is valid, else throw appropriate error.
+Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2){
     if(t1==TYPE_ERROR || t2==TYPE_ERROR || t1==TYPE_UNDEFINED|| t2==TYPE_UNDEFINED) return TYPE_UNDEFINED;
+    Error e;
 
     if(op==OP_ARITH){
         if(t1==t2 && (t1==TYPE_INTEGER || t1==TYPE_REAL)) return t1;
         else{
-            printf("Expression types of LHS RHS (Arith) dont match\n");
+            e.type=ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION;
+            e.line=tk_data->lineNumber;
+            add_error(e);
             return TYPE_ERROR;
         }
     } 
     else if(op==OP_REL){
         if(t1==t2 && (t1==TYPE_INTEGER || t1==TYPE_REAL)) return TYPE_BOOLEAN;
         else{
-            printf("Expression types of LHS RHS (Rel) dont match\n");
+            e.type=ERROR_INCOMPATIBLE_RELATIONAL_OPERATION;
+            e.line=tk_data->lineNumber;
+            add_error(e);
             return TYPE_ERROR;
         }
     }
     else if(op==OP_LOGIC){
         if(t1==t2 && t1==TYPE_BOOLEAN) return TYPE_BOOLEAN;
         else{
-            printf("Expression types of LHS RHS (Bool) dont match\n");
+            e.type=ERROR_INCOMPATIBLE_LOGICAL_OPERATION;
+            e.line=tk_data->lineNumber;
+            add_error(e);
             return TYPE_ERROR;
         }
-    } else if(op==OP_ARR){ // Also add cases for Real and Boolean
-        if(t1==t2 && t1==TYPE_INTEGER) return TYPE_INTEGER;
-        else{
-            printf("Expression types of LHS RHS (Arr) dont match\n");
-            return TYPE_ERROR;
-        }
+    // } else if(op==OP_ARR){ // Also add cases for Real and Boolean
+    //     if(t1==t2 && t1==TYPE_INTEGER) return TYPE_INTEGER;
+    //     else{
+    //         printf("Expression types of LHS RHS (Arr) dont match\n");
+    //         return TYPE_ERROR;
+    //     }
     } else if(op==OP_ASSIGN){
         if(t1==t2) return TYPE_UNDEFINED;
         else{
-            printf("Expression types of LHS RHS (Assign) dont match\n");
+            e.type=ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION;
+            e.line=tk_data->lineNumber;
+            add_error(e);
             return TYPE_ERROR;
         }
     }
-    else return TYPE_ERROR;
+    else{
+        e.type=ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION;
+        e.line=tk_data->lineNumber;
+        add_error(e);
+        return TYPE_ERROR;
+    }
 }
 
 int boundCheck(Token_Info* tk_data, STEntry* st_entry, int index){
@@ -46,6 +61,10 @@ int boundCheck(Token_Info* tk_data, STEntry* st_entry, int index){
     if(index>=lower_bound && index<=upper_bound) return 1;
     else{
         printf("Line %d: Array %s out of bounds.\n", tk_data->lineNumber, tk_data->lexeme);
+        Error e;
+        e.type=ERROR_ARRAY_OUT_OF_BOUNDS;
+        e.line=tk_data->lineNumber;
+        add_error(e);
         return 0;
     }   
 }
@@ -60,230 +79,573 @@ Operator token_to_op(Token t){
 
 Type typecheckdfs(Ast_Node* root){
 
-    // ASSIGNMENT/ARITHMETIC/BOOLEAN/ARRAY TYPE CHECKING
+    //Type checking at assignment operation.
     if(root->type==22){
-        Type left_expr=typecheckdfs(root->child_1);
+
         STEntry* st_id = recursiveCheckID(root->child_1->symbol_table, root->child_1->token_data);
-        if(st_id==NULL) return TYPE_ERROR;
-        // st_id->hasBeenAssigned=true;
-        if(st_id->is_for_loop_variable==true) {printf("Assigning to loop variable\n"); return TYPE_ERROR;}
+
+        //Checks if entry exists for the ID to which value is being assigned.
+        if(st_id==NULL){
+            Error e;
+            e.type=VAR_NOT_INITIALIZED;
+            e.line=root->child_1->token_data->lineNumber;
+            strcpy(e.id_name,root->child_1->token_data->lexeme);
+            add_error(e);
+            
+            root->type = TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        // st_id->hasBeenAssigned=true; //paaji uncomment this ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        //Checkis if assignment is being done to loop variable.
+        if(st_id->is_for_loop_variable==true){
+            Error e;
+            e.type=VAR_ASSIGNMENT_TO_FOR_LOOP_VARIABLE;
+            e.line=root->child_1->token_data->lineNumber;
+            strcpy(e.id_name,root->child_1->token_data->lexeme);
+            add_error(e);
+
+            root->type = TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        Type left_expr=typecheckdfs(root->child_1);
         Type right_expr=typecheckdfs(root->child_2);
         
-        return checkType(OP_ASSIGN, left_expr, right_expr);
+        //Type check LHS and RHS of assignment.
+        root->type = checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
+        return checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
     }
 
+    //Type checking at unary operations on expressions.
     if(root->type==34){
         Type right_expr=typecheckdfs(root->child_2);
-        if(right_expr!=TYPE_INTEGER && right_expr!=TYPE_REAL) return TYPE_ERROR;
-        else return right_expr;
+
+        //If unary operators like '+' or '-' are being assigned, it should be integer or real.
+        if(right_expr!=TYPE_INTEGER && right_expr!=TYPE_REAL){
+            Error e;
+            e.type=UNARY_ASSIGNMENT_TO_NON_NUM_RNUM;
+            e.line=root->child_1->token_data->lineNumber;
+            add_error(e);
+
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        root->type=right_expr;
+        return right_expr;
     }
     
+    //Type checking rules for right expanding expressions.
     if(root->type==35 || root->type == 38 || root->type==39 || root->type==43 || root->type==44) {
+        //Check if it is the highest level of expansion.
         if(root->child_2==NULL) {
             if(root->syn_next == NULL) {
+                root->type=typecheckdfs(root->child_1);
                 return typecheckdfs(root->child_1);
             }
+
+            root->type=typecheckdfs(root->syn_next);
             return typecheckdfs(root->syn_next);
         }
+
         Type left_expr = typecheckdfs(root->inh_1);
-        Operator op = token_to_op(root->child_1->token_data->token);
         Type right_expr;
+
+        Operator op = token_to_op(root->child_1->token_data->token);
+
+        //Check if it is the lowest level of expansion. Checking at syn_next because child_2 is inherited at syn_next.
         if(root->syn_next == NULL) {
             right_expr = typecheckdfs(root->child_2);
         } else {
             right_expr = typecheckdfs(root->syn_next);
         }
 
-        return checkType(op, left_expr, right_expr);
+        root->type=checkType(root->inh_1->token_data, op, left_expr, right_expr);
+        return checkType(root->inh_1->token_data, op, left_expr, right_expr);
     }
 
+    //Type Checking for relational expansion or array index expansion. Format is same for both rules.
     if(root->type==36 || root->type == 40){
         if(root->child_2==NULL){
+            root->type=typecheckdfs(root->child_1);
             return typecheckdfs(root->child_1);
         } else {
+            root->type=typecheckdfs(root->child_2);
             return typecheckdfs(root->child_2);
         }
     }
 
+    //Type checking for relational operations.
     if(root->type==37){
         Type left_expr=typecheckdfs(root->inh_1);
         Type right_expr=typecheckdfs(root->child_2);
+
         Operator op=token_to_op(root->child_1->token_data->token);
 
-        return checkType(op, left_expr, right_expr);
+        root->type=checkType(root->inh_1->token_data, op, left_expr, right_expr);
+        return checkType(root->inh_1->token_data, op, left_expr, right_expr);
     }
 
-     if(root->type == 31) {
+    //Type and statically bound check for assignment on array elements.
+    if(root->type == 31) {
         Type left_expr = typecheckdfs(root->inh_1);
         Type right_expr = typecheckdfs(root->child_1);
 
+        //We try to find if the array exists else we throw an error when left_expr is called.
         STEntry* st_entry=recursiveCheckID(root->symbol_table, root->inh_1->token_data);
-        if(!st_entry->isArray || (left_expr!=TYPE_INTEGER && left_expr!=TYPE_REAL)) return TYPE_ERROR;
-        else{
-            if(!st_entry->isDynamic.lower && !st_entry->isDynamic.upper){
-                int temp;
-                
-                if(root->child_1->type==42 && root->child_1->child_1->token_data->token==NUM){
-                    temp = root->child_1->child_1->token_data->value.num;
-                    temp*=-1;
-                } else if(root->child_1->type==41 && root->child_1->child_1->token_data->token==NUM){
-                    temp = root->child_1->child_1->token_data->value.num;
-                } else if(root->child_1->type==43){
-                    if(root->child_1->syn_next==NULL && root->child_1->child_1->syn_next==NULL && root->child_1->child_1->child_1->token_data->token==NUM) temp = root->child_1->child_1->child_1->token_data->value.num;
-                    else{
-                        Type index_expr = typecheckdfs(root->child_1);
-                        if(index_expr==TYPE_INTEGER) return left_expr;
-                        else return TYPE_ERROR;
-                    }
-                } else if(root->child_1->child_1->token_data->token!=NUM){
-                    STEntry* st_id = recursiveCheckID(root->child_1->child_1->symbol_table, root->child_1->child_1->token_data);
-                    if(st_id==NULL) return TYPE_ERROR;
-                    if(st_id->type!=TYPE_INTEGER) return left_expr;
-                    else return TYPE_UNDEFINED;
+        if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_REAL){
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        //If the ID is not of array type we throw an error.
+        if(!st_entry->isArray) {
+            Error e;
+            e.type= VAR_NOT_OF_TYPE_ARRAY;
+            e.line=root->inh_1->token_data->lineNumber;
+            strcpy(e.id_name, root->inh_1->token_data->lexeme);
+            add_error(e);
+
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        //We check if array is not dynamic, because dynamic bound checking is done at code generation and here we just static bound check.
+        if(!st_entry->isDynamic.lower && !st_entry->isDynamic.upper){
+            //Here we store the static index.
+            int arr_index;
+
+            //This handles the case when '+' precedes the NUM-type index.
+            if(root->child_1->type==41 && root->child_1->child_1->token_data->token==NUM){
+                arr_index = root->child_1->child_1->token_data->value.num;
+            } 
+            
+            //This handles the case when '-' precedes the NUM-type index.
+            else if(root->child_1->type==42 && root->child_1->child_1->token_data->token==NUM){
+                arr_index = root->child_1->child_1->token_data->value.num;
+                arr_index*=-1;
+            } 
+            
+            //This handles if there is no prefix, then we have to type check for ID, NUM or expressions as index.
+            else if(root->child_1->type==43){
+
+                //This checks for non-expression NUM type index.
+                if(root->child_1->syn_next==NULL && root->child_1->child_1->syn_next==NULL && root->child_1->child_1->child_1->token_data->token==NUM){
+                    arr_index = root->child_1->child_1->child_1->token_data->value.num;
                 }
 
-                if(boundCheck(root->inh_1->token_data, st_entry, temp)) return left_expr;
-                else return TYPE_ERROR;
+                //If we have an expression, we get its type by calling type check on the expression itself.
+                else{
+                    Type index_expr = typecheckdfs(root->child_1);
+
+                    //Since the epression is of integer type, we have type checked and bound check for expressions is dynamic.
+                    if(index_expr==TYPE_INTEGER){
+                        root->type=left_expr;
+                        return left_expr;
+                    }
+
+                    //We return a error if index type is not integer.
+                    else{
+                        Error e;
+                        e.type=NON_INTEGER_ARRAY_INDEX;
+                        e.line=root->inh_1->token_data->lineNumber;
+                        strcpy(e.id_name, root->inh_1->token_data->lexeme);
+                        add_error(e);
+
+                        root->type=TYPE_ERROR;
+                        return TYPE_ERROR;
+                    }
+                }
+            } 
+            
+            //This type checks for ID type index and returns without bound checking as it is done dynamically for ID.
+            else if(root->child_1->child_1->token_data->token!=NUM){
+
+                //We check if the ID is declared or not first.
+                STEntry* st_id = recursiveCheckID(root->child_1->child_1->symbol_table, root->child_1->child_1->token_data);
+                if(st_entry==NULL){
+                    Error e;
+                    e.type=VAR_NOT_INITIALIZED;
+                    e.line=root->inh_1->token_data->lineNumber;
+                    strcpy(e.id_name,root->inh_1->token_data->lexeme);
+                    add_error(e);
+                    
+                    root->type = TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+
+                //Checks for integer type of index, else throws an error.
+                if(st_id->type==TYPE_INTEGER){
+                    root->type=left_expr;
+                    return left_expr;
+                }
+
+                else{
+                    Error e;
+                    e.type=NON_INTEGER_ARRAY_INDEX;
+                    e.line=root->inh_1->token_data->lineNumber;
+                    strcpy(e.id_name, root->inh_1->token_data->lexeme);
+                    add_error(e);
+
+                    root->type=TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+            }   
+
+            //Here, we perform bound checking and error is reported inside the boundCheck function.
+            if(boundCheck(root->inh_1->token_data, st_entry, arr_index)){
+                root->type=left_expr;
+                return left_expr;
+            }
+
+            else{
+                root->type=TYPE_ERROR;
+                    return TYPE_ERROR;
             }
         }
     }
 
+    //Type and statically bound check
     if(root->type==21){
         Type left_expr = typecheckdfs(root->inh_1);
         Type right_expr = typecheckdfs(root->child_1);
+
+         //We try to find if the array exists else we throw an error when left_expr is called.
         STEntry* st_entry=recursiveCheckID(root->symbol_table, root->inh_1->token_data);
-        if(!st_entry->isArray || (left_expr!=TYPE_INTEGER && left_expr!=TYPE_REAL)) return TYPE_ERROR;
-        else{
-            if(!st_entry->isDynamic.lower && !st_entry->isDynamic.upper){
-                int temp;
+        if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_REAL){
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
 
-                if(root->child_1->child_1==NULL){
-                    if(root->child_1->child_2->token_data->token!=NUM){
-                        STEntry* st_id = recursiveCheckID(root->child_1->child_2->symbol_table, root->child_1->child_2->token_data);
-                        if(st_id==NULL) return TYPE_ERROR;
-                        if(st_id->type!=TYPE_INTEGER) return TYPE_ERROR;
-                        else return TYPE_UNDEFINED;
-                    }
-                    else{
-                        temp = root->child_1->child_2->token_data->value.num;
-                    }
-                } else if(root->child_1->child_1->token_data->token==MINUS && root->child_1->child_2->token_data->token==NUM){
-                    temp = root->child_1->child_2->token_data->value.num;
-                    temp*=-1;
-                } else if(root->child_1->child_1->token_data->token==PLUS && root->child_1->child_2->token_data->token==NUM){
-                    temp = root->child_1->child_2->token_data->value.num;
-                } else if(root->child_1->child_2->token_data->token==ID){
+        //If the ID is not of array type we throw an error.
+        if(!st_entry->isArray) {
+            Error e;
+            e.type= VAR_NOT_OF_TYPE_ARRAY;
+            e.line=root->inh_1->token_data->lineNumber;
+            strcpy(e.id_name, root->inh_1->token_data->lexeme);
+            add_error(e);
+
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        //We check if array is not dynamic, because dynamic bound checking is done at code generation and here we just static bound check.
+        if(!st_entry->isDynamic.lower && !st_entry->isDynamic.upper){
+            //Here we store the static index.
+            int arr_index;
+
+            //This checks if the associated index has no '+' or '-' sign before it and implemets for those cases.
+            if(root->child_1->child_1==NULL){
+
+                //If the index is a variable we see if the type is integer, else we throw an error.
+                if(root->child_1->child_2->token_data->token!=NUM){
+
+                    //Here we check if the variable has been declared.
                     STEntry* st_id = recursiveCheckID(root->child_1->child_2->symbol_table, root->child_1->child_2->token_data);
-                    if(st_id==NULL) return TYPE_ERROR;
-                    if(st_id->type!=TYPE_INTEGER) return left_expr;
-                    else return TYPE_UNDEFINED;
-                }
-
-                printf("%d \n", temp);
-                if(boundCheck(root->inh_1->token_data, st_entry, temp)) return TYPE_UNDEFINED;
-                else return TYPE_ERROR;
-            }
-        }
-    }
-
-    //CONDITIONAL SWITCH-CASE
-    if(root->type==46){
-        Type left_expr=typecheckdfs(root->child_1);
-        if(left_expr==TYPE_BOOLEAN && root->child_4!=NULL) {printf("dfault error\n"); return TYPE_ERROR;}
-        else if(left_expr==TYPE_INTEGER && root->child_4==NULL) {printf("default error\n"); return TYPE_ERROR;}
-        else if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_BOOLEAN) return TYPE_ERROR;
-        else{
-            Type stmts;
-            Ast_Node* node =root->child_3;
-            int flag=0, mismatch=0;
-            if(left_expr==TYPE_INTEGER){
-                while(flag==0){
-                    if(typecheckdfs(node->child_1)!=TYPE_INTEGER) {printf("type error- not int\n");}
-                    node=node->child_3;
-                    if(node==NULL) flag++;
-                }
-                return TYPE_UNDEFINED;
-            } else if(left_expr==TYPE_BOOLEAN){
-                int fl=0;
-                while(flag==0){
-                    // printf("r1\n");
-                    if(typecheckdfs(node->child_1)!=TYPE_BOOLEAN) {printf("type error - not bool\n");}
-                    else{
-                        if(node->child_1->token_data->token==TRUE){
-                            if(fl==0 || fl==2) fl++;
-                        } else if(node->child_1->token_data->token==FALSE){
-                            if(fl==0 || fl==1) fl+=2;
-                        }
+                    if(st_entry==NULL){
+                        Error e;
+                        e.type=VAR_NOT_INITIALIZED;
+                        e.line=root->child_1->child_2->token_data->lineNumber;
+                        strcpy(e.id_name,root->child_1->child_2->token_data->lexeme);
+                        add_error(e);
+                        
+                        root->type = TYPE_ERROR;
+                        return TYPE_ERROR;
                     }
-                    node=node->child_3;
-                    if(node==NULL) flag++;
+
+                    //If it is integer our type checking is done and we return nothing, else we throw an error.
+                    if(st_id->type==TYPE_INTEGER){
+                        root->type=TYPE_UNDEFINED;
+                        return TYPE_UNDEFINED;
+                    }
+                    else{
+                        Error e;
+                        e.type=NON_INTEGER_ARRAY_INDEX;
+                        e.line=root->child_1->child_2->token_data->lineNumber;
+                        strcpy(e.id_name, root->child_1->child_2->token_data->lexeme);
+                        add_error(e);
+
+                        root->type=TYPE_ERROR;
+                        return TYPE_ERROR;
+                    }
+                }
+            } 
+            
+            //This handles the case when '+' precedes the NUM-type index.
+            if(root->child_1->child_1->token_data->token==PLUS && root->child_1->child_2->token_data->token==NUM){
+                arr_index = root->child_1->child_2->token_data->value.num;
+            }
+
+            //This handles the case when '-' precedes the NUM-type index.
+            else if(root->child_1->child_1->token_data->token==MINUS && root->child_1->child_2->token_data->token==NUM){
+                arr_index = root->child_1->child_2->token_data->value.num;
+                arr_index*=-1;
+            }
+
+            //This handles the case when the index is a sign-less ID.
+            else if(root->child_1->child_2->token_data->token==ID){
+
+                //Here we check if the variable has been declared.
+                STEntry* st_id = recursiveCheckID(root->child_1->child_2->symbol_table, root->child_1->child_2->token_data);
+                if(st_entry==NULL){
+                    Error e;
+                    e.type=VAR_NOT_INITIALIZED;
+                    e.line=root->child_1->child_2->token_data->lineNumber;
+                    strcpy(e.id_name,root->child_1->child_2->token_data->lexeme);
+                    add_error(e);
+                        
+                    root->type = TYPE_ERROR;
+                    return TYPE_ERROR;
                 }
 
-                if(fl==3) return TYPE_UNDEFINED;
-                else{
-                    if(fl==0) {printf("No TF\n");return TYPE_ERROR;}
-                    if(fl==1) {printf("No F\n");return TYPE_ERROR;}
-                    if(fl==2) {printf("No T\n");return TYPE_ERROR;}
-                    else {printf("haggu\n"); return TYPE_ERROR;}
+                //If it is integer our type checking is done and we return nothing, else we throw an error.
+                if(st_id->type==TYPE_INTEGER){
+                    root->type=TYPE_UNDEFINED;
+                    return TYPE_UNDEFINED;
                 }
+                else{
+                    Error e;
+                    e.type=NON_INTEGER_ARRAY_INDEX;
+                    e.line=root->child_1->child_2->token_data->lineNumber;
+                    strcpy(e.id_name, root->child_1->child_2->token_data->lexeme);
+                    add_error(e);
+
+                    root->type=TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+            }
+
+            //Here, we perform bound checking and error is reported inside the boundCheck function.
+            if(boundCheck(root->inh_1->token_data, st_entry, arr_index)){
+                root->type=TYPE_UNDEFINED;
+                return TYPE_UNDEFINED;
+            }
+
+            else{
+                root->type=TYPE_ERROR;
+                return TYPE_ERROR;
             }
         }
     }
 
-    if(root->type==47){
-        Type left_expr = typecheckdfs(root->child_1);
+    //Type checking for switch-case conditional statements
+    if(root->type==46){
 
-        if(root->child_3==NULL) return left_expr;
-        Type right_expr = typecheckdfs(root->child_3);
+        //First, we get the type of switch variable and depending on its type we have different cases shown below.
+        Type left_expr=typecheckdfs(root->child_1);
 
-        if(left_expr==right_expr) return left_expr;
-        else return TYPE_ERROR;
+        //Check if switch-case is of type integer or boolean, else throw an error.
+        if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_BOOLEAN){
+            Error e;
+            e.type=INVALID_SWITCH_TYPE_FOR_CASES;
+            e.line=root->child_1->token_data->lineNumber;
+            
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        //Check that boolean switch-case does not have a default type, else throw an error.
+        if(left_expr==TYPE_BOOLEAN && root->child_4!=NULL){
+            Error e;
+            e.type=DEFAULT_CASE_IN_BOOLEAN_SWITCH;
+            e.line=root->child_1->token_data->lineNumber;
+            
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+
+        //Check that integer switch-case has a default type, else throw an error.
+        if(left_expr==TYPE_INTEGER && root->child_4==NULL){
+            Error e;
+            e.type=DEFAULT_CASE_IN_INTEGER_SWITCH;
+            e.line=root->child_1->token_data->lineNumber;
+            
+            root->type=TYPE_ERROR;
+            return TYPE_ERROR;
+        }
+        
+        //Here we recurse on all the case statements belonging to the switch and type check on them. The flag is used as a loop variable which
+        //gets set when we reach the last case/bottom of recursion to break the loop.
+        Ast_Node* node =root->child_3;
+        int flag=0;
+
+        if(left_expr==TYPE_INTEGER){
+            while(flag==0){
+
+                //For integer case we have to check if case type is integer and report errors for all cases that are not of integer type.
+                if(typecheckdfs(node->child_1)!=TYPE_INTEGER) {
+                    //Assign error to the case statement type.
+                    node->child_1->type=TYPE_ERROR;
+
+                    Error e;
+                    e.type=CASE_NOT_INTEGER_TYPE_FOR_INTEGER_SWITCH;
+                    e.line=node->child_1->token_data->lineNumber;
+                    strcpy(e.id_name, node->child_1->token_data->lexeme);
+                    add_error(e);
+                }
+
+                //Change node to check the next case statement.
+                node=node->child_3;
+                if(node==NULL) flag++;
+            }
+
+            //Return undefined because we do not have to type check above.
+            root->type=TYPE_UNDEFINED;
+            return TYPE_UNDEFINED;
+        } 
+        
+        if(left_expr==TYPE_BOOLEAN){
+
+            //'fl' is a set fo two flags based on binary bit-wise representation. fl can take 4 values: 0, 1, 2, 3. The 1st bit/MSB checks if a
+            //'case true' occurs and 2nd bit/LSB checks if a 'case false' occurs. This helps report error in case either case do not occur.
+            int fl=0;
+
+            while(flag==0){
+
+
+                //For boolean case we have to check if case type is boolean and report errors for all cases that are not of boolean type.
+                if(typecheckdfs(node->child_1)!=TYPE_BOOLEAN) {
+                    //Assign error to the case statement type.
+                    node->child_1->type=TYPE_ERROR;
+
+                    Error e;
+                    e.type=CASE_NOT_BOOLEAN_TYPE_FOR_BOOLEAN_SWITCH;
+                    e.line=node->child_1->token_data->lineNumber;
+                    strcpy(e.id_name, node->child_1->token_data->lexeme);
+                    add_error(e);
+                }
+
+                else{
+                    if(node->child_1->token_data->token==TRUE){
+                        //Set MSB of 'fl' if not set, if set we ignore.
+                        if(fl==0 || fl==1) fl+=2;
+                    } else if(node->child_1->token_data->token==FALSE){
+                        //Set LSB of 'fl' if not set, if set we ignore.
+                        if(fl==0 || fl==2) fl++;
+                    }
+                }
+
+                //Change node to check the next case statement.
+                node=node->child_3;
+                if(node==NULL) flag++;
+            }
+
+            //If both bits are set, case true and false both have occurred and hence we have to report no errors.
+            if(fl==3){
+                root->type=TYPE_UNDEFINED;
+                return TYPE_UNDEFINED;
+            }
+
+            //Else we have to report appropriate error as to which case true and/or false have not occurred.
+            else{
+                if(fl==0){
+                    Error e;
+                    e.type=MISSING_TRUE_FALSE_CASES;
+                    e.line=root->child_1->token_data->lineNumber;
+                    add_error(e);
+
+                    root->type=TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+                if(fl==1){
+                    Error e;
+                    e.type=MISSING_TRUE_CASES;
+                    e.line=root->child_1->token_data->lineNumber;
+                    add_error(e);
+
+                    root->type=TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+                if(fl==2){
+                    Error e;
+                    e.type=MISSING_FALSE_CASES;
+                    e.line=root->child_1->token_data->lineNumber;
+                    add_error(e);
+
+                    root->type=TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+
+                //In some case (which won't happen) flag value becomes soething outside our utility, we throw an unexpected error.
+                else{
+                    Error e;
+                    e.type=UNEXPECTED_FLAG_VALUE;
+                    e.line=root->child_1->token_data->lineNumber;
+                    add_error(e);
+
+                    root->type=TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+            }
+        }
+        
     }
 
+    //Return type of case to the parent function where it is checked if it matches switch type.
+    if(root->type==47){
+        root->type=typecheckdfs(root->child_1);
+        return typecheckdfs(root->child_1);
+    }
 
-
-    //TERMINALS
+    //Type checking ID and other terminals and returning accurate types for type checking.
     if(root->type==0){
+        
+        //If terminal is ID we have to check if it is declared and in scope or not.
         if(root->token_data->token == ID) {
-            // return TYPE_INTEGER;
-
-            // SEG FAULT DUE TO RECURSIVECHECKID FUNC -> SYMBOL tABLE AST NODE ME NAI AARI
-
-
-            // printf("ok1\n");
-            // printf("%d\n", root->symbol_table->lineNumber.begin);
             STEntry* st_entry=recursiveCheckID(root->symbol_table, root->token_data);
-            // printf("ok2\n");
-            // //exist nai karta, kuch bhi aur error batana padega
-            if(st_entry==NULL) return TYPE_ERROR;
+            if(st_entry==NULL){
+                Error e;
+                e.type=VAR_NOT_INITIALIZED;
+                e.line=root->token_data->lineNumber;
+                strcpy(e.id_name,root->token_data->lexeme);
+                add_error(e);
+                
+                root->type = TYPE_ERROR;
+                return TYPE_ERROR;
+            }
+
+            root->type=st_entry->type;
             return st_entry->type;
         }
+
         if(root->token_data->token == NUM) {
+            root->type=TYPE_INTEGER;
             return TYPE_INTEGER;
         }
+
         if(root->token_data->token == RNUM) {
+            root->type=TYPE_REAL;
             return TYPE_REAL;
         }
+
         if(root->token_data->token == TRUE || root->token_data->token == FALSE) {
+            root->type=TYPE_BOOLEAN;
             return TYPE_BOOLEAN;
         }
-        return TYPE_UNDEFINED;
+
+        else{
+            Error e;
+            e.type=UNKNOWN_TERMINAL_TYPE;
+            e.line=root->token_data->lineNumber;
+            strcpy(e.id_name,root->token_data->lexeme);
+            add_error(e);
+                
+            root->type = TYPE_ERROR;
+            return TYPE_ERROR;
+        }
     }
 
+    //For other rules, we do not need to type/bound/scope check. This code segment is just to traverse the tree.
+    Type t;
+    if(root->child_1!=NULL) t=typecheckdfs(root->child_1);
+    if(root->child_2!=NULL) t=typecheckdfs(root->child_2);
+    if(root->child_3!=NULL) t=typecheckdfs(root->child_3);
+    if(root->child_4!=NULL) t=typecheckdfs(root->child_4);
+    if(root->child_5!=NULL) t=typecheckdfs(root->child_5);
+    if(root->syn_next!=NULL) t=typecheckdfs(root->syn_next);
 
-    //ITERATIVE
-
-
-    //ALL OTHERS
-    else{
-        Type t;
-        if(root->child_1!=NULL) t=typecheckdfs(root->child_1);
-        if(root->child_2!=NULL) t=typecheckdfs(root->child_2);
-        if(root->child_3!=NULL) t=typecheckdfs(root->child_3);
-        if(root->child_4!=NULL) t=typecheckdfs(root->child_4);
-        if(root->child_5!=NULL) t=typecheckdfs(root->child_5);
-        if(root->syn_next!=NULL) t=typecheckdfs(root->syn_next);
-
-        return TYPE_UNDEFINED;
-    }
+    root->type=TYPE_UNDEFINED;
+    return TYPE_UNDEFINED;
 }
