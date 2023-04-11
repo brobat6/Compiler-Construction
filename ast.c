@@ -395,7 +395,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     // 42. <P1> -> SQBO <index_arr> SQBC
         root->type = 21;
         assert(prev != NULL); // Rule 40.
-        root->inh_1 = prev->child_1;
+        root->inh_1 = prev;
         root->child_1 = generateAST(curr->firstchild->next, NULL);
         break;
     case 43:
@@ -606,7 +606,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     case 78:
     // 78. <new_NT> -> BO <arithmeticExpr> BC
         free(root);
-        root = generateAST(curr->firstchild, prev);
+        root = generateAST(curr->firstchild->next, prev);
         break;
     case 79:
     // 79. <new_NT> -> <var_id_num>
