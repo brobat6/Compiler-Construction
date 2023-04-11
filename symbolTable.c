@@ -230,6 +230,7 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         } else {
             ht_store(functionST, func->moduleName, func);
         }
+        generateST(currSTNode, root->child_1);
         return;
     }
     if(root->type == 5) {
@@ -345,6 +346,9 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             }
             temp = temp->syn_next;
         }
+        generateST(childSTNode, root->child_1);
+        generateST(childSTNode, root->child_2);
+        generateST(childSTNode, root->child_3);
         generateST(childSTNode, root->child_4);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
         func->function_width = childSTNode->nodeWidth;
@@ -369,6 +373,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             }
             temp = temp->syn_next;
         }
+        generateST(currSTNode, root->child_1);
+        generateST(currSTNode, root->child_2);
         return;
     }
     if(root->type == 46) {
@@ -381,8 +387,11 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         (childSTNode->lineNumber).end = end_line_no;
         strcpy(childSTNode->moduleName, currSTNode->moduleName);
         childSTNode->offset = curOffset;
+        generateST(currSTNode, root->child_1);
+        generateST(childSTNode, root->child_2);
         generateST(childSTNode, root->child_3);
         generateST(childSTNode, root->child_4);
+        generateST(childSTNode, root->child_5);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
         return;
     }
@@ -410,14 +419,17 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         id_entry->offset = curOffset;
         curOffset += 2;
         ht_store(childSTNode->hashTable, id_entry->variableName, id_entry);
-
+        
+        generateST(currSTNode, root->child_1);
         // 3. Call with child symbol table inside for loop
         generateST(currSTNode, root->child_2); /*
         1. Doing this for type checking etc later, as symbol table needs to be populated
         2. What happens in case we have FOR X IN RANGE [X...3], i.e. range has same identifier declared previously?
         Current ans. It would not give error, the X in range would be taken from outer scope. 
         */
+       generateST(currSTNode, root->child_3);
         generateST(childSTNode, root->child_4);
+        generateST(currSTNode, root->child_5);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
         return;
     }
@@ -432,7 +444,9 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         strcpy(childSTNode->moduleName, currSTNode->moduleName);
         childSTNode->offset = curOffset;
         generateST(currSTNode, root->child_1); // Just done so that ast_node->symbol_table elements are populated (for easy type checking later)
+        generateST(currSTNode, root->child_2);
         generateST(childSTNode, root->child_3);
+        generateST(currSTNode, root->child_4);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
         return;
     }
