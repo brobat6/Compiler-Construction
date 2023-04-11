@@ -77,7 +77,10 @@ int main(int argc, char *argv[]) {
             fclose(f_st);
 
             // Type checking
-            // typecheckdfs(ast_root);
+            typecheckdfs(ast_root);
+
+            // Function Checking
+            semanticAnalyzer(ast_root);
         }
         else if(choice==4)
         {

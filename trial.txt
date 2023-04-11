@@ -1,4 +1,13 @@
 <<<driver program>>>
 start
+    declare a, b, c : integer;
+    declare flag : boolean;
     declare d: array[5..10] of integer;
+    switch(flag)
+    start
+        case false : print(100);
+        break;
+        case true : a := b; 
+        break;
+    end
 end

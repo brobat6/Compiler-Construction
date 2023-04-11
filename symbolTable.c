@@ -3,9 +3,9 @@
 #define DATASEGMENTOFFSET 1000
 int curOffset=DATASEGMENTOFFSET;
 STTreeNode* curSTTreeNode=NULL;
-STTreeNode* globalSTRoot=NULL;
+STTreeNode* globalSTRoot=NULL; // Root of symbol table
 STEntry* tempEntry;
-ht* functionST;
+ht* functionST; // Function symbol table
 
 STTreeNode* createSTTreeNode(){             ///can use current AST node for data;
     STTreeNode* newNode = (STTreeNode*)malloc(sizeof(STTreeNode));
@@ -45,7 +45,8 @@ STEntry* createSTEntry(STEntry* prevEntry) {
         newNode->width = prevEntry->width;
         newNode->offset = prevEntry->offset;
         newNode->is_for_loop_variable = prevEntry->is_for_loop_variable;
-        newNode->isOutputParameter = prevEntry->isOutputParameter;
+        newNode->isOutputParameter = false;
+        newNode->hasBeenAssigned = false;
     }
     return newNode;
 }
@@ -205,7 +206,7 @@ void throw_already_exists_error(char module_name[], int line_no) {
 }
 
 void throw_function_not_declared_error(char module_name[], int line_no) {
-    printf("Function %s is being defined at line %d, but it has not been declared!\n", module_name, line_no);
+    printf("Function %s is being called at line %d, but it has not been declared!\n", module_name, line_no);
 }
 
 void throw_function_redefinition_error(char module_name[], int line_no) {
@@ -214,7 +215,7 @@ void throw_function_redefinition_error(char module_name[], int line_no) {
 
 void generateST(STTreeNode* currSTNode, Ast_Node* root) {
 
-    assert(root != NULL);
+    if(root == NULL) return;
     assert(currSTNode != NULL);
 
     root->symbol_table = currSTNode;
@@ -480,12 +481,12 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         return;
     }
     
-    if(root->child_1 != NULL) generateST(currSTNode, root->child_1);
-    if(root->child_2 != NULL) generateST(currSTNode, root->child_2);
-    if(root->child_3 != NULL) generateST(currSTNode, root->child_3);
-    if(root->child_4 != NULL) generateST(currSTNode, root->child_4);
-    if(root->child_5 != NULL) generateST(currSTNode, root->child_5);
-    if(root->syn_next != NULL) generateST(currSTNode, root->syn_next);
+    generateST(currSTNode, root->child_1);
+    generateST(currSTNode, root->child_2);
+    generateST(currSTNode, root->child_3);
+    generateST(currSTNode, root->child_4);
+    generateST(currSTNode, root->child_5);
+    generateST(currSTNode, root->syn_next);
 }
 
 STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input parameter; INCOMPLETE
@@ -557,3 +558,188 @@ void print_symbol_table(STTreeNode* root, FILE* fp) {
     recursive_print_symbol_table(root, fp);
 }
 
+/*
+------------------------------------------------------------------------------------
+Symbol Table is over here. The code below is for semantic analyser. But I am adding
+it in the same file right now to reduce complications in multiple file sync between
+me and Shivam.
+------------------------------------------------------------------------------------
+*/
+
+typedef struct FUNCTION_TRACE Function_Trace;
+struct FUNCTION_TRACE {
+    char module_name[21];
+    Function_Trace* next;
+    Function_Trace* prev;
+};
+Function_Trace* function_trace_stack; // NEVER EMPTY. Contains atleast the driver module.
+/*
+Note : CLARIFY WITH MA'AM IF SOME MODULE CAN HAVE THE NAME "driver" OR NOT. 
+CURRENTLY I AM CONSIDERING THAT IT IS NOT ALLOWED.
+IF IT IS ALLOWED, SIMPLY CHANGE THE DRIVER MODULE NAME TO "driverX" where X is any symbol that 
+can never be used in another module's name!!!
+*/
+
+void push_function_record(char module_name[]) {
+    // Adds new function module_name to the current stack. 
+    // "function_trace_stack" is updated to point to this new function.
+    Function_Trace* new_func = (Function_Trace*)malloc(sizeof(Function_Trace));
+    strcpy(new_func->module_name, module_name);
+    function_trace_stack->next = new_func;
+    new_func->prev = function_trace_stack;
+    new_func->next = NULL;
+    function_trace_stack = new_func;
+}
+
+void pop_function_record() {
+    // Removes most recent function call from stack.
+    // "function_trace_stack" is updated to point to the previous function.
+    Function_Trace* old_func = function_trace_stack->prev;
+    free(function_trace_stack);
+    function_trace_stack = old_func;
+    old_func->next = NULL;
+}
+
+bool function_is_recursive(char module_name[]) {
+    // Returns true if "module_name" already exists in the function trace stack.
+    Function_Trace* temp = function_trace_stack;
+    while(temp != NULL) {
+        if(strcmp(module_name, temp->module_name) == 0) return true;
+        temp = temp->prev;
+    }
+    return false;
+}
+
+void throw_function_is_recursive_error(char module_name[], int line_no) {
+    printf("Error at line %d: Cannot call module %s, recursive calls are not allowed!\n", line_no, module_name);
+}
+
+void throw_error() {
+    // Not yet implemented. 
+    printf("There is an error but the print statement has not yet been implemented\n");
+}
+
+void functionChecker(Ast_Node* root) {
+    if(root == NULL) return;
+    if(root->type == 26) {
+        /*
+        <moduleReuseStmt> -> <optional> USE MODULE ID WITH PARAMETERS <actual_para_list> SEMICOL
+        Need to check
+        1. Module ID has been declared previously.
+        2. Parameters returned in <optional> are the same as output parameter list of module ID. 
+        3. No recursion
+        */
+        int line_no = root->child_2->token_data->lineNumber;
+        char module_name[21];
+        strcpy(module_name, root->child_2->token_data->lexeme); 
+        FunctionSTEntry* func = ht_fetch(functionST, module_name);
+        if(func == NULL || func->declaration_line_no > line_no) {
+            // Function has not been declared previously
+            // Note : Can add seperate errors for not declared at all, and for not declared YET.
+            throw_error();
+        } else {
+            // Function has been declared previously
+            if(function_is_recursive(module_name)) {
+                // Recursion.
+                throw_error();
+            } else {
+                // No recursion.
+
+                // 1. Check output parameter list.
+                if(func->outputParamList->size == 0) {
+                    if(root->child_1 != NULL) {
+                        // Function is not returning any parameters but is being assigned to something.
+                        throw_error();
+                    }
+                } else {
+                    if(root->child_1 == NULL) {
+                        // Function is returning parameters but they are not being assigned to anything.
+                        throw_error();
+                    } else {
+                        ParamListNode* temp1 = func->outputParamList->first;
+                        Ast_Node* temp2 = root->child_1->child_1;
+                        while(temp1 != NULL && temp2 != NULL) {
+                            assert(temp2->type == 33);
+                            // Check that the variable temp2 has been declared.
+                            STEntry* actual = recursiveCheckID(temp2->symbol_table, temp2->child_1->token_data);
+                            if(actual == NULL) {
+                                // Variable has not been declared, but is being used.
+                                throw_error();
+                            } else if(actual->type != temp1->entry->type || actual->isArray) {
+                                // Variable types do not match!
+                                throw_error();
+                            } else if(actual->is_for_loop_variable) {
+                                // Variable is a for loop variable - assignment not allowed.
+                                throw_error();
+                            }
+                            temp1 = temp1->next;
+                            temp2 = temp2->syn_next;
+                        }
+                        if(temp1 == NULL && temp2 != NULL) {
+                            // Function returns LESS parameters than are being assigned.
+                            throw_error();
+                        }
+                        if(temp1 != NULL && temp2 == NULL) {
+                            // Function returns MORE parameters than are being assigned.
+                            throw_error();
+                        }
+                    }
+                }
+
+                /*
+                2. Check input parameter list.
+                Note : In our grammar, things like x[2..20], -y would have been allowed.
+                But actually, only variable names must be passed to input parameter list.
+                So, I am going to consider only those cases. If needed, we can fix our
+                grammar & parser later on.
+                */
+                assert(func->inputParamList != NULL); // Our grammar won't allow this, but check once!!!
+                ParamListNode* temp1 = func->inputParamList->first;
+                Ast_Node* temp2 = root->child_3;
+                while(temp1 != NULL && temp2 != NULL) {
+                    STEntry* actual = recursiveCheckID(temp2->symbol_table, temp2->child_1->child_1->child_1->token_data);
+                    // actual ^^ assuming that temp2 can only give ID production (check once). (Will give segfault if assumption is wrong)
+                    if(actual == NULL) {
+                        // Variable has not been declared, but is being used.
+                        throw_error();
+                    } else {
+                        if(actual->type != temp1->entry->type || actual->isArray != temp1->entry->isArray) {
+                            // Type mismatch.
+                            throw_error();
+                        } else {
+                            // NOTE : UNIMPLEMENTED CODE FOR LOWER/UPPER BOUND CHECKING.
+                        }
+                    }
+                    temp1 = temp1->next;
+                    temp2 = temp2->syn_next;
+                }
+                if(temp1 == NULL && temp2 != NULL) {
+                    // Function asks for LESS parameters than are being given.
+                    throw_error();
+                }
+                if(temp1 != NULL && temp2 == NULL) {
+                    // Function asks for MORE parameters than are being given.
+                    throw_error();
+                }
+            }
+        }
+    }
+    functionChecker(root->child_1);
+    functionChecker(root->child_2);
+    functionChecker(root->child_3);
+    functionChecker(root->child_4);
+    functionChecker(root->child_5);
+    functionChecker(root->syn_next);
+}
+
+void semanticAnalyzer(Ast_Node* root) {
+    /**
+     * The main function to be called from driver.c for complete semantic analysis.
+    */
+    function_trace_stack = (Function_Trace*)malloc(sizeof(Function_Trace));
+    strcpy(function_trace_stack->module_name, "driver");
+    function_trace_stack->next = NULL;
+    function_trace_stack->prev = NULL;
+    
+    functionChecker(root);
+}

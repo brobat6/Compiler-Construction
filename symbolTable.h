@@ -22,4 +22,12 @@ STTreeNode* generateSymbolTable(Ast_Node* ASTRoot);
 void recursive_print_symbol_table(STTreeNode* root, FILE* fp);
 void print_symbol_table(STTreeNode* root, FILE* fp);
 
+void push_function_record(char module_name[]);
+void pop_function_record();
+bool function_is_recursive(char module_name[]);
+void throw_function_is_recursive_error(char module_name[], int line_no);
+void throw_error();
+void functionChecker(Ast_Node* root);
+void semanticAnalyzer(Ast_Node* root);
+
 #endif

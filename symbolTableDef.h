@@ -52,6 +52,7 @@ typedef struct STEntry{
     int width; // If any isDynamic is true, then this is not computed.
     int offset;
     bool isOutputParameter; // Since nesting level for output parameters has to be -1. (fuv)
+    bool hasBeenAssigned; // If an output parameter has never been assigned a value, it's a semantic error.
 }STEntry;
 
 typedef struct ParamListNode {
