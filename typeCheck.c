@@ -63,6 +63,10 @@ Type typecheckdfs(Ast_Node* root){
     // ASSIGNMENT/ARITHMETIC/BOOLEAN/ARRAY TYPE CHECKING
     if(root->type==22){
         Type left_expr=typecheckdfs(root->child_1);
+        STEntry* st_id = recursiveCheckID(root->child_1->symbol_table, root->child_1->token_data);
+        if(st_id==NULL) return TYPE_ERROR;
+        // st_id->hasBeenAssigned=true;
+        if(st_id->is_for_loop_variable==true) {printf("Assigning to loop variable\n"); return TYPE_ERROR;}
         Type right_expr=typecheckdfs(root->child_2);
         
         return checkType(OP_ASSIGN, left_expr, right_expr);
@@ -125,7 +129,7 @@ Type typecheckdfs(Ast_Node* root){
                 } else if(root->child_1->type==41 && root->child_1->child_1->token_data->token==NUM){
                     temp = root->child_1->child_1->token_data->value.num;
                 } else if(root->child_1->type==43){
-                    if(root->child_1->syn_next==NULL && root->child_1->child_1->syn_next==NULL) temp = root->child_1->child_1->child_1->token_data->value.num;
+                    if(root->child_1->syn_next==NULL && root->child_1->child_1->syn_next==NULL && root->child_1->child_1->child_1->token_data->token==NUM) temp = root->child_1->child_1->child_1->token_data->value.num;
                     else{
                         Type index_expr = typecheckdfs(root->child_1);
                         if(index_expr==TYPE_INTEGER) return left_expr;
@@ -139,7 +143,7 @@ Type typecheckdfs(Ast_Node* root){
                 }
 
                 if(boundCheck(root->inh_1->token_data, st_entry, temp)) return left_expr;
-                else{printf("Array out of bounds with index %d\n", temp); return TYPE_ERROR;}
+                else return TYPE_ERROR;
             }
         }
     }
@@ -154,7 +158,7 @@ Type typecheckdfs(Ast_Node* root){
                 int temp;
 
                 if(root->child_1->child_1==NULL){
-                    if(root->child_1->child_2->token_data->token==ID){
+                    if(root->child_1->child_2->token_data->token!=NUM){
                         STEntry* st_id = recursiveCheckID(root->child_1->child_2->symbol_table, root->child_1->child_2->token_data);
                         if(st_id==NULL) return TYPE_ERROR;
                         if(st_id->type!=TYPE_INTEGER) return TYPE_ERROR;
@@ -177,28 +181,82 @@ Type typecheckdfs(Ast_Node* root){
 
                 printf("%d \n", temp);
                 if(boundCheck(root->inh_1->token_data, st_entry, temp)) return TYPE_UNDEFINED;
-                else{printf("Array out of bounds with index %d\n", temp); return TYPE_ERROR;}
+                else return TYPE_ERROR;
             }
         }
     }
 
     //CONDITIONAL SWITCH-CASE
+    if(root->type==46){
+        Type left_expr=typecheckdfs(root->child_1);
+        if(left_expr==TYPE_BOOLEAN && root->child_4!=NULL) {printf("dfault error\n"); return TYPE_ERROR;}
+        else if(left_expr==TYPE_INTEGER && root->child_4==NULL) {printf("default error\n"); return TYPE_ERROR;}
+        else if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_BOOLEAN) return TYPE_ERROR;
+        else{
+            Type stmts;
+            Ast_Node* node =root->child_3;
+            int flag=0, mismatch=0;
+            if(left_expr==TYPE_INTEGER){
+                while(flag==0){
+                    if(typecheckdfs(node->child_1)!=TYPE_INTEGER) {printf("type error- not int\n");}
+                    node=node->child_3;
+                    if(node==NULL) flag++;
+                }
+                return TYPE_UNDEFINED;
+            } else if(left_expr==TYPE_BOOLEAN){
+                int fl=0;
+                while(flag==0){
+                    // printf("r1\n");
+                    if(typecheckdfs(node->child_1)!=TYPE_BOOLEAN) {printf("type error - not bool\n");}
+                    else{
+                        if(node->child_1->token_data->token==TRUE){
+                            if(fl==0 || fl==2) fl++;
+                        } else if(node->child_1->token_data->token==FALSE){
+                            if(fl==0 || fl==1) fl+=2;
+                        }
+                    }
+                    node=node->child_3;
+                    if(node==NULL) flag++;
+                }
+
+                if(fl==3) return TYPE_UNDEFINED;
+                else{
+                    if(fl==0) {printf("No TF\n");return TYPE_ERROR;}
+                    if(fl==1) {printf("No F\n");return TYPE_ERROR;}
+                    if(fl==2) {printf("No T\n");return TYPE_ERROR;}
+                    else {printf("haggu\n"); return TYPE_ERROR;}
+                }
+            }
+        }
+    }
+
+    if(root->type==47){
+        Type left_expr = typecheckdfs(root->child_1);
+
+        if(root->child_3==NULL) return left_expr;
+        Type right_expr = typecheckdfs(root->child_3);
+
+        if(left_expr==right_expr) return left_expr;
+        else return TYPE_ERROR;
+    }
 
 
+
+    //TERMINALS
     if(root->type==0){
         if(root->token_data->token == ID) {
-            return TYPE_INTEGER;
+            // return TYPE_INTEGER;
 
             // SEG FAULT DUE TO RECURSIVECHECKID FUNC -> SYMBOL tABLE AST NODE ME NAI AARI
 
 
             // printf("ok1\n");
             // printf("%d\n", root->symbol_table->lineNumber.begin);
-            // STEntry* st_entry=recursiveCheckID(root->symbol_table, root->token_data);
+            STEntry* st_entry=recursiveCheckID(root->symbol_table, root->token_data);
             // printf("ok2\n");
             // //exist nai karta, kuch bhi aur error batana padega
-            // if(st_entry==NULL) return TYPE_ERROR;
-            // return st_entry->type;
+            if(st_entry==NULL) return TYPE_ERROR;
+            return st_entry->type;
         }
         if(root->token_data->token == NUM) {
             return TYPE_INTEGER;
@@ -212,6 +270,11 @@ Type typecheckdfs(Ast_Node* root){
         return TYPE_UNDEFINED;
     }
 
+
+    //ITERATIVE
+
+
+    //ALL OTHERS
     else{
         Type t;
         if(root->child_1!=NULL) t=typecheckdfs(root->child_1);
