@@ -66,7 +66,7 @@ start
 	declare x,y, p: real;
 	declare k, v2: integer;
 	declare E: array[2..20] of integer;
-	declare Var3, var4: array[100..150] of boolean;
+	declare Var3, var4: array[100..150] of boolean; **Line 69: Only replace spelling of the variable var4 with Var4 (use uppercase V)**
 	get_value(y);
 	get_value(x);
 	declare A,B: array[4..10] of integer;
@@ -104,7 +104,7 @@ start
 				 get_value(u);
 				 u:= k+12 - k*10+u;        **ERROR: Type mismatch error**  
 				 int1:= 20+32;
-				 k:= int1-3;               **ERROR: for loop conditional variable k is assigned value***   
+				 k:= int1-3;               **ERROR: for loop conditional variable k is assigned value**   
 				 break;
 			default: v2:= D[15]+D[20];	      **not an error**	
 				 [v2, u]:=use module function1 with parameters Var3, c, k, Var1, k; **ERROR: Number of output parameters does not match with that of formal parameters**       

@@ -155,7 +155,7 @@ start
 		declare int1: integer;
 		u := y+c*34.2;
 		v:= u-c*p-20.5E+2;
-		[x, int1, m, k]:=use module function1 with parameters Var3, c, k, Var4, k; **ERROR: Input parameter type of Var4 does not match with formal parameter type**		
+		[x, int1, m, k]:=use module function1 with parameters Var3, c, k, Var4, k; **ERROR: Input parameter type of Var4 does not match with formal parameter type, UPD: Line 158: Loop variable k is assigned a value in the scope of for loop**		
 		switch(k)
 		start
 			case 10: declare A:real;
@@ -166,13 +166,13 @@ start
 				 B:=C;           	      **not an error**
 				 E:= Q;                       **ERROR: variables E and Q are of different types	**	 
 				 break;
-			case 20: A:= 12.90 + u*y - c; 
-				 [A, Q, u, y1]:=use module function1 with parameters Var3, c, k, Var1, int1; **ERROR: Output parameter type of u does not match with formal parameter type**      
-				 get_value(Q);
-				 E[7]:= k+12 - Q*10+u;        **ERROR: Type mismatch error**    
+			case 20: A:= 12.90 + u*y - c;  **Line 169: type mismatch**
+				 [A, Q, u, y1]:=use module function1 with parameters Var3, c, k, Var1, int1; **ERROR: Output parameter type of u does not match with formal parameter type,UPD: Line 170: Q is not declared and types of A and u mismatch**      
+				 get_value(Q); **Line 171: Q is not declared**
+				 E[7]:= k+12 - Q*10+u;        **ERROR: Type mismatch error, UPD:Line 172: Q is not declared **    
 				 break;
-			default: E[9]:= B[15]+Q;	      **not an error**	
-				 [A, Q]:=use module function1 with parameters Var3, c, k, Var1, int1; **ERROR: Number of output parametters does not match with that of formal parameters**       
+			default: E[9]:= B[15]+Q;	      **not an error, UPD: Line 174: Q is not declared and B[15] is out of bound**	
+				 [A, Q]:=use module function1 with parameters Var3, c, k, Var1, int1; **ERROR: Number of output parametters does not match with that of formal parameters,UPD: Line 175: Q is not declared and A is of wrong type**       
 				 break;			 	
 		end
 		x:=x + u*v- u<=v;                             **ERROR: Type mismatch error**
@@ -282,7 +282,7 @@ start
 			break;
 		case 3: a:= a*b;
 			break;
-		case 4: a:= a/b;
+		case 4: a:= a/b; **Line 285: type mismatch**
 			break;
 	end					**ERROR: default statement is missing- the type of switch variable is integer**
 end

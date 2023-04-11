@@ -51,18 +51,18 @@ start
 			 declare E: array[4..10] of integer;
 			 B[12]:= k*20; 	                  	
 			 break;
-		case 20: A:= 12.90 + p;       		**ERROR: Case value is incorrect as condiiton variable type is boolean**
+		case 20: A:= 12.90 + p;       		**ERROR: Case value is incorrect as condiiton variable type is boolean, UPD: Line 54: A is not declared**
 			 get_value(Q);			**Variable Q is not declared**
 			 for(m in 10..15)
 			 start
 				n:= n+m;
 			 end
-			 E[7]:= k+12 - Q*10;       **Variable E is not declared**
+			 E[7]:= k+12 - Q*10;       **Variable E is not declared, UPD: Line 60: Q is not declared**
 			 break;
 		case true: m:=m-n;
 			 print(m);			
 			 break;
-		default: E[9]:= B[15]+Q;	      **ERROR: presence of default statement is incorrect as condiiton variable type is boolean, UPD: Variable E is not declared** 
+		default: E[9]:= B[15]+Q;	      **ERROR: presence of default statement is incorrect as condiiton variable type is boolean, UPD: Variable E is not declared, UPD: Line 65: Q is not declared** 
 			 break;			 	
 	end
 	
@@ -95,7 +95,7 @@ start
 			break;
 		case 3: a:= a*b;
 			break;
-		case 4: a:= a/b;
+		case 4: a:= a/b; **Line 98: type mismatch**
 			break;
 	end					**ERROR: default statement is missing- the type of switch variable is integer**
 end

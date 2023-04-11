@@ -63,7 +63,7 @@ start
 				 get_value(Q);		      **ERROR: Q not declared**
 				 A[7]:= k+12 - D[12]*10+u;    **ERROR: Type mismatch error**    
 				 break;
-			default: E[9]:= B[15]+Q;	      **not an error, UPD: Variable E is not declared**	       
+			default: E[9]:= B[15]+Q;	      **not an error, UPD: Variable E is not declared, UPD: Line 66:  Array element B[15] is out of bound and Q is not declared**	       
 				 break;			 	
 		end
 		x:=x + u*v- u<=v;                             **ERROR: Type mismatch error**
@@ -87,8 +87,8 @@ start
 	p:= 23.56;
 	get_value(v_1_2_3);							 		
 	declare B, C: array [2..20] of integer;
-	[ v_1_2_3, u1]:=use module var_demo_array with parameters A,B,p;		
-	[ v_1_2_3, k]:=use module var_demo_array with parameters A,B,p;	
+	[ v_1_2_3, u1]:=use module var_demo_array with parameters A,B,p;	**Line 90: Input parameter B has a type mismatch**	
+	[ v_1_2_3, k]:=use module var_demo_array with parameters A,B,p;		**Line 91: Input parameter B has a type mismatch**
 	declare a,b:integer;
 	a:= 5.89e-2;			        **ERROR: type mismatch error**
 	get_value(b);
