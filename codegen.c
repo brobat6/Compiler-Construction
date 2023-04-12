@@ -298,15 +298,16 @@ void outOfBoundsHelper (STEntry* cur_id, STEntry cur_node) { // cur id is id, an
     int r_index = cur_id->range.upper.value;
     fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_node.offset);
     fprintf(fp, "\tmov bx, %d\n", l_index);
-    fprintf(fp, "\tcmp ax, bx");
-    fprintf(fp, "\tjl ArrayOutOfBoundsError");
+    fprintf(fp, "\tcmp ax, bx\n");
+    fprintf(fp, "\tjl ArrayOutOfBoundsError\n");
     fprintf(fp, "\tmov bx, %d\n", r_index);
-    fprintf(fp, "\tcmp ax, bx");
-    fprintf(fp, "\tjg ArrayOutOfBoundsError");
+    fprintf(fp, "\tcmp ax, bx\n");
+    fprintf(fp, "\tjg ArrayOutOfBoundsError\n");
     fprintf(fp, "\tmov bx, %d\n", l_index);
-    fprintf(fp, "\tsub ax, bx"); // should be >= 0
+    fprintf(fp, "\tsub ax, bx\n"); // should be >= 0
     fprintf(fp, "\tmov bx, %d\n", cur_id->width);
-    fprintf(fp, "\tmul bx");    
+    fprintf(fp, "\tmul bx\n");
+    fprintf(fp, "\tmov rbx, 0");
     fprintf(fp, "\tmov bx, ax\n");
     fprintf(fp, "\tmov dx, %d\n", cur_id->offset);
     fprintf(fp, "\tadd bx, dx\n");
@@ -347,15 +348,15 @@ STEntry outOfBoundsCheckArrIndWithExpr (STEntry* cur_id, Ast_Node* cur_ast_node)
     STEntry new_node = getNewTemporary(cur_id->type);
     outOfBoundsHelper(cur_id, cur_node);
     if (cur_id->type == TYPE_BOOLEAN) {
-        fprintf(fp, "\tmov al, [buffer + bx]\n");
+        fprintf(fp, "\tmov al, [buffer + rbx]\n");
         storeAtOffset(new_node.offset, TYPE_BOOLEAN);
     }
     else if (cur_id->type == TYPE_INTEGER) {
-        fprintf(fp, "\tmov ax, [buffer + bx]\n");
+        fprintf(fp, "\tmov ax, [buffer + rbx]\n");
         storeAtOffset(new_node.offset, TYPE_INTEGER);
     }
     else if (cur_id->type == TYPE_REAL) {
-        fprintf(fp, "\tmov eax, [buffer + bx]\n");//////////////////////////////////////////////////////////////////////////////////////////////////////
+        fprintf(fp, "\tmov eax, [buffer + rbx]\n");//////////////////////////////////////////////////////////////////////////////////////////////////////
         storeAtOffset(new_node.offset, TYPE_REAL);
     }
     return new_node;
@@ -739,19 +740,19 @@ void assignStatement (Ast_Node* cur_ast_node) {
                 storeAtOffset(array_index.offset, TYPE_INTEGER);
             }
         }
-        outOfBoundsHelper(l_entry, array_index);
         STEntry r_value = evaluateExpression(cur_ast_node->child_2);
+        outOfBoundsHelper(l_entry, array_index);
         if (l_entry->type == TYPE_BOOLEAN) {
             fprintf(fp, "\tmov al, [buffer + %d]\n", r_value.offset);
-            fprintf(fp, "\tmov [buffer + bx], al\n");
+            fprintf(fp, "\tmov [buffer + rbx], al\n");
         }
         else if (l_entry->type == TYPE_INTEGER) {
             fprintf(fp, "\tmov ax, [buffer + %d]\n", r_value.offset);
-            fprintf(fp, "\tmov [buffer + bx], ax\n");
+            fprintf(fp, "\tmov [buffer + rbx], ax\n");
         }
         else if (l_entry->type == TYPE_REAL) {
             fprintf(fp, "\tmov eax, [buffer + bx]\n");//////////////////////////////////////////////////////////////////////////////////////
-            fprintf(fp, "\tmov [buffer + bx], eax\n");
+            fprintf(fp, "\tmov [buffer + rbx], eax\n");
         }
     }
     else if (cur_ast_node->type == 23) {
@@ -760,18 +761,18 @@ void assignStatement (Ast_Node* cur_ast_node) {
         }
         else {
             STEntry r_value = evaluateExpression(cur_ast_node->child_1);
-            fprintf(fp, "\tmov bx, %d\n", l_entry->offset);
+            fprintf(fp, "\tmov rbx, %d\n", l_entry->offset);
             if (l_entry->type == TYPE_BOOLEAN) {
                 fprintf(fp, "\tmov al, [buffer + %d]\n", r_value.offset);
-                fprintf(fp, "\tmov [buffer + bx], al\n");
+                fprintf(fp, "\tmov [buffer + rbx], al\n");
             }
             else if (l_entry->type == TYPE_INTEGER) {
                 fprintf(fp, "\tmov ax, [buffer + %d]\n", r_value.offset);
-                fprintf(fp, "\tmov [buffer + bx], ax\n");
+                fprintf(fp, "\tmov [buffer + rbx], ax\n");
             }
             else if (l_entry->type == TYPE_REAL) {
-                fprintf(fp, "\tmov eax, [buffer + bx]\n");//////////////////////////////////////////////////////////////////////////////////////
-                fprintf(fp, "\tmov [buffer + bx], eax\n");
+                fprintf(fp, "\tmov eax, [buffer + rbx]\n");//////////////////////////////////////////////////////////////////////////////////////
+                fprintf(fp, "\tmov [buffer + rbx], eax\n");
             }
         }
     }
