@@ -960,6 +960,15 @@ void assignStatement (Ast_Node* cur_ast_node) {
 // isime check karna hai ki out of bounds to nahi hai
 void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     STEntry* cur_entry = recursiveCheckID(cur_ast_node->symbol_table, cur_ast_node->token_data);
+    if (cur_entry->type == TYPE_BOOLEAN) {
+        cur_entry->width = 1;
+    }
+    else if (cur_entry->type == TYPE_INTEGER) {
+        cur_entry->width = 2;
+    }
+    else {
+        cur_entry->width = 4;
+    }
     if (!cur_entry->isArray) return;
     STEntry l_val = getNewTemporary(TYPE_INTEGER);
     STEntry r_val = getNewTemporary(TYPE_INTEGER);
