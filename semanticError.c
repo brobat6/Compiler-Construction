@@ -39,7 +39,74 @@ void add_error(Error error) {
 void print_semantic_errors(FILE *fp) {
     Error_List* e = error_list;
     while(e != NULL) {
-        fprintf(fp, "Error: %d Line: %d\n", e->error.type, e->error.line);
+        fprintf(fp, "Line : %d, Error : ", e->error.line);
+        
+        if(e->error.type == ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION) {
+            fprintf(fp, "Arithmetic operand type mismatch error about '%s' operator.", e->error.id_name);
+        }
+        if(e->error.type == ERROR_INCOMPATIBLE_RELATIONAL_OPERATION) {
+            fprintf(fp, "Relational operand type mismatch error about '%s' operator.", e->error.id_name);
+        }
+        if(e->error.type == ERROR_INCOMPATIBLE_LOGICAL_OPERATION) {
+            fprintf(fp, "Logical operand type mismatch error about '%s' operator.", e->error.id_name);
+        }
+        if(e->error.type == ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION) {
+            fprintf(fp, "Operand type mismatch error about ':=' operator.");
+        }
+        if(e->error.type == ERROR_UNKNOWN_OPERATOR) {
+            fprintf(fp, "Unknown operator type.");
+        }
+        if(e->error.type == ERROR_ARRAY_OUT_OF_BOUNDS) {
+            fprintf(fp, "element of array %s is out of bound", e->error.id_name);
+        }
+        if(e->error.type == VAR_NOT_INITIALIZED) {
+            fprintf(fp, "Variable %s is not declared.", e->error.id_name);
+        }
+        if(e->error.type == VAR_ASSIGNMENT_TO_FOR_LOOP_VARIABLE) {
+            fprintf(fp, "Loop variable %s cannot be assigned any value.", e->error.id_name);
+        }
+        if(e->error.type == UNARY_ASSIGNMENT_TO_NON_NUM_RNUM) {
+            fprintf(fp, "Type mismatch error while applying unary operator.");
+        }
+        if(e->error.type == UNKNOWN_TERMINAL_TYPE) {
+            fprintf(fp, "Terminal type unknown.");
+        }
+        if(e->error.type == INVALID_SWITCH_TYPE_FOR_CASES) {
+            fprintf(fp, "Switch variable %s cannot be of type real.", e->error.id_name);
+        }
+        if(e->error.type == DEFAULT_CASE_IN_BOOLEAN_SWITCH) {
+            fprintf(fp, "Presence of default statement is incorrect as condition variable type is boolean.");
+        }
+        if(e->error.type == DEFAULT_CASE_IN_INTEGER_SWITCH) {
+            fprintf(fp, "Default statement is missing - the type of switch variable is integer.");
+        }
+        if(e->error.type == CASE_NOT_INTEGER_TYPE_FOR_INTEGER_SWITCH) {
+            fprintf(fp, "Case value is incorrect as condition variable type is integer.");
+        }
+        if(e->error.type == CASE_NOT_BOOLEAN_TYPE_FOR_BOOLEAN_SWITCH) {
+            fprintf(fp, "Case value is incorrect as condition variable type is boolean.");
+        }
+        if(e->error.type == MISSING_TRUE_FALSE_CASES) {
+            fprintf(fp, "Case value true and false are missing as condition variable type is boolean.");
+        }
+        if(e->error.type == MISSING_TRUE_CASES) {
+            fprintf(fp, "Case value true is missing as condition variable type is boolean.");
+        }
+        if(e->error.type == MISSING_FALSE_CASES) {
+            fprintf(fp, "Case value false is missing as condition variable type is boolean.");
+        }
+        if(e->error.type == UNEXPECTED_FLAG_VALUE) {
+            fprintf(fp, "Unexpected error has occurred.");
+        }
+        if(e->error.type == VAR_NOT_OF_TYPE_ARRAY) {
+            fprintf(fp, "Variable %s is not of type array.", e->error.id_name);
+        }
+        if(e->error.type == NON_INTEGER_ARRAY_INDEX) {
+            fprintf(fp, "Array index does not evaluate to type integer");
+        }
+
+        
         e = e->next;
+         fprintf(fp, "\n");
     }
 }
