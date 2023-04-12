@@ -334,8 +334,6 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             STEntry* entry = createSTEntry(tempEntry);
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
-            entry->offset = curOffset;
-            curOffset += entry->width;
             // Currently adding input/output lists in CHILD symbol table.
             if(checkID(elder_child_st_node, entry->variableName) != NULL) {
                 Error e;
@@ -345,6 +343,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
                 strcpy(e.id_name, entry->variableName);
                 add_error(e);
             } else {
+                entry->offset = curOffset;
+                curOffset += entry->width;
                 ht_store(elder_child_st_node->hashTable, entry->variableName, entry);
                 add_to_parameter_list(func->inputParamList, entry);
             }
@@ -361,8 +361,6 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             entry->isOutputParameter = true;
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
-            entry->offset = curOffset;
-            curOffset += entry->width;
             // Currently adding input/output lists in CHILD symbol table.
             // Change if necessary !!!!!!
             if(checkID(younger_child_st_node, entry->variableName) != NULL) {
@@ -373,6 +371,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
                 strcpy(e.id_name, entry->variableName);
                 add_error(e);
             } else {
+                entry->offset = curOffset;
+                curOffset += entry->width;
                 ht_store(younger_child_st_node->hashTable, entry->variableName, entry);
                 add_to_parameter_list(func->outputParamList, entry);
             }
@@ -396,8 +396,6 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             STEntry* newEntry = createSTEntry(tempEntry);
             strcpy(newEntry->variableName, temp->child_1->token_data->lexeme);
             newEntry->declarationLineNumber = temp->child_1->token_data->lineNumber; 
-            newEntry->offset = curOffset;
-            curOffset += newEntry->width;
             if(checkID(currSTNode, newEntry->variableName) != NULL) {
                 // ERROR!!!!! 
                 Error e;
@@ -407,6 +405,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
                 strcpy(e.id_name, newEntry->variableName);
                 add_error(e);
             } else {
+                newEntry->offset = curOffset;
+                curOffset += newEntry->width;
                 ht_store(currSTNode->hashTable, newEntry->variableName, newEntry);
             }
             temp = temp->syn_next;
