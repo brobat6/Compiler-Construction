@@ -865,12 +865,14 @@ void forStatement (Ast_Node* cur_ast_node) {
     fprintf(fp, "comp_label%d:\n", cur_label);
     codeGenASTTraversal(cur_ast_node->child_4);
     if (l_value <= r_value) {
+        fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_id->offset);
         fprintf(fp, "\tadd ax, 1\n");
         fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
         fprintf(fp, "\tcmp ax, bx\n");
         fprintf(fp, "\tjle comp_label%d\n", cur_label);
     }
     else {
+        fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_id->offset);
         fprintf(fp, "\tsub ax, 1\n");
         fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
         fprintf(fp, "\tcmp ax, bx\n");
