@@ -9,7 +9,7 @@ CC=gcc				#compiler
 TARGET=a	#target file name
 
 all: 
-	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c symbolTable.c typeCheck.c semanticError.c codegen.c -o $(TARGET)
+	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c symbolTable.c typeCheck.c semanticError.c codegen.c semanticAnalyzer.c -o $(TARGET)
 
 clean:
 	rm -rf $(TARGET)

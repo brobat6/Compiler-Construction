@@ -38,75 +38,126 @@ void add_error(Error error) {
 
 void print_semantic_errors(FILE *fp) {
     Error_List* e = error_list;
+    if(e == NULL) {
+        fprintf(fp, "There are no semantic errors in the code!\n");
+        return;
+    }
+    fprintf(fp, "List of semantic errors:\n");
     while(e != NULL) {
         fprintf(fp, "Line : %d, Error : ", e->error.line);
         
+        // Shivam Errors
         if(e->error.type == ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION) {
             fprintf(fp, "Arithmetic operand type mismatch error about '%s' operator.", e->error.id_name);
         }
-        if(e->error.type == ERROR_INCOMPATIBLE_RELATIONAL_OPERATION) {
+        else if(e->error.type == ERROR_INCOMPATIBLE_RELATIONAL_OPERATION) {
             fprintf(fp, "Relational operand type mismatch error about '%s' operator.", e->error.id_name);
         }
-        if(e->error.type == ERROR_INCOMPATIBLE_LOGICAL_OPERATION) {
+        else if(e->error.type == ERROR_INCOMPATIBLE_LOGICAL_OPERATION) {
             fprintf(fp, "Logical operand type mismatch error about '%s' operator.", e->error.id_name);
         }
-        if(e->error.type == ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION) {
+        else if(e->error.type == ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION) {
             fprintf(fp, "Operand type mismatch error about ':=' operator.");
         }
-        if(e->error.type == ERROR_UNKNOWN_OPERATOR) {
+        else if(e->error.type == ERROR_UNKNOWN_OPERATOR) {
             fprintf(fp, "Unknown operator type.");
         }
-        if(e->error.type == ERROR_ARRAY_OUT_OF_BOUNDS) {
-            fprintf(fp, "element of array %s is out of bound", e->error.id_name);
+        else if(e->error.type == ERROR_ARRAY_OUT_OF_BOUNDS) {
+            fprintf(fp, "Element of array %s is out of bounds.", e->error.id_name);
         }
-        if(e->error.type == VAR_NOT_INITIALIZED) {
+        else if(e->error.type == VAR_NOT_INITIALIZED) {
             fprintf(fp, "Variable %s is not declared.", e->error.id_name);
         }
-        if(e->error.type == VAR_ASSIGNMENT_TO_FOR_LOOP_VARIABLE) {
-            fprintf(fp, "Loop variable %s cannot be assigned any value.", e->error.id_name);
+        else if(e->error.type == VAR_ASSIGNMENT_TO_FOR_LOOP_VARIABLE) {
+            fprintf(fp, "For loop variable %s cannot be assigned any value.", e->error.id_name);
         }
-        if(e->error.type == UNARY_ASSIGNMENT_TO_NON_NUM_RNUM) {
+        else if(e->error.type == UNARY_ASSIGNMENT_TO_NON_NUM_RNUM) {
             fprintf(fp, "Type mismatch error while applying unary operator.");
         }
-        if(e->error.type == UNKNOWN_TERMINAL_TYPE) {
+        else if(e->error.type == UNKNOWN_TERMINAL_TYPE) {
             fprintf(fp, "Terminal type unknown.");
         }
-        if(e->error.type == INVALID_SWITCH_TYPE_FOR_CASES) {
+        else if(e->error.type == INVALID_SWITCH_TYPE_FOR_CASES) {
             fprintf(fp, "Switch variable %s cannot be of type real.", e->error.id_name);
         }
-        if(e->error.type == DEFAULT_CASE_IN_BOOLEAN_SWITCH) {
+        else if(e->error.type == DEFAULT_CASE_IN_BOOLEAN_SWITCH) {
             fprintf(fp, "Presence of default statement is incorrect as condition variable type is boolean.");
         }
-        if(e->error.type == DEFAULT_CASE_IN_INTEGER_SWITCH) {
+        else if(e->error.type == DEFAULT_CASE_IN_INTEGER_SWITCH) {
             fprintf(fp, "Default statement is missing - the type of switch variable is integer.");
         }
-        if(e->error.type == CASE_NOT_INTEGER_TYPE_FOR_INTEGER_SWITCH) {
+        else if(e->error.type == CASE_NOT_INTEGER_TYPE_FOR_INTEGER_SWITCH) {
             fprintf(fp, "Case value is incorrect as condition variable type is integer.");
         }
-        if(e->error.type == CASE_NOT_BOOLEAN_TYPE_FOR_BOOLEAN_SWITCH) {
+        else if(e->error.type == CASE_NOT_BOOLEAN_TYPE_FOR_BOOLEAN_SWITCH) {
             fprintf(fp, "Case value is incorrect as condition variable type is boolean.");
         }
-        if(e->error.type == MISSING_TRUE_FALSE_CASES) {
+        else if(e->error.type == MISSING_TRUE_FALSE_CASES) {
             fprintf(fp, "Case value true and false are missing as condition variable type is boolean.");
         }
-        if(e->error.type == MISSING_TRUE_CASES) {
+        else if(e->error.type == MISSING_TRUE_CASES) {
             fprintf(fp, "Case value true is missing as condition variable type is boolean.");
         }
-        if(e->error.type == MISSING_FALSE_CASES) {
+        else if(e->error.type == MISSING_FALSE_CASES) {
             fprintf(fp, "Case value false is missing as condition variable type is boolean.");
         }
-        if(e->error.type == UNEXPECTED_FLAG_VALUE) {
+        else if(e->error.type == UNEXPECTED_FLAG_VALUE) {
             fprintf(fp, "Unexpected error has occurred.");
         }
-        if(e->error.type == VAR_NOT_OF_TYPE_ARRAY) {
+        else if(e->error.type == VAR_NOT_OF_TYPE_ARRAY) {
             fprintf(fp, "Variable %s is not of type array.", e->error.id_name);
         }
-        if(e->error.type == NON_INTEGER_ARRAY_INDEX) {
+        else if(e->error.type == NON_INTEGER_ARRAY_INDEX) {
             fprintf(fp, "Array index does not evaluate to type integer");
         }
-
-        
+        else if(e->error.type == ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION) {
+            fprintf(fp, "Expression in RHS cannot be assigned to array %s.", e->error.id_name);
+        }
+        else if(e->error.type == ERROR_INCOMPATIBLE_ARRAY_OPERATION) {
+            fprintf(fp, "Cannot operate on the array %s as a whole.", e->error.id_name);
+        }
+        // Tanveer Errors
+        else if(e->error.type == ERROR_MODULE_REDECLARATION) {
+            fprintf(fp, "Module %s already exists (previously declared at line %d).", e->error.module_name, e->error.line_2);
+        }
+        else if(e->error.type == ERROR_MODULE_REDEFINITION) {
+            fprintf(fp, "Module %s has already been defined previously.", e->error.module_name);
+        }
+        else if(e->error.type == ERROR_IDENTIFIER_ALREADY_EXISTS) {
+            fprintf(fp, "Variable %s already exists (previously declared at line %d).", e->error.id_name, e->error.line_2);
+        }
+        else if(e->error.type == ERROR_FUNCTION_RECURSIVE) {
+            fprintf(fp, "Recursive function calls are not allowed!");
+        }
+        else if(e->error.type == ERROR_FUNCTION_OUTPUT_NOT_BEING_ASSIGNED) {
+            fprintf(fp, "Number of parameters returned by module %s is MORE than the number of parameters on LHS of assignment.", e->error.module_name);
+        }
+        else if(e->error.type == ERROR_FUNCTION_OUTPUT_BEING_ASSIGNED_EXTRA) {
+            fprintf(fp, "Number of parameters returned by module %s is LESS than the number of parameters on LHS of assignment.", e->error.module_name);
+        }
+        else if(e->error.type == ERROR_FUNCTION_OUTPUT_TYPES_DONT_MATCH) {
+            fprintf(fp, "The type of function output parameter %s is not the same as that of %s, to which the output is being assigned.", e->error.id_name, e->error.id_name_2);
+        }
+        else if(e->error.type == ERROR_FUNCTION_OUTPUT_ARRAY) {
+            fprintf(fp, "%s is an array, it can never be an output parameter of a function.", e->error.id_name);
+        }
+        else if(e->error.type == ERROR_FUNCTION_INPUT_TYPES_DONT_MATCH) {
+            fprintf(fp, "Type of formal input parameter %s does not match the actual input parameter %s.", e->error.id_name_2, e->error.id_name);
+        }
+        else if(e->error.type == ERROR_FUNCTION_GETS_LESS_INPUT) {
+            fprintf(fp, "Module %s takes LESS input parameters than its definition.", e->error.module_name);
+        }
+        else if(e->error.type == ERROR_FUNCTION_GETS_MORE_INPUT) {
+            fprintf(fp, "Module %s takes MORE input parameters than its definition.", e->error.module_name);
+        }
+        else if(e->error.type == ERROR_FUNCTION_NOT_DECLARED) {
+            fprintf(fp, "Module %s has not been declared but is being called.", e->error.module_name);
+        }
+        else {
+            fprintf(fp, "There is an error but the print statement has not been implemented yet.");
+        }
         e = e->next;
-         fprintf(fp, "\n");
+        fprintf(fp, "\n");
     }
+    fprintf(fp, "\n");
 }

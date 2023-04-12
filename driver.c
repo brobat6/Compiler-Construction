@@ -10,6 +10,7 @@ ID: 2020A7PS0120P			    Name: Kshitij Garg
 #include "typeCheck.h"
 #include "semanticError.h"
 #include "codegen.h"
+#include "semanticAnalyzer.h"
 
 ht* initialize () {
     readGrammarFile();

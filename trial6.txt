@@ -1,0 +1,22 @@
+**Basic program for switch statement**
+<<<driver program>>>
+start
+declare a,b,c,x: integer;
+get_value(x);
+print(x);
+a:=100;
+b:=200;
+c:=300;
+switch(x)
+	start
+		case 1: 
+			print(a);
+            break;
+		case 2: 
+            print(b);
+            break;
+		default:
+            print(c);
+			break;
+	end	
+end
