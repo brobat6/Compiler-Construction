@@ -73,7 +73,7 @@ void outOfBoundsHelper (STEntry* cur_id, STEntry cur_node) { // cur id is id, an
     fprintf(fp, "\tsub ax, bx\n"); // should be >= 0
     fprintf(fp, "\tmov bx, %d\n", cur_id->width);
     fprintf(fp, "\tmul bx\n");
-    fprintf(fp, "\tmov rbx, 0");
+    fprintf(fp, "\tmov rbx, 0\n");
     fprintf(fp, "\tmov bx, ax\n");
     fprintf(fp, "\tmov dx, %d\n", cur_id->offset);
     fprintf(fp, "\tadd bx, dx\n");
