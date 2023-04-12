@@ -4,18 +4,8 @@
 
 <<<driver program>>>
 start
-	declare x, y, z:integer;
-	declare a, b, c:integer;
-	declare u, v: boolean;
 	declare A: array[-3..2] of integer;
-	get_value(A); 
-                          
-**Note: Implement get_value(A) using type information of A. Your code template should first inform user of the size, range indices and type of data and read accordingly to populate the memory locations allocated for elements of A**
-   
-        y:= a+x+A[0]*2 + A[1]*3 +A[-3];                **bound checking at compile time must have been done before code generation**
-	print(y);	
-	print(A);
-
+	y:= a+x+A[0]*2 + A[1]*3 +A[-3];
 end
 
 ** Expected output

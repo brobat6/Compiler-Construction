@@ -943,14 +943,8 @@ void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////
         }
     }
     else {
-        if (cur_entry->range.lower_sign == 1) {
-            fprintf(fp, "\tmov ax, %d\n", cur_entry->range.lower.value);
-            fprintf(fp, "\tmov [buffer + %d], ax\n", l_val.offset);
-        }
-        else { // -1
-            fprintf(fp, "\tmov ax, %d\n", -cur_entry->range.lower.value);
-            fprintf(fp, "\tmov [buffer + %d], ax\n", l_val.offset);
-        }
+        fprintf(fp, "\tmov ax, %d\n", cur_entry->range.lower.value);
+        fprintf(fp, "\tmov [buffer + %d], ax\n", l_val.offset);
     }
     if (cur_entry->isDynamic.upper) { // upper bound is dynamic
         Token_Info* t=(Token_Info*)malloc(sizeof(Token_Info));
@@ -969,14 +963,8 @@ void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////
         }
     }
     else {
-        if (cur_entry->range.upper_sign == 1) {
-            fprintf(fp, "\tmov ax, %d\n", cur_entry->range.upper.value);
-            fprintf(fp, "\tmov [buffer + %d], ax\n", r_val.offset);
-        }
-        else { // -1
-            fprintf(fp, "\tmov ax, %d\n", -cur_entry->range.upper.value);
-            fprintf(fp, "\tmov [buffer + %d], ax\n", r_val.offset);
-        }
+        fprintf(fp, "\tmov ax, %d\n", cur_entry->range.upper.value);
+        fprintf(fp, "\tmov [buffer + %d], ax\n", r_val.offset);
     }
     cur_entry->range.lower.value = l_val.offset;
     cur_entry->range.upper.value = r_val.offset;
