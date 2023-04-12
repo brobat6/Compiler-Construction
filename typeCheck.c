@@ -167,8 +167,7 @@ Type typecheckdfs(Ast_Node* root){
         } else {
             right_expr = typecheckdfs(root->syn_next);
         }
-
-        root->datatype=checkType(root->inh_1->token_data, op, left_expr, right_expr);
+        root->datatype=checkType(root->child_1->token_data, op, left_expr, right_expr);
         return root->datatype;
     }
 
