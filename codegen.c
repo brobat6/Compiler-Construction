@@ -213,24 +213,48 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
                         fprintf(fp, "\tjne comp_label%d\n", comp_label + 1);
                         fprintf(fp, "\tmov rdi, outputFalse\n");
                         fprintf(fp, "comp_label%d:\n", comp_label + 1);
+                        fprintf(fp, "\tpush rax\n");
+                        fprintf(fp, "\tpush rbx\n");
+                        fprintf(fp, "\tpush rcx\n");
+                        fprintf(fp, "\tpush rdx\n");
                         fprintf(fp, "\tcall puts\n");
+                        fprintf(fp, "\tpop rdx\n");
+                        fprintf(fp, "\tpop rcx\n");
+                        fprintf(fp, "\tpop rbx\n");
+                        fprintf(fp, "\tpop rax\n");
                     }
                     else if (cur_id->type == TYPE_INTEGER) {
                         fprintf(fp, "\tmov rdi, outputInt\n");
                         fprintf(fp, "\tmov si, [buffer + rbx]\n");
+                        fprintf(fp, "\tpush rax\n");
+                        fprintf(fp, "\tpush rbx\n");
+                        fprintf(fp, "\tpush rcx\n");
+                        fprintf(fp, "\tpush rdx\n");
                         fprintf(fp, "\tcall printf\n");
+                        fprintf(fp, "\tpop rdx\n");
+                        fprintf(fp, "\tpop rcx\n");
+                        fprintf(fp, "\tpop rbx\n");
+                        fprintf(fp, "\tpop rax\n");
                     }
                     else if (cur_id->type == TYPE_REAL) {
 
 
                         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+                        fprintf(fp, "\tpush rax\n");
+                        fprintf(fp, "\tpush rbx\n");
+                        fprintf(fp, "\tpush rcx\n");
+                        fprintf(fp, "\tpush rdx\n");
                         fprintf(fp, "\tcall printf\n");
+                        fprintf(fp, "\tpop rdx\n");
+                        fprintf(fp, "\tpop rcx\n");
+                        fprintf(fp, "\tpop rbx\n");
+                        fprintf(fp, "\tpop rax\n");
                     }
                     fprintf(fp, "\tadd rbx, %d\n", cur_id->width);
                     fprintf(fp, "\tadd dx, 1\n");
                     fprintf(fp, "\tcmp cx, dx\n");
-                    fprintf(fp, "\tjne comp_label%d\n", comp_label);
+                    fprintf(fp, "\tjge comp_label%d\n", comp_label);
                     comp_label+=2;
                 }
                 else {
@@ -906,7 +930,7 @@ void assignStatement (Ast_Node* cur_ast_node) {
             fprintf(fp, "\tadd rax, %d\n", l_entry->width);
             fprintf(fp, "\tadd dx, 1\n");
             fprintf(fp, "\tcmp cx, dx\n");
-            fprintf(fp, "\tjne comp_label%d\n", comp_label);
+            fprintf(fp, "\tjge comp_label%d\n", comp_label);
             comp_label++;
         }
         else {
