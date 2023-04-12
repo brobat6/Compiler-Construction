@@ -910,7 +910,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     // 130. <caseStmts> -> CASE <value> COLON <statements> BREAK SEMICOL <N9>
         root->type = 47;
         root->inh_1 = prev;
-        temp = curr->firstchild->next; 
+        temp = curr->firstchild->next;
         root->child_1 = generateAST(temp, NULL); // value
         temp = temp->next->next;
         root->child_2 = generateAST(temp, NULL); // statements

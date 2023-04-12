@@ -796,6 +796,53 @@ void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////
     }
 }
 
+void switchCaseStatements (Ast_Node* cur_ast_node) {
+    STEntry* cur_id = recursiveCheckID(cur_ast_node->child_1->symbol_table, cur_ast_node->child_1->token_data);
+    if (cur_id->type == TYPE_INTEGER) {
+        fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_id->offset);
+        Ast_Node* cur_case_stmt = cur_ast_node->child_3;
+        int fin_label = comp_label;
+        comp_label++;
+        while (cur_case_stmt) {
+            fprintf(fp, "\tmov bx, %d\n", cur_case_stmt->child_1->token_data->value.num);
+            fprintf(fp, "\tcmp ax, bx\n");
+            fprintf(fp, "\tjne comp_label%d\n", comp_label);
+            codeGenASTTraversal(cur_case_stmt->child_2);
+            fprintf(fp, "\tjmp comp_label%d\n", fin_label);
+            fprintf(fp, "comp_label%d:\n", comp_label);
+            comp_label++;
+            cur_case_stmt = cur_case_stmt->child_3;
+        }
+        // default
+        codeGenASTTraversal(cur_ast_node->child_4->child_1);
+        fprintf(fp, "comp_label%d:\n", fin_label);
+    }
+    else if (cur_id->type == TYPE_BOOLEAN) {
+        fprintf(fp, "\tmov al, [buffer + %d]\n", cur_id->offset);
+        Ast_Node* cur_case_stmt = cur_ast_node->child_3;
+        int fin_label = comp_label;
+        comp_label++;
+        while (cur_case_stmt) {
+            if (cur_case_stmt->child_1->token_data->value.b == true) {
+                fprintf(fp, "\tmov bl, 1\n");
+            }
+            else {
+                fprintf(fp, "\tmov bx, 0\n");
+            }
+            fprintf(fp, "\tcmp al, bl\n");
+            fprintf(fp, "\tjne comp_label%d\n", comp_label);
+            codeGenASTTraversal(cur_case_stmt->child_2);
+            fprintf(fp, "\tjmp comp_label%d\n", fin_label);
+            fprintf(fp, "comp_label%d:\n", comp_label);
+            comp_label++;
+            cur_case_stmt = cur_case_stmt->child_3;
+        }
+        fprintf(fp, "comp_label%d:\n", fin_label);
+    }
+}
+
+
+
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
     if (!cur_ast_node) return;
     switch (cur_ast_node->type)
@@ -987,12 +1034,11 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         codeGenASTTraversal(cur_ast_node->child_2);
         break;
     case 46:
-        // swicth
-        codeGenASTTraversal(cur_ast_node->child_2);
+        // switch
+        switchCaseStatements(cur_ast_node);
         break;
     case 47:
         // switch
-        codeGenASTTraversal(cur_ast_node->child_2);
         break;
     case 48:
         // iterativeStmt - for loop
