@@ -535,10 +535,10 @@ void printNodeInfo (treeNode* treenode, FILE* tree_fp) {
         struct token_info cur_token = treenode->token;
         fprintf(tree_fp, "%s %d %s ", treenode->symbol->name, cur_token.lineNumber, tokenToString[cur_token.token]);
         if (cur_token.token==NUM) {
-            fprintf(tree_fp, "%d ", cur_token.value);
+            fprintf(tree_fp, "%d ", cur_token.value.num);
         }
         else if (cur_token.token==RNUM) {
-            fprintf(tree_fp, "%f ", cur_token.value);
+            fprintf(tree_fp, "%f ", cur_token.value.rnum);
         }
         else {
             fprintf(tree_fp, "--- ");
