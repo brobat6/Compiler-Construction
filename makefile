@@ -6,7 +6,7 @@
 #Name: Tanveer Singh		ID:2020A7PS0084P
 
 CC=gcc				#compiler
-TARGET=stage1exe	#target file name
+TARGET=a	#target file name
 
 all: 
 	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c symbolTable.c typeCheck.c semanticError.c -o $(TARGET)
