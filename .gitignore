@@ -4,3 +4,5 @@ stage1exe
 *.exe
 trial.txt
 .idea
+.run
+driver
