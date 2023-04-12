@@ -6,3 +6,4 @@ trial.txt
 .idea
 .run
 driver
+*.asm
