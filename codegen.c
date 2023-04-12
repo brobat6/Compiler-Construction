@@ -10,7 +10,7 @@
 // checkArrayBounds and setArrayBounds saath saath karne hain
 
 //////////////////// arrays are pass by reference, so whatever changes are made in function should be made to the original array too
-
+// lol
 FILE* fp;
 storageStructure st;
 int cur_offset;
