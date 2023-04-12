@@ -430,7 +430,7 @@ Type typecheckdfs(Ast_Node* root){
 
             else{
                 root->datatype=TYPE_ERROR;
-                    return TYPE_ERROR;
+                return left_expr;
             }
         }
     }
