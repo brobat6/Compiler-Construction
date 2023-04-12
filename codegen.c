@@ -839,7 +839,22 @@ void switchCaseStatements (Ast_Node* cur_ast_node) {
     }
 }
 
+void forStatement (Ast_Node* cur_ast_node) {
+    STEntry* cur_id = recursiveCheckID(cur_ast_node->child_1->symbol_table, cur_ast_node->child_1->token_data);
+    Ast_Node* range_for_loop = cur_ast_node->child_2;
+    if (range_for_loop->child_1->child_1 == NULL || range_for_loop->child_1->child_1->token_data->token == PLUS) {
 
+    }
+    else {
+
+    }
+    if (range_for_loop->child_2->child_1 == NULL || range_for_loop->child_2->child_1->token_data->token == PLUS) {
+
+    }
+    else {
+        
+    }
+}
 
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
     if (!cur_ast_node) return;
