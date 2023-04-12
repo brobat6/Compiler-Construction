@@ -576,9 +576,9 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
         // Array Range
         if(data->isArray) {
             if(data->isDynamic.lower) {
-                fprintf(fp, "%-10s[%s -","", data->range.lower.lexeme);
+                fprintf(fp, "%-10s[%s ,","", data->range.lower.lexeme);
             } else {
-                fprintf(fp, "%-10s[%d -","", data->range.lower.value);
+                fprintf(fp, "%-10s[%d ,","", data->range.lower.value);
             }
             if(data->isDynamic.upper) {
                 fprintf(fp, " %s]", data->range.upper.lexeme);
