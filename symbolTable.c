@@ -415,24 +415,66 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         generateST(currSTNode, root->child_2);
         return;
     }
-    if(root->type == 46) {
-        // Conditional statement (SWITCH)
+
+    /**
+     * Initially, symbol table was created for entire SWITCH statement. But consider 
+     * the case : 
+     * case 1 : declare m
+     * case 2 : m := 3
+     * This should give an error!
+     * So, instead of one symbol table for all cases, there needs to be seperate
+     * symbol table for each specific case, including default.
+     * I am leaving old code commented.
+    */
+    if(root->type == 47) {
+        // Case statement
         int start_line_no = root->child_1->token_data->lineNumber;
-        int end_line_no = root->child_5->token_data->lineNumber;
+        int end_line_no = root->token_data->lineNumber;
         STTreeNode* childSTNode = createSTTreeNode();
         addSTChild(currSTNode, childSTNode);
         (childSTNode->lineNumber).begin = start_line_no;
         (childSTNode->lineNumber).end = end_line_no;
         strcpy(childSTNode->moduleName, currSTNode->moduleName);
         childSTNode->offset = curOffset;
-        generateST(currSTNode, root->child_1);
+        generateST(childSTNode, root->child_1);
         generateST(childSTNode, root->child_2);
-        generateST(childSTNode, root->child_3);
-        generateST(childSTNode, root->child_4);
-        generateST(childSTNode, root->child_5);
+        childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        generateST(currSTNode, root->child_3);
+        return;
+    }
+    if(root->type == 52) {
+        // Default statement
+        int start_line_no = root->token_data->lineNumber;
+        int end_line_no = root->child_2->token_data->lineNumber;
+        STTreeNode* childSTNode = createSTTreeNode();
+        addSTChild(currSTNode, childSTNode);
+        (childSTNode->lineNumber).begin = start_line_no;
+        (childSTNode->lineNumber).end = end_line_no;
+        strcpy(childSTNode->moduleName, currSTNode->moduleName);
+        childSTNode->offset = curOffset;
+        generateST(childSTNode, root->child_1);
+        generateST(childSTNode, root->child_2);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
         return;
     }
+    // if(root->type == 46) {
+    //     // Conditional statement (SWITCH)
+    //     int start_line_no = root->child_1->token_data->lineNumber;
+    //     int end_line_no = root->child_5->token_data->lineNumber;
+    //     STTreeNode* childSTNode = createSTTreeNode();
+    //     addSTChild(currSTNode, childSTNode);
+    //     (childSTNode->lineNumber).begin = start_line_no;
+    //     (childSTNode->lineNumber).end = end_line_no;
+    //     strcpy(childSTNode->moduleName, currSTNode->moduleName);
+    //     childSTNode->offset = curOffset;
+    //     generateST(currSTNode, root->child_1);
+    //     generateST(childSTNode, root->child_2);
+    //     generateST(childSTNode, root->child_3);
+    //     generateST(childSTNode, root->child_4);
+    //     generateST(childSTNode, root->child_5);
+    //     childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+    //     return;
+    // }
     if(root->type == 48) {
         // FOR
 

@@ -63,7 +63,7 @@ void print_semantic_errors(FILE *fp) {
             fprintf(fp, "Unknown operator type.");
         }
         else if(e->error.type == ERROR_ARRAY_OUT_OF_BOUNDS) {
-            fprintf(fp, "element of array %s is out of bound", e->error.id_name);
+            fprintf(fp, "Element of array %s is out of bounds.", e->error.id_name);
         }
         else if(e->error.type == VAR_NOT_INITIALIZED) {
             fprintf(fp, "Variable %s is not declared.", e->error.id_name);

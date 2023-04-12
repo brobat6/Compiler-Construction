@@ -70,6 +70,7 @@ int boundCheck(Token_Info* tk_data, STEntry* st_entry, int index){
         // printf("Line %d: Array %s out of bounds.\n", tk_data->lineNumber, tk_data->lexeme);
         Error e;
         e.type=ERROR_ARRAY_OUT_OF_BOUNDS;
+        strcpy(e.id_name, st_entry->variableName);
         e.line=tk_data->lineNumber;
         add_error(e);
         return 0;
@@ -85,6 +86,8 @@ Operator token_to_op(Token t){
 }
 
 Type typecheckdfs(Ast_Node* root){
+
+    if(root == NULL) return TYPE_UNDEFINED;
 
     // DEF MODULE ID ... 
     // Don't want to check types in input_plist or ret
@@ -572,6 +575,9 @@ Type typecheckdfs(Ast_Node* root){
             return TYPE_ERROR;
         }
 
+        typecheckdfs(root->child_3);
+        typecheckdfs(root->child_4);
+
         //Check that boolean switch-case does not have a default type, else throw an error.
         if(left_expr==TYPE_BOOLEAN && root->child_4!=NULL){
             Error e;
@@ -714,6 +720,8 @@ Type typecheckdfs(Ast_Node* root){
     //Return type of case to the parent function where it is checked if it matches switch type.
     if(root->type==47){
         root->datatype=typecheckdfs(root->child_1);
+        typecheckdfs(root->child_2);
+        typecheckdfs(root->child_3);
         return root->datatype;
     }
 
