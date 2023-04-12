@@ -69,7 +69,7 @@ void print_semantic_errors(FILE *fp) {
             fprintf(fp, "Variable %s is not declared.", e->error.id_name);
         }
         else if(e->error.type == VAR_ASSIGNMENT_TO_FOR_LOOP_VARIABLE) {
-            fprintf(fp, "Loop variable %s cannot be assigned any value.", e->error.id_name);
+            fprintf(fp, "For loop variable %s cannot be assigned any value.", e->error.id_name);
         }
         else if(e->error.type == UNARY_ASSIGNMENT_TO_NON_NUM_RNUM) {
             fprintf(fp, "Type mismatch error while applying unary operator.");

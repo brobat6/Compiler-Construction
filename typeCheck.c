@@ -3,7 +3,8 @@
 //Check if the operation is valid, else throw appropriate error.
 Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2) {
 
-    if(t1==TYPE_ERROR || t2==TYPE_ERROR || t1==TYPE_UNDEFINED|| t2==TYPE_UNDEFINED) return TYPE_UNDEFINED;
+
+    if(t1==TYPE_ERROR || t2==TYPE_ERROR || t1==TYPE_UNDEFINED|| t2==TYPE_UNDEFINED) return t1;
 
     Error e;
 
@@ -68,6 +69,7 @@ Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2) {
 int boundCheck(Token_Info* tk_data, STEntry* st_entry, int index){
     int lower_bound=st_entry->range.lower.value;
     int upper_bound=st_entry->range.upper.value;
+    // printf("Hm %d\n", tk_data->lineNumber);
 
     if(index>=lower_bound && index<=upper_bound) return 1;
     else{
