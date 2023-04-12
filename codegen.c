@@ -1100,7 +1100,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         break;
     case 49:
         // iterativeStmt - while loop
-        
+        whileStatement(cur_ast_node);
         break;
     case 50:
         // for loop
