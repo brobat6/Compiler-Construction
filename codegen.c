@@ -4,7 +4,7 @@
 // rbp, rbx, r12, r13, r14, r15 -- DO NOT USE
 // All others free to use
 
-////////////////// create a label ArrayOutOfBoundsError
+////////////////// create a label ArrayOutOfBoundsError, IncorrectBoundsError
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // checkArrayBounds and setArrayBounds saath saath karne hain
@@ -14,7 +14,7 @@
 FILE* fp;
 storageStructure st;
 int cur_offset;
-int comp_label = 0;
+int comp_label = 1;
 
 void initialiseStorage () {
     st.capacity = 10;
@@ -54,6 +54,29 @@ void printDataSection () {
     fprintf(fp, "outputFloat:  db  '%%f', 10, 0\n");
     fprintf(fp, "outputTrue:  db  'true', 0\n");
     fprintf(fp, "outputFalse:  db  'false', 0\n");
+    fprintf(fp, "outOfBounds:  db  'Array index out of bounds - Execution stopped', 0\n");
+    fprintf(fp, "incorrectBounds:  db  'Array bounds incorrect - Execution stopped', 0\n");
+    fprintf(fp, "uncompatibleAssignment:  db  'Uncompatible Array Assignment - Execution stopped', 0\n");
+}
+
+void outOfBoundsHelper (STEntry* cur_id, STEntry cur_node) { // cur id is id, and cur node contains arr index
+    int l_index = cur_id->range.lower.value;
+    int r_index = cur_id->range.upper.value;
+    fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_node.offset);
+    fprintf(fp, "\tmov bx, [buffer + %d]\n", l_index);
+    fprintf(fp, "\tcmp ax, bx\n");
+    fprintf(fp, "\tjl ArrayOutOfBoundsError\n");
+    fprintf(fp, "\tmov bx, [buffer + %d]\n", r_index);
+    fprintf(fp, "\tcmp ax, bx\n");
+    fprintf(fp, "\tjg ArrayOutOfBoundsError\n");
+    fprintf(fp, "\tmov bx, [buffer + %d]\n", l_index);
+    fprintf(fp, "\tsub ax, bx\n"); // should be >= 0
+    fprintf(fp, "\tmov bx, %d\n", cur_id->width);
+    fprintf(fp, "\tmul bx\n");
+    fprintf(fp, "\tmov rbx, 0");
+    fprintf(fp, "\tmov bx, ax\n");
+    fprintf(fp, "\tmov dx, %d\n", cur_id->offset);
+    fprintf(fp, "\tadd bx, dx\n");
 }
 
 void getValue (Ast_Node* cur_ast_node) {
@@ -62,9 +85,36 @@ void getValue (Ast_Node* cur_ast_node) {
     STEntry* cur_node = recursiveCheckID(cur_ast_node->symbol_table, cur_ast_node->token_data);
     int offset_req = cur_node->offset;
     fprintf(fp, "\txor eax, eax\n");
-    if (cur_node->isArray) {
-        // to do after dynamic arrays ka sort ho jaaye //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    if (cur_node->isArray) { // double ke liye bhi same hi tarah se array input liya hai /////////////////////////////////////////////////////////////////////////////////////////////////
+        fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_node->range.lower.value);
+        fprintf(fp, "\tmov bx, [buffer + %d]\n", cur_node->range.upper.value);
+        fprintf(fp, "\tsub bx, ax\n");
+        fprintf(fp, "\tmov cx, bx\n");
+        fprintf(fp, "\tmov dx, 0\n");
+        fprintf(fp, "\tmov rbx, %d\n", offset_req);
+        fprintf(fp, "comp_label%d:\n", comp_label);
+        fprintf(fp, "\txor eax, eax\n");
+        if (cur_node->type == TYPE_BOOLEAN) {
+            fprintf(fp, "\tmov rdi, inputBool\n");
+            fprintf(fp, "\tmov rsi, buffer + rbx\n");
+        }
+        else if (cur_node->type == TYPE_INTEGER) {
+            fprintf(fp, "\tmov rdi, inputInt\n");
+            fprintf(fp, "\tmov rsi, buffer + rbx\n");
+        }
+        else if (cur_node->type == TYPE_REAL) {
 
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+        }
+        fprintf(fp, "\tcall scanf\n");
+        fprintf(fp, "\tadd rbx, %d\n", cur_node->width);
+        fprintf(fp, "\tadd dx, 1\n");
+        fprintf(fp, "\tcmp cx, dx\n");
+        fprintf(fp, "\tjne comp_label%d\n", comp_label);
+        comp_label++;
     }
     else {
         if (cur_node->type == TYPE_BOOLEAN) {
@@ -125,7 +175,7 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
     // output whole array
     // call arithemetic function to calculate the value and then print it
     // above can't be done
-    if (cur_ast_node->type == 19) {/////////////////////////// problem is that <P1> could be null
+    if (cur_ast_node->type == 19) {
         if (cur_ast_node->child_2 == NULL) {
             if (cur_ast_node->child_1->token_data->token == TRUE) {
                 fprintf(fp, "\tmov rdi, outputTrue\n");
@@ -137,7 +187,45 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
             }
             else if (cur_ast_node->child_1->token_data->token == ID) {
                 STEntry* cur_id = recursiveCheckID(cur_ast_node->child_1->symbol_table, cur_ast_node->child_1->token_data);
-                printHelper(*cur_id);
+                if (cur_id->isArray) {
+                    fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_id->range.lower.value);
+                    fprintf(fp, "\tmov bx, [buffer + %d]\n", cur_id->range.upper.value);
+                    fprintf(fp, "\tsub bx, ax\n");
+                    fprintf(fp, "\tmov cx, bx\n");
+                    fprintf(fp, "\tmov dx, 0\n");
+                    fprintf(fp, "\tmov rbx, %d\n", cur_id->offset);
+                    fprintf(fp, "comp_label%d:\n", comp_label);
+                    fprintf(fp, "\txor eax, eax\n");
+                    if (cur_id->type == TYPE_BOOLEAN) {
+                        fprintf(fp, "\tmov rdi, outputTrue\n");
+                        fprintf(fp, "\tmov al, [buffer + rbx]\n");
+                        fprintf(fp, "\tcmp al, 0\n");
+                        fprintf(fp, "\tjne comp_label%d\n", comp_label + 1);
+                        fprintf(fp, "\tmov rdi, outputFalse\n");
+                        fprintf(fp, "comp_label%d:\n", comp_label + 1);
+                        fprintf(fp, "\tcall puts\n");
+                    }
+                    else if (cur_id->type == TYPE_INTEGER) {
+                        fprintf(fp, "\tmov rdi, outputInt\n");
+                        fprintf(fp, "\tmov si, [buffer + rbx]\n");
+                        fprintf(fp, "\tcall printf\n");
+                    }
+                    else if (cur_id->type == TYPE_REAL) {
+
+
+                        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                        fprintf(fp, "\tcall printf\n");
+                    }
+                    fprintf(fp, "\tadd rbx, %d\n", cur_id->width);
+                    fprintf(fp, "\tadd dx, 1\n");
+                    fprintf(fp, "\tcmp cx, dx\n");
+                    fprintf(fp, "\tjne comp_label%d\n", comp_label);
+                    comp_label+=2;
+                }
+                else {
+                    printHelper(*cur_id);
+                }
             }
             else {
                 STEntry cur_temp;
@@ -152,13 +240,56 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
                     storeAtOffset(cur_temp.offset, TYPE_REAL);/////////////////////////////////////////////////////////////
                 }
             }
-            printValue(cur_ast_node->child_1);
         }
-        else { // id p1, p1 not null
+        else { // id p1, p1 not null - A[expr]
             STEntry* cur_id = recursiveCheckID(cur_ast_node->child_1->symbol_table, cur_ast_node->child_1->token_data);
-            if (cur_id->isArray) {
-
-                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            Ast_Node* index_arr = cur_ast_node->child_2->child_1;
+            STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
+            if (index_arr->child_1 == NULL || index_arr->child_1->token_data->token == PLUS) {
+                if (index_arr->child_2->token_data->token == NUM) {
+                    fprintf(fp, "\tmov ax, %d\n", index_arr->child_2->token_data->value.num);
+                    fprintf(fp, "\tmov [buffer + %d], ax\n", cur_temp.offset);
+                }
+                else {
+                    STEntry* temp_id = recursiveCheckID(index_arr->child_2->symbol_table, index_arr->child_2->token_data);
+                    fprintf(fp, "\tmov ax, [buffer + %d]\n", temp_id->offset);
+                    fprintf(fp, "\tmov [buffer + %d], ax\n", cur_temp.offset);
+                }
+            }
+            else {
+                if (index_arr->child_2->token_data->token == NUM) {
+                    fprintf(fp, "\tmov ax, %d\n", -index_arr->child_2->token_data->value.num);
+                    fprintf(fp, "\tmov [buffer + %d], ax\n", cur_temp.offset);
+                }
+                else {
+                    STEntry* temp_id = recursiveCheckID(index_arr->child_2->symbol_table, index_arr->child_2->token_data);
+                    fprintf(fp, "\tmov ax, [buffer + ]\n", temp_id->offset);
+                    fprintf(fp, "\tmov bx, 0\n");
+                    fprintf(fp, "\tsub bx, ax\n");
+                    fprintf(fp, "\tmov [buffer + %d], bx\n", cur_temp.offset);
+                }
+            }
+            outOfBoundsHelper(cur_id, cur_temp);
+            fprintf(fp, "\txor eax, eax\n");
+            if (cur_id->type == TYPE_BOOLEAN) {
+                fprintf(fp, "\tmov rdi, outputTrue\n");
+                fprintf(fp, "\tmov al, [buffer + rbx]\n");
+                fprintf(fp, "\tcmp al, 0\n");
+                fprintf(fp, "\tjne comp_label%d\n", comp_label);
+                fprintf(fp, "\tmov rdi, outputFalse\n");
+                fprintf(fp, "comp_label%d:\n", comp_label);
+                fprintf(fp, "\txor eax, eax\n");
+                fprintf(fp, "\tcall puts\n");
+                comp_label++;
+            }
+            else if (cur_id->type == TYPE_INTEGER) {
+                fprintf(fp, "\tmov rdi, outputInt\n");
+                fprintf(fp, "\tmov si, [buffer + rbx]\n");
+                fprintf(fp, "\tcall printf\n");
+            }
+            else if (cur_id->type == TYPE_REAL) {
+                fprintf(fp, "\tmov eax, [buffer + bx]\n");//////////////////////////////////////////////////////////////////////////////////////
+                fprintf(fp, "\tmov [buffer + rbx], eax\n");
             }
         }
     }
@@ -284,26 +415,6 @@ STEntry evaluateArrayExpression (Ast_Node* cur_ast_node) {
             return evaluateArrayExpression(cur_ast_node->child_2);
         }
     }
-}
-
-void outOfBoundsHelper (STEntry* cur_id, STEntry cur_node) { // cur id is id, and cur node contains arr index
-    int l_index = cur_id->range.lower.value; //////////////////////////////////////////////////////////////////////////////////////////////////////
-    int r_index = cur_id->range.upper.value;
-    fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_node.offset);
-    fprintf(fp, "\tmov bx, %d\n", l_index);
-    fprintf(fp, "\tcmp ax, bx\n");
-    fprintf(fp, "\tjl ArrayOutOfBoundsError\n");
-    fprintf(fp, "\tmov bx, %d\n", r_index);
-    fprintf(fp, "\tcmp ax, bx\n");
-    fprintf(fp, "\tjg ArrayOutOfBoundsError\n");
-    fprintf(fp, "\tmov bx, %d\n", l_index);
-    fprintf(fp, "\tsub ax, bx\n"); // should be >= 0
-    fprintf(fp, "\tmov bx, %d\n", cur_id->width);
-    fprintf(fp, "\tmul bx\n");
-    fprintf(fp, "\tmov rbx, 0");
-    fprintf(fp, "\tmov bx, ax\n");
-    fprintf(fp, "\tmov dx, %d\n", cur_id->offset);
-    fprintf(fp, "\tadd bx, dx\n");
 }
 
 STEntry outOfBoundsCheckArrIndWithExpr (STEntry* cur_id, Ast_Node* cur_ast_node) { /////////////////// check ----------------------------------
@@ -750,7 +861,43 @@ void assignStatement (Ast_Node* cur_ast_node) {
     }
     else if (cur_ast_node->type == 23) {
         if (l_entry->isArray) {
-            // A = B for array /////////////////////////////////////////////////////////////////////////////////////////////////////
+            Ast_Node* r_node = cur_ast_node->child_1->child_1->child_1->child_1->child_1->child_1;
+            STEntry* r_entry = recursiveCheckID(r_node->symbol_table, r_node->token_data);
+            fprintf(fp, "\tmov ax, [buffer + %d]\n", l_entry->range.lower.value);
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", l_entry->range.upper.value);
+            fprintf(fp, "\tsub bx, ax\n");
+            fprintf(fp, "\tmov cx, [buffer + %d]\n", r_entry->range.lower.value);
+            fprintf(fp, "\tmov dx, [buffer + %d]\n", r_entry->range.upper.value);
+            fprintf(fp, "\tsub dx, cx\n");
+            fprintf(fp, "\tcmp bx, dx\n");
+            fprintf(fp, "\tjne UncompatibleArrayAssignment\n");
+
+            fprintf(fp, "\tmov cx, bx\n");
+            fprintf(fp, "\tmov dx, 0\n");
+            fprintf(fp, "\tmov rbx, %d\n", l_entry->offset);
+            fprintf(fp, "\tmov rax, %d\n", r_entry->offset);
+            fprintf(fp, "comp_label%d:\n", comp_label);
+            if (l_entry->type == TYPE_BOOLEAN) {
+                fprintf(fp, "\tmov sil, [buffer + rax]\n");
+                fprintf(fp, "\tmov [buffer + rbx], sil\n");
+            }
+            else if (l_entry->type == TYPE_INTEGER) {
+                fprintf(fp, "\tmov si, [buffer + rax]\n");
+                fprintf(fp, "\tmov [buffer + rbx], si\n");
+            }
+            else if (l_entry->type == TYPE_REAL) {
+
+
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+            }
+            fprintf(fp, "\tadd rbx, %d\n", l_entry->width);
+            fprintf(fp, "\tadd rax, %d\n", l_entry->width);
+            fprintf(fp, "\tadd dx, 1\n");
+            fprintf(fp, "\tcmp cx, dx\n");
+            fprintf(fp, "\tjne comp_label%d\n", comp_label);
+            comp_label++;
         }
         else {
             STEntry r_value = evaluateExpression(cur_ast_node->child_1);
@@ -775,25 +922,66 @@ void assignStatement (Ast_Node* cur_ast_node) {
 void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     STEntry* cur_entry = recursiveCheckID(cur_ast_node->symbol_table, cur_ast_node->token_data);
     if (!cur_entry->isArray) return;
+    STEntry l_val = getNewTemporary(TYPE_INTEGER);
+    STEntry r_val = getNewTemporary(TYPE_INTEGER);
     if (cur_entry->isDynamic.lower) { // lower bound is dynamic
         Token_Info* t=(Token_Info*)malloc(sizeof(Token_Info));
         strcpy(t->lexeme,cur_entry->range.lower.lexeme);
         t->lineNumber=cur_ast_node->token_data->lineNumber;
         STEntry* lbound = recursiveCheckID(cur_ast_node->symbol_table,t);
-        // cur_entry->range.lower.lexeme
+        if (cur_entry->range.lower_sign == 1) {
+            fprintf(fp, "\tmov ax, [buffer + %d]\n", lbound->offset);
+            fprintf(fp, "\tmov [buffer + %d], ax\n", l_val.offset);
+        }
+        else { // -1
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", lbound->offset);
+            fprintf(fp, "\tmov ax, 0\n");
+            fprintf(fp, "\tsub ax, bx\n");
+            fprintf(fp, "\tmov [buffer + %d], ax\n", l_val.offset);
+        }
     }
     else {
-
+        if (cur_entry->range.lower_sign == 1) {
+            fprintf(fp, "\tmov ax, %d\n", cur_entry->range.lower.value);
+            fprintf(fp, "\tmov [buffer + %d], ax\n", l_val.offset);
+        }
+        else { // -1
+            fprintf(fp, "\tmov ax, %d\n", -cur_entry->range.lower.value);
+            fprintf(fp, "\tmov [buffer + %d], ax\n", l_val.offset);
+        }
     }
-    if (cur_entry->isDynamic.upper) { // lower bound is dynamic
+    if (cur_entry->isDynamic.upper) { // upper bound is dynamic
         Token_Info* t=(Token_Info*)malloc(sizeof(Token_Info));
-        strcpy(t->lexeme,cur_entry->range.lower.lexeme);
+        strcpy(t->lexeme,cur_entry->range.upper.lexeme);
         t->lineNumber=cur_ast_node->token_data->lineNumber;
         STEntry* rbound = recursiveCheckID(cur_ast_node->symbol_table,t);
+        if (cur_entry->range.upper_sign == 1) {
+            fprintf(fp, "\tmov ax, [buffer + %d]\n", rbound->offset);
+            fprintf(fp, "\tmov [buffer + %d], ax\n", r_val.offset);
+        }
+        else { // -1
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", rbound->offset);
+            fprintf(fp, "\tmov ax, 0\n");
+            fprintf(fp, "\tsub ax, bx\n");
+            fprintf(fp, "\tmov [buffer + %d], ax\n", r_val.offset);
+        }
     }
     else {
-        
+        if (cur_entry->range.upper_sign == 1) {
+            fprintf(fp, "\tmov ax, %d\n", cur_entry->range.upper.value);
+            fprintf(fp, "\tmov [buffer + %d], ax\n", r_val.offset);
+        }
+        else { // -1
+            fprintf(fp, "\tmov ax, %d\n", -cur_entry->range.upper.value);
+            fprintf(fp, "\tmov [buffer + %d], ax\n", r_val.offset);
+        }
     }
+    cur_entry->range.lower.value = l_val.offset;
+    cur_entry->range.upper.value = r_val.offset;
+    fprintf(fp, "\tmov ax, [buffer + %d]\n", l_val.offset);
+    fprintf(fp, "\tmov bx, [buffer + %d]\n", r_val.offset);
+    fprintf(fp, "\tcmp ax, bx\n");
+    fprintf(fp, "\tjg IncorrectArrayBoundsError\n");
 }
 
 void switchCaseStatements (Ast_Node* cur_ast_node) {
@@ -897,6 +1085,23 @@ void whileStatement (Ast_Node* cur_ast_node) {
     fprintf(fp, "comp_label%d:\n", cur_label + 1);
 }
 
+void writeErrorCodes () {
+    // fprintf(fp, "outOfBounds:  db  'Array index out of bounds - Execution stopped', 0\n");
+    // fprintf(fp, "incorrectBounds:  db  'Array bounds incorrect - Execution stopped', 0\n");
+    fprintf(fp, "ArrayOutOfBoundsError:\n");
+    fprintf(fp, "\tmov rdi, outOfBounds\n");
+    fprintf(fp, "\tcall puts\n");
+    fprintf(fp, "\tjmp comp_label0\n");
+    fprintf(fp, "IncorrectArrayBoundsError:\n");
+    fprintf(fp, "\tmov rdi, incorrectBounds\n");
+    fprintf(fp, "\tcall puts\n");
+    fprintf(fp, "\tjmp comp_label0\n");
+    fprintf(fp, "UncompatibleArrayAssignment:\n");
+    fprintf(fp, "\tmov rdi, uncompatibleAssignment\n");
+    fprintf(fp, "\tcall puts\n");
+    fprintf(fp, "\tjmp comp_label0\n");
+}
+
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
     if (!cur_ast_node) return;
     switch (cur_ast_node->type)
@@ -909,6 +1114,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         fprintf (fp, "\tglobal main\n");
         fprintf (fp, "\textern printf, scanf, puts\n");
         fprintf (fp, "\tsection .text\n");
+        writeErrorCodes();
         codeGenASTTraversal(cur_ast_node->child_2);
         codeGenASTTraversal(cur_ast_node->child_3);
         codeGenASTTraversal(cur_ast_node->child_4);
@@ -930,6 +1136,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         fprintf (fp, "\tpush rax\n"); // stack alignment
         codeGenASTTraversal(cur_ast_node->child_1);
         fprintf (fp, "\tpop rax\n"); // stack alignment
+        fprintf(fp, "comp_label0:");
         fprintf (fp, "\tret\n");
         break;
     case 6:
