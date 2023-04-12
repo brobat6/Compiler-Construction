@@ -3,3 +3,4 @@ stage1exe
 .vscode
 *.exe
 trial.txt
+.idea
