@@ -1163,7 +1163,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         fprintf (fp, "\tpush rax\n"); // stack alignment
         codeGenASTTraversal(cur_ast_node->child_1);
         fprintf (fp, "\tpop rax\n"); // stack alignment
-        fprintf(fp, "comp_label0:");
+        fprintf(fp, "comp_label0:\n");
         fprintf (fp, "\tret\n");
         break;
     case 6:
