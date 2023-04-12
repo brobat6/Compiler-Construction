@@ -121,6 +121,57 @@ Type typecheckdfs(Ast_Node* root){
         Type left_expr=typecheckdfs(root->child_1);
 
         Type right_expr=typecheckdfs(root->child_2);
+
+        if(st_id->isArray && st_id->isDynamic.lower == false && st_id->isDynamic.upper == false && root->child_1->type == 23) {
+            // Check for expressions of the form a := b, where a is a static array.
+            Ast_Node* exp = root->child_2->child_1;
+            // AnyTerm --> exp->child_1. 
+            // ArithExp --> exp->child_1->child_1
+            // Term --> exp->child_1->child_1->child_1
+            // Factor --> exp->child_1->child_1->child_1->child_1
+            if(exp->type != 35 || exp->syn_next != NULL || exp->child_1->child_2 != NULL || exp->child_1->child_1->syn_next != NULL || exp->child_1->child_1->child_1->syn_next != NULL) {
+                Error e;
+                e.type = ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION;
+                e.line = root->child_1->token_data->lineNumber;
+                strcpy(e.id_name, root->child_1->token_data->lexeme);
+                add_error(e);
+                root->datatype = TYPE_ERROR;
+                return TYPE_ERROR;
+            }
+            Ast_Node* factor = exp->child_1->child_1->child_1->child_1;
+            if(factor->child_2 != NULL || factor->type != 40) {
+                Error e;
+                e.type = ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION;
+                e.line = root->child_1->token_data->lineNumber;
+                strcpy(e.id_name, root->child_1->token_data->lexeme);
+                add_error(e);
+                root->datatype = TYPE_ERROR;
+                return TYPE_ERROR;
+            }
+            STEntry* rhs_id = recursiveCheckID(factor->child_1->symbol_table, factor->child_1->token_data);
+            if(rhs_id->isArray == false) {
+                Error e;
+                e.type = ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION;
+                e.line = root->child_1->token_data->lineNumber;
+                strcpy(e.id_name, root->child_1->token_data->lexeme);
+                add_error(e);
+                root->datatype = TYPE_ERROR;
+                return TYPE_ERROR;
+            }
+            if(rhs_id->isDynamic.lower == false && rhs_id->isDynamic.upper == false) {
+                int sz_left = st_id->range.upper.value - st_id->range.lower.value;
+                int sz_right = rhs_id->range.upper.value - rhs_id->range.lower.value;
+                if(sz_left != sz_right) {
+                    Error e;
+                    e.type = ERROR_UNEQUAL_ARRAY_SIZES;
+                    e.line = root->child_1->token_data->lineNumber;
+                    strcpy(e.id_name, root->child_1->token_data->lexeme);
+                    add_error(e);
+                    root->datatype = TYPE_ERROR;
+                    return TYPE_ERROR;
+                }
+            }
+        }
         
         //Type check LHS and RHS of assignment.
         root->datatype = checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
