@@ -1131,15 +1131,15 @@ void writeErrorCodes () {
     fprintf(fp, "ArrayOutOfBoundsError:\n");
     fprintf(fp, "\tmov rdi, outOfBounds\n");
     fprintf(fp, "\tcall puts\n");
-    fprintf(fp, "\tjmp comp_label0\n");
+    fprintf(fp, "\tcall exit\n");
     fprintf(fp, "IncorrectArrayBoundsError:\n");
     fprintf(fp, "\tmov rdi, incorrectBounds\n");
     fprintf(fp, "\tcall puts\n");
-    fprintf(fp, "\tjmp comp_label0\n");
+    fprintf(fp, "\tcall exit\n");
     fprintf(fp, "UncompatibleArrayAssignment:\n");
     fprintf(fp, "\tmov rdi, uncompatibleAssignment\n");
     fprintf(fp, "\tcall puts\n");
-    fprintf(fp, "\tjmp comp_label0\n");
+    fprintf(fp, "\tcall exit\n");
 }
 
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
@@ -1267,7 +1267,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         // after the function has been processed
         // set the value of output list of function to offsets of optional list
         // if we pass array in input list, check bounds and transfer array data from callee to caller
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
         break;
     case 27:
         // actual_para_list
