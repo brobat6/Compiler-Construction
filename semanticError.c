@@ -124,7 +124,7 @@ void print_semantic_errors(FILE *fp) {
             fprintf(fp, "Module %s has already been defined previously.", e->error.module_name);
         }
         else if(e->error.type == ERROR_IDENTIFIER_ALREADY_EXISTS) {
-            fprintf(fp, "Identifier %s already exists (previously declared at line %d).", e->error.id_name, e->error.line_2);
+            fprintf(fp, "Variable %s already exists (previously declared at line %d).", e->error.id_name, e->error.line_2);
         }
         else if(e->error.type == ERROR_FUNCTION_RECURSIVE) {
             fprintf(fp, "Recursive function calls are not allowed!");

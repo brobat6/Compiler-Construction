@@ -1,8 +1,10 @@
 #include "typeCheck.h"
 
 //Check if the operation is valid, else throw appropriate error.
-Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2){
+Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2) {
+
     if(t1==TYPE_ERROR || t2==TYPE_ERROR || t1==TYPE_UNDEFINED|| t2==TYPE_UNDEFINED) return TYPE_UNDEFINED;
+
     Error e;
 
     if(op==OP_ARITH){
@@ -30,7 +32,9 @@ Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2){
         }
     }
     else if(op==OP_LOGIC){
-        if(t1==t2 && t1==TYPE_BOOLEAN) return TYPE_BOOLEAN;
+        if(t1==t2 && t1==TYPE_BOOLEAN) {
+            return TYPE_BOOLEAN;
+        }
         else{
             e.type=ERROR_INCOMPATIBLE_LOGICAL_OPERATION;
             e.line=tk_data->lineNumber;
@@ -97,7 +101,7 @@ Type typecheckdfs(Ast_Node* root){
 
     //Type checking at assignment operation.
     if(root->type==22){
-        
+        // 46. <assignmentStmt> -> ID <whichStmt>
         STEntry* st_id = recursiveCheckID(root->child_1->symbol_table, root->child_1->token_data);
 
         //Checks if entry exists for the ID to which value is being assigned.
@@ -156,6 +160,15 @@ Type typecheckdfs(Ast_Node* root){
                 return TYPE_ERROR;
             }
             STEntry* rhs_id = recursiveCheckID(factor->child_1->symbol_table, factor->child_1->token_data);
+            if(rhs_id == NULL) {
+                Error e;
+                e.type=VAR_NOT_INITIALIZED;
+                e.line=factor->child_1->token_data->lineNumber;
+                strcpy(e.id_name,factor->child_1->token_data->lexeme);
+                add_error(e);
+                root->datatype = TYPE_ERROR;
+                return TYPE_ERROR;
+            }
             if(rhs_id->isArray == false) {
                 Error e;
                 e.type = ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION;
@@ -182,6 +195,10 @@ Type typecheckdfs(Ast_Node* root){
                 root->datatype=left_expr;
                 return root->datatype;
             } else{
+                if(rhs_id->type == TYPE_ERROR) {
+                    root->datatype = TYPE_ERROR;
+                    return root->datatype;
+                }
                 Error e;
                 e.type=ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION;
                 e.line=factor->child_1->token_data->lineNumber;
@@ -192,7 +209,7 @@ Type typecheckdfs(Ast_Node* root){
             }
         }
         Type right_expr=typecheckdfs(root->child_2);
-        
+        // printf("%d, %d\n", left_expr, right_expr);
         //Type check LHS and RHS of assignment.
         root->datatype = checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
         return root->datatype;
@@ -328,7 +345,12 @@ Type typecheckdfs(Ast_Node* root){
 
         if(root->type == 24){
             //Then we check if type of LHS and RHS are the same.
-            if(st_entry->type!=typecheckdfs(root->child_2)){
+            Type tt = typecheckdfs(root->child_2);
+            if(tt == TYPE_ERROR || tt == TYPE_UNDEFINED) {
+                root->datatype = TYPE_ERROR;
+                return root->datatype;
+            }
+            if(st_entry->type!=tt){
                 Error e;
                 e.type=ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION;
                 e.line=root->inh_1->token_data->lineNumber;
@@ -771,6 +793,11 @@ Type typecheckdfs(Ast_Node* root){
             root->datatype = TYPE_ERROR;
             return TYPE_ERROR;
         }
+    }
+
+    if(root->type == 23) {
+        root->datatype = typecheckdfs(root->child_1);
+        return root->datatype;
     }
 
     //For other rules, we do not need to type/bound/scope check. This code segment is just to traverse the tree.
