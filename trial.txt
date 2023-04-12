@@ -4,6 +4,8 @@
 <<<driver program>>>
 start
 	declare a : integer;
+    get_value(a);
+    print(a);
     declare b, c : boolean;
     c := b OR a;
 end

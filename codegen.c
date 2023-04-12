@@ -104,18 +104,18 @@ void storeAtOffset (int offset, Type dataType) {
 void printHelper (STEntry cur_entry) { ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     fprintf(fp, "\txor eax, eax\n");
     if (cur_entry.type == TYPE_BOOLEAN) {
-        fprintf(fp, "\tmov rdi, OutputTrue\n");
+        fprintf(fp, "\tmov rdi, outputTrue\n");
         fprintf(fp, "\tmov al, [buffer + %d]\n", cur_entry.offset);
         fprintf(fp, "\tcmp al, 0\n");
         fprintf(fp, "\tjne comp_label%d\n", comp_label);
-        fprintf(fp, "\tmov rdi, OutputFalse\n");
+        fprintf(fp, "\tmov rdi, outputFalse\n");
         fprintf(fp, "comp_label%d:\n", comp_label);
         fprintf(fp, "\txor eax, eax\n");
         fprintf(fp, "\tcall puts\n");
         comp_label++;
     }
     else if (cur_entry.type == TYPE_INTEGER) {
-        fprintf(fp, "\tmov rdi, OutputInt\n");
+        fprintf(fp, "\tmov rdi, outputInt\n");
         fprintf(fp, "\tmov rax, 0\n");
         fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_entry.offset);
         fprintf(fp, "\tmov rsi, rax\n");
@@ -135,11 +135,11 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
     if (cur_ast_node->type == 19) {/////////////////////////// problem is that <P1> could be null
         if (cur_ast_node->child_2 == NULL) {
             if (cur_ast_node->child_1->token_data->token == TRUE) {
-                fprintf(fp, "\tmov rdi, OutputTrue\n");
+                fprintf(fp, "\tmov rdi, outputTrue\n");
                 fprintf(fp, "\tcall puts\n");
             }
             else if (cur_ast_node->child_1->token_data->token == FALSE) {
-                fprintf(fp, "\tmov rdi, OutputFalse\n");
+                fprintf(fp, "\tmov rdi, outputFalse\n");
                 fprintf(fp, "\tcall puts\n");
             }
             else if (cur_ast_node->child_1->token_data->token == ID) {
