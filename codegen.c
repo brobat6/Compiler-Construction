@@ -969,11 +969,11 @@ void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////
     else {
         cur_entry->width = 4;
     }
+    if (!cur_entry->isArray) return;
     if (cur_entry->isDynamic.lower || cur_entry->isDynamic.upper) {
         cur_entry->offset = cur_offset;
         cur_offset+=200;
     }
-    if (!cur_entry->isArray) return;
     STEntry l_val = getNewTemporary(TYPE_INTEGER);
     STEntry r_val = getNewTemporary(TYPE_INTEGER);
     if (cur_entry->isDynamic.lower) { // lower bound is dynamic
@@ -1142,6 +1142,10 @@ void writeErrorCodes () {
     fprintf(fp, "\tcall exit\n");
 }
 
+void moduleReuseStatement (Ast_Node* cur_ast_node) {
+    
+}
+
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
     if (!cur_ast_node) return;
     switch (cur_ast_node->type)
@@ -1267,7 +1271,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         // after the function has been processed
         // set the value of output list of function to offsets of optional list
         // if we pass array in input list, check bounds and transfer array data from callee to caller
-        
+        moduleReuseStatement(cur_ast_node);
         break;
     case 27:
         // actual_para_list
