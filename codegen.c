@@ -1143,7 +1143,7 @@ void writeErrorCodes () {
 }
 
 void moduleReuseStatement (Ast_Node* cur_ast_node) {
-    
+
 }
 
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
@@ -1156,7 +1156,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
     case 1:
         // program
         fprintf (fp, "\tglobal main\n");
-        fprintf (fp, "\textern printf, scanf, puts\n");
+        fprintf (fp, "\textern printf, scanf, puts, exit\n");
         fprintf (fp, "\tsection .text\n");
         writeErrorCodes();
         codeGenASTTraversal(cur_ast_node->child_2);

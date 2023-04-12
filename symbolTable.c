@@ -70,6 +70,7 @@ STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t) {
     */
     if(node == NULL) return NULL;
     STEntry* check = checkID(node, t->lexeme);
+    if(check->is_for_loop_variable && check->declarationLineNumber == t->lineNumber) return check;
     if(check == NULL || check->declarationLineNumber > t->lineNumber) {
         return recursiveCheckID(node->parent, t);
     }
@@ -500,16 +501,16 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         curOffset += 2;
         ht_store(childSTNode->hashTable, id_entry->variableName, id_entry);
         
-        generateST(currSTNode, root->child_1);
+        generateST(childSTNode, root->child_1);
         // 3. Call with child symbol table inside for loop
-        generateST(currSTNode, root->child_2); /*
+        generateST(childSTNode, root->child_2); /*
         1. Doing this for type checking etc later, as symbol table needs to be populated
         2. What happens in case we have FOR X IN RANGE [X...3], i.e. range has same identifier declared previously?
         Current ans. It would not give error, the X in range would be taken from outer scope. 
         */
-        generateST(currSTNode, root->child_3);
+        generateST(childSTNode, root->child_3);
         generateST(childSTNode, root->child_4);
-        generateST(currSTNode, root->child_5);
+        generateST(childSTNode, root->child_5);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
         return;
     }

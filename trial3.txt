@@ -1,12 +1,8 @@
-**for loop to add first 5 natural number**
 <<<driver program>>>
 start
-declare sum,i: integer;
-sum:=0;
+declare i: integer;
 for(i in 1..5)
 start
 print(i);
 end
-print(sum);
 end
-
