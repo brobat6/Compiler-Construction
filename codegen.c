@@ -842,18 +842,41 @@ void switchCaseStatements (Ast_Node* cur_ast_node) {
 void forStatement (Ast_Node* cur_ast_node) {
     STEntry* cur_id = recursiveCheckID(cur_ast_node->child_1->symbol_table, cur_ast_node->child_1->token_data);
     Ast_Node* range_for_loop = cur_ast_node->child_2;
+    int l_value, r_value;
     if (range_for_loop->child_1->child_1 == NULL || range_for_loop->child_1->child_1->token_data->token == PLUS) {
-
+        l_value = range_for_loop->child_1->child_2->token_data->value.num;
     }
     else {
-
+        l_value = - range_for_loop->child_1->child_2->token_data->value.num;
     }
     if (range_for_loop->child_2->child_1 == NULL || range_for_loop->child_2->child_1->token_data->token == PLUS) {
-
+        r_value = range_for_loop->child_2->child_2->token_data->value.num;
     }
     else {
-        
+        r_value = - range_for_loop->child_2->child_2->token_data->value.num;
     }
+    fprintf(fp, "\tmov ax, %d\n", l_value);
+    fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
+    fprintf(fp, "\tmov bx, %d\n", r_value);
+    fprintf(fp, "comp_label%d:\n", comp_label);
+    codeGenASTTraversal(cur_ast_node->child_4);
+    if (l_value <= r_value) {
+        fprintf(fp, "\tadd ax, 1\n");
+        fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
+        fprintf(fp, "\tcmp ax, bx\n");
+        fprintf(fp, "\tjle comp_label%d\n", comp_label);
+    }
+    else {
+        fprintf(fp, "\tsub ax, 1\n");
+        fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
+        fprintf(fp, "\tcmp ax, bx\n");
+        fprintf(fp, "\tjge comp_label%d\n", comp_label);
+    }
+    comp_label++;
+}
+
+void whileStatement (Ast_Node* cur_ast_node) {
+    
 }
 
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
