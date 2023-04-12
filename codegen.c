@@ -13,7 +13,7 @@
 // lol
 FILE* fp;
 storageStructure st;
-int cur_offset;
+int cur_offset = 2000;//////////////////////////////////////////////////////////////////////////////
 int comp_label = 1;
 
 void initialiseStorage () {
@@ -968,6 +968,10 @@ void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////
     }
     else {
         cur_entry->width = 4;
+    }
+    if (cur_entry->isDynamic.lower || cur_entry->isDynamic.upper) {
+        cur_entry->offset = cur_offset;
+        cur_offset+=200;
     }
     if (!cur_entry->isArray) return;
     STEntry l_val = getNewTemporary(TYPE_INTEGER);
