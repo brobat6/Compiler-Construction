@@ -39,7 +39,7 @@ void add_error(Error error) {
 void print_semantic_errors(FILE *fp) {
     Error_List* e = error_list;
     while(e != NULL) {
-
+        fprintf(fp, "Error: %d Line: %d\n", e->error.type, e->error.line);
         e = e->next;
     }
 }

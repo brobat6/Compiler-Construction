@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "semanticError.h"
 
 #ifndef _SYMBOLTABLEDEF_H
 #define _SYMBOLTABLEDEF_H

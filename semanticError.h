@@ -17,6 +17,9 @@ add_error(e);
 #include <ctype.h>
 #include <time.h>
 
+#ifndef _SEMANTIC_ERROR_H
+#define _SEMANTIC_ERROR_H
+
 typedef enum Error_Type{
     ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION,
     ERROR_INCOMPATIBLE_RELATIONAL_OPERATION,
@@ -60,3 +63,5 @@ struct ERROR_LIST {
 void add_error(Error error);
 
 void print_semantic_errors(FILE *fp);
+
+#endif

@@ -8,6 +8,7 @@ ID: 2020A7PS0120P			    Name: Kshitij Garg
 */
 
 #include "typeCheck.h"
+#include "semanticError.h"
 
 ht* initialize () {
     readGrammarFile();
@@ -81,6 +82,11 @@ int main(int argc, char *argv[]) {
 
             // Function Checking
             semanticAnalyzer(ast_root);
+
+            // Print semantic errors
+            FILE* f_error = fopen("semantic_error.out", "w");
+            print_semantic_errors(f_error);
+            fclose(f_error);
         }
         else if(choice==4)
         {

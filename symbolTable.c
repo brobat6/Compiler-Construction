@@ -619,6 +619,8 @@ void throw_error() {
     printf("There is an error but the print statement has not yet been implemented\n");
 }
 
+// NOTE : ADD ASSIGNMENT COUNTER WHEN RETURNING FROM A FUNCTION!!!!!!!!!!!!!!
+
 void functionChecker(Ast_Node* root) {
     if(root == NULL) return;
     if(root->type == 26) {

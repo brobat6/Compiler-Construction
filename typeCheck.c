@@ -79,9 +79,15 @@ Operator token_to_op(Token t){
 
 Type typecheckdfs(Ast_Node* root){
 
+    // DEF MODULE ID ... 
+    // Don't want to check types in input_plist or ret
+    if(root->type == 6) {
+        return typecheckdfs(root->child_4);
+    }
+
     //Type checking at assignment operation.
     if(root->type==22){
-
+        
         STEntry* st_id = recursiveCheckID(root->child_1->symbol_table, root->child_1->token_data);
 
         //Checks if entry exists for the ID to which value is being assigned.
@@ -92,11 +98,10 @@ Type typecheckdfs(Ast_Node* root){
             strcpy(e.id_name,root->child_1->token_data->lexeme);
             add_error(e);
             
-            root->type = TYPE_ERROR;
+            root->datatype = TYPE_ERROR;
             return TYPE_ERROR;
         }
-
-        // st_id->hasBeenAssigned=true; //paaji uncomment this ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        st_id->hasBeenAssigned=true;
 
         //Checkis if assignment is being done to loop variable.
         if(st_id->is_for_loop_variable==true){
@@ -106,16 +111,17 @@ Type typecheckdfs(Ast_Node* root){
             strcpy(e.id_name,root->child_1->token_data->lexeme);
             add_error(e);
 
-            root->type = TYPE_ERROR;
+            root->datatype = TYPE_ERROR;
             return TYPE_ERROR;
         }
 
         Type left_expr=typecheckdfs(root->child_1);
+
         Type right_expr=typecheckdfs(root->child_2);
         
         //Type check LHS and RHS of assignment.
-        root->type = checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
-        return checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
+        root->datatype = checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
+        return root->datatype;
     }
 
     //Type checking at unary operations on expressions.
@@ -129,11 +135,11 @@ Type typecheckdfs(Ast_Node* root){
             e.line=root->child_1->token_data->lineNumber;
             add_error(e);
 
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
 
-        root->type=right_expr;
+        root->datatype=right_expr;
         return right_expr;
     }
     
@@ -142,12 +148,12 @@ Type typecheckdfs(Ast_Node* root){
         //Check if it is the highest level of expansion.
         if(root->child_2==NULL) {
             if(root->syn_next == NULL) {
-                root->type=typecheckdfs(root->child_1);
-                return typecheckdfs(root->child_1);
+                root->datatype=typecheckdfs(root->child_1);
+                return root->datatype;
             }
 
-            root->type=typecheckdfs(root->syn_next);
-            return typecheckdfs(root->syn_next);
+            root->datatype=typecheckdfs(root->syn_next);
+            return root->datatype;
         }
 
         Type left_expr = typecheckdfs(root->inh_1);
@@ -162,18 +168,18 @@ Type typecheckdfs(Ast_Node* root){
             right_expr = typecheckdfs(root->syn_next);
         }
 
-        root->type=checkType(root->inh_1->token_data, op, left_expr, right_expr);
-        return checkType(root->inh_1->token_data, op, left_expr, right_expr);
+        root->datatype=checkType(root->inh_1->token_data, op, left_expr, right_expr);
+        return root->datatype;
     }
 
     //Type Checking for relational expansion or array index expansion. Format is same for both rules.
     if(root->type==36 || root->type == 40){
         if(root->child_2==NULL){
-            root->type=typecheckdfs(root->child_1);
-            return typecheckdfs(root->child_1);
+            root->datatype=typecheckdfs(root->child_1);
+            return root->datatype; // NOTE : DO THIS EVERYWHERE !!!!!!!!!!!!!!!!!!!!!
         } else {
-            root->type=typecheckdfs(root->child_2);
-            return typecheckdfs(root->child_2);
+            root->datatype=typecheckdfs(root->child_2);
+            return root->datatype;
         }
     }
 
@@ -184,8 +190,8 @@ Type typecheckdfs(Ast_Node* root){
 
         Operator op=token_to_op(root->child_1->token_data->token);
 
-        root->type=checkType(root->inh_1->token_data, op, left_expr, right_expr);
-        return checkType(root->inh_1->token_data, op, left_expr, right_expr);
+        root->datatype=checkType(root->inh_1->token_data, op, left_expr, right_expr);
+        return root->datatype;
     }
 
     //Type and statically bound check for assignment on array elements.
@@ -196,7 +202,7 @@ Type typecheckdfs(Ast_Node* root){
         //We try to find if the array exists else we throw an error when left_expr is called.
         STEntry* st_entry=recursiveCheckID(root->symbol_table, root->inh_1->token_data);
         if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_REAL){
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
 
@@ -208,7 +214,7 @@ Type typecheckdfs(Ast_Node* root){
             strcpy(e.id_name, root->inh_1->token_data->lexeme);
             add_error(e);
 
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
 
@@ -242,7 +248,7 @@ Type typecheckdfs(Ast_Node* root){
 
                     //Since the epression is of integer type, we have type checked and bound check for expressions is dynamic.
                     if(index_expr==TYPE_INTEGER){
-                        root->type=left_expr;
+                        root->datatype=left_expr;
                         return left_expr;
                     }
 
@@ -254,7 +260,7 @@ Type typecheckdfs(Ast_Node* root){
                         strcpy(e.id_name, root->inh_1->token_data->lexeme);
                         add_error(e);
 
-                        root->type=TYPE_ERROR;
+                        root->datatype=TYPE_ERROR;
                         return TYPE_ERROR;
                     }
                 }
@@ -272,13 +278,13 @@ Type typecheckdfs(Ast_Node* root){
                     strcpy(e.id_name,root->inh_1->token_data->lexeme);
                     add_error(e);
                     
-                    root->type = TYPE_ERROR;
+                    root->datatype = TYPE_ERROR;
                     return TYPE_ERROR;
                 }
 
                 //Checks for integer type of index, else throws an error.
                 if(st_id->type==TYPE_INTEGER){
-                    root->type=left_expr;
+                    root->datatype=left_expr;
                     return left_expr;
                 }
 
@@ -289,19 +295,19 @@ Type typecheckdfs(Ast_Node* root){
                     strcpy(e.id_name, root->inh_1->token_data->lexeme);
                     add_error(e);
 
-                    root->type=TYPE_ERROR;
+                    root->datatype=TYPE_ERROR;
                     return TYPE_ERROR;
                 }
             }   
 
             //Here, we perform bound checking and error is reported inside the boundCheck function.
             if(boundCheck(root->inh_1->token_data, st_entry, arr_index)){
-                root->type=left_expr;
+                root->datatype=left_expr;
                 return left_expr;
             }
 
             else{
-                root->type=TYPE_ERROR;
+                root->datatype=TYPE_ERROR;
                     return TYPE_ERROR;
             }
         }
@@ -315,7 +321,7 @@ Type typecheckdfs(Ast_Node* root){
          //We try to find if the array exists else we throw an error when left_expr is called.
         STEntry* st_entry=recursiveCheckID(root->symbol_table, root->inh_1->token_data);
         if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_REAL){
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
 
@@ -327,7 +333,7 @@ Type typecheckdfs(Ast_Node* root){
             strcpy(e.id_name, root->inh_1->token_data->lexeme);
             add_error(e);
 
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
 
@@ -351,13 +357,13 @@ Type typecheckdfs(Ast_Node* root){
                         strcpy(e.id_name,root->child_1->child_2->token_data->lexeme);
                         add_error(e);
                         
-                        root->type = TYPE_ERROR;
+                        root->datatype = TYPE_ERROR;
                         return TYPE_ERROR;
                     }
 
                     //If it is integer our type checking is done and we return nothing, else we throw an error.
                     if(st_id->type==TYPE_INTEGER){
-                        root->type=TYPE_UNDEFINED;
+                        root->datatype=TYPE_UNDEFINED;
                         return TYPE_UNDEFINED;
                     }
                     else{
@@ -367,7 +373,7 @@ Type typecheckdfs(Ast_Node* root){
                         strcpy(e.id_name, root->child_1->child_2->token_data->lexeme);
                         add_error(e);
 
-                        root->type=TYPE_ERROR;
+                        root->datatype=TYPE_ERROR;
                         return TYPE_ERROR;
                     }
                 }
@@ -396,13 +402,13 @@ Type typecheckdfs(Ast_Node* root){
                     strcpy(e.id_name,root->child_1->child_2->token_data->lexeme);
                     add_error(e);
                         
-                    root->type = TYPE_ERROR;
+                    root->datatype = TYPE_ERROR;
                     return TYPE_ERROR;
                 }
 
                 //If it is integer our type checking is done and we return nothing, else we throw an error.
                 if(st_id->type==TYPE_INTEGER){
-                    root->type=TYPE_UNDEFINED;
+                    root->datatype=TYPE_UNDEFINED;
                     return TYPE_UNDEFINED;
                 }
                 else{
@@ -412,19 +418,19 @@ Type typecheckdfs(Ast_Node* root){
                     strcpy(e.id_name, root->child_1->child_2->token_data->lexeme);
                     add_error(e);
 
-                    root->type=TYPE_ERROR;
+                    root->datatype=TYPE_ERROR;
                     return TYPE_ERROR;
                 }
             }
 
             //Here, we perform bound checking and error is reported inside the boundCheck function.
             if(boundCheck(root->inh_1->token_data, st_entry, arr_index)){
-                root->type=TYPE_UNDEFINED;
+                root->datatype=TYPE_UNDEFINED;
                 return TYPE_UNDEFINED;
             }
 
             else{
-                root->type=TYPE_ERROR;
+                root->datatype=TYPE_ERROR;
                 return TYPE_ERROR;
             }
         }
@@ -441,8 +447,9 @@ Type typecheckdfs(Ast_Node* root){
             Error e;
             e.type=INVALID_SWITCH_TYPE_FOR_CASES;
             e.line=root->child_1->token_data->lineNumber;
+            add_error(e);
             
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
 
@@ -451,8 +458,9 @@ Type typecheckdfs(Ast_Node* root){
             Error e;
             e.type=DEFAULT_CASE_IN_BOOLEAN_SWITCH;
             e.line=root->child_1->token_data->lineNumber;
+            add_error(e);
             
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
 
@@ -461,8 +469,9 @@ Type typecheckdfs(Ast_Node* root){
             Error e;
             e.type=DEFAULT_CASE_IN_INTEGER_SWITCH;
             e.line=root->child_1->token_data->lineNumber;
+            add_error(e);
             
-            root->type=TYPE_ERROR;
+            root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
         
@@ -492,7 +501,7 @@ Type typecheckdfs(Ast_Node* root){
             }
 
             //Return undefined because we do not have to type check above.
-            root->type=TYPE_UNDEFINED;
+            root->datatype=TYPE_UNDEFINED;
             return TYPE_UNDEFINED;
         } 
         
@@ -534,7 +543,7 @@ Type typecheckdfs(Ast_Node* root){
 
             //If both bits are set, case true and false both have occurred and hence we have to report no errors.
             if(fl==3){
-                root->type=TYPE_UNDEFINED;
+                root->datatype=TYPE_UNDEFINED;
                 return TYPE_UNDEFINED;
             }
 
@@ -546,7 +555,7 @@ Type typecheckdfs(Ast_Node* root){
                     e.line=root->child_1->token_data->lineNumber;
                     add_error(e);
 
-                    root->type=TYPE_ERROR;
+                    root->datatype=TYPE_ERROR;
                     return TYPE_ERROR;
                 }
                 if(fl==1){
@@ -555,7 +564,7 @@ Type typecheckdfs(Ast_Node* root){
                     e.line=root->child_1->token_data->lineNumber;
                     add_error(e);
 
-                    root->type=TYPE_ERROR;
+                    root->datatype=TYPE_ERROR;
                     return TYPE_ERROR;
                 }
                 if(fl==2){
@@ -564,7 +573,7 @@ Type typecheckdfs(Ast_Node* root){
                     e.line=root->child_1->token_data->lineNumber;
                     add_error(e);
 
-                    root->type=TYPE_ERROR;
+                    root->datatype=TYPE_ERROR;
                     return TYPE_ERROR;
                 }
 
@@ -575,7 +584,7 @@ Type typecheckdfs(Ast_Node* root){
                     e.line=root->child_1->token_data->lineNumber;
                     add_error(e);
 
-                    root->type=TYPE_ERROR;
+                    root->datatype=TYPE_ERROR;
                     return TYPE_ERROR;
                 }
             }
@@ -585,8 +594,8 @@ Type typecheckdfs(Ast_Node* root){
 
     //Return type of case to the parent function where it is checked if it matches switch type.
     if(root->type==47){
-        root->type=typecheckdfs(root->child_1);
-        return typecheckdfs(root->child_1);
+        root->datatype=typecheckdfs(root->child_1);
+        return root->datatype;
     }
 
     //Type checking ID and other terminals and returning accurate types for type checking.
@@ -602,37 +611,37 @@ Type typecheckdfs(Ast_Node* root){
                 strcpy(e.id_name,root->token_data->lexeme);
                 add_error(e);
                 
-                root->type = TYPE_ERROR;
+                root->datatype = TYPE_ERROR;
                 return TYPE_ERROR;
             }
 
-            root->type=st_entry->type;
+            root->datatype=st_entry->type;
             return st_entry->type;
         }
 
         if(root->token_data->token == NUM) {
-            root->type=TYPE_INTEGER;
+            root->datatype=TYPE_INTEGER;
             return TYPE_INTEGER;
         }
 
         if(root->token_data->token == RNUM) {
-            root->type=TYPE_REAL;
+            root->datatype=TYPE_REAL;
             return TYPE_REAL;
         }
 
         if(root->token_data->token == TRUE || root->token_data->token == FALSE) {
-            root->type=TYPE_BOOLEAN;
+            root->datatype=TYPE_BOOLEAN;
             return TYPE_BOOLEAN;
         }
 
         else{
-            Error e;
-            e.type=UNKNOWN_TERMINAL_TYPE;
-            e.line=root->token_data->lineNumber;
-            strcpy(e.id_name,root->token_data->lexeme);
-            add_error(e);
+            // Error e;
+            // e.type=UNKNOWN_TERMINAL_TYPE;
+            // e.line=root->token_data->lineNumber;
+            // strcpy(e.id_name,root->token_data->lexeme);
+            // add_error(e);
                 
-            root->type = TYPE_ERROR;
+            root->datatype = TYPE_ERROR;
             return TYPE_ERROR;
         }
     }
@@ -646,6 +655,6 @@ Type typecheckdfs(Ast_Node* root){
     if(root->child_5!=NULL) t=typecheckdfs(root->child_5);
     if(root->syn_next!=NULL) t=typecheckdfs(root->syn_next);
 
-    root->type=TYPE_UNDEFINED;
+    root->datatype=TYPE_UNDEFINED;
     return TYPE_UNDEFINED;
 }
