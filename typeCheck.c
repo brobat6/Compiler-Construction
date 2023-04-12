@@ -188,6 +188,7 @@ Type typecheckdfs(Ast_Node* root){
                     e.type = ERROR_UNEQUAL_ARRAY_SIZES;
                     e.line = root->child_1->token_data->lineNumber;
                     strcpy(e.id_name, root->child_1->token_data->lexeme);
+                    strcpy(e.id_name_2, rhs_id->variableName);
                     add_error(e);
                     root->datatype = TYPE_ERROR;
                     return TYPE_ERROR;

@@ -137,7 +137,7 @@ void functionChecker(Ast_Node* root) {
                                 Error e;
                                 e.type = VAR_ASSIGNMENT_TO_FOR_LOOP_VARIABLE;
                                 e.line = line_no;
-                                strcpy(e.id_name, temp2->child_1->token_data);
+                                strcpy(e.id_name, temp2->child_1->token_data->lexeme);
                                 add_error(e);
                             }
                             temp1 = temp1->next;

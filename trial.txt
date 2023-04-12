@@ -1,99 +1,103 @@
-** Test case 4: Testing symbol table creation for variable declaration and redeclaration checks**
-** Multiple level nesting using static array data type**
-**Variant of test case 2**
+**Code Generation test case 4: Computing expressions using integer, boolean and static array data types**
 
-<<module var_demo_array>>
-takes input [x:integer, m:array [2..20] of integer, p:real];
-returns [ n:integer, k: boolean];
-start
-	declare a,b:integer;	
-	get_value(b);
-	declare p: array[2..20] of integer;	**Not an error as local variable can shadow the definition of input parameter**
-	a:= m[5]+3;
-	p:= m;					** not an error**
-	k:=true;
-	p[10]:= a*b-20*h;			**ERROR: variable h is not declared**
-	while(k AND x<=m[11] OR false) **UPD: Lines 16-23: none of the while loop condition variables is assigned a value in the loop body**
-	start
-		declare p:integer;
-		declare b: array[2..20] of integer;
-		b:= m;
-		b[2]:= u+m[6];			**ERROR: variable u is not declared**
-		p:= b[18]*18;
-	end
-        n:= a - b;
-	declare b:real;				**ERROR: variable b is re-declared**
-	b:= b+3;
-	k:= a>b OR b>100;
-	print(k);	
-end
-
-
-<<module f1>>
-takes input[a: array[10..30] of integer, b:array[10..30] of integer, c:real];
-returns [m:boolean, n:integer];
-start
-	declare x,y: real;
-	declare k: integer;
-	get_value(y);
-	get_value(x);
-	declare A,B: array[4..10] of integer;
-	get_value(B);
-	declare C: array[10..30] of integer;
-	A:=B;
-	C:=a;
-	D:=C;					**ERROR: variable D is not declared**
-	for (k in -15..40)
-	start
-		x:=x+y;
-		declare u, v:real;
-		u := y+c*34.2;
-		v:= u-c*p-20.5E+2;		**ERROR: variable p is not declared**
-		switch(k)
-		start
-			case 10: declare A:real;
-				 declare B: array[10..30] of integer;
-				 declare E: array[4..10] of integer;
-				 B[15]:= k*20; 	**No error as index is within bounds computed statically**	
-				 B:=C;          **No error as C is available with static ancestor**
-				 E:= Q;		**ERROR: variable Q is not declared**
-				 break;
-			case 20: declare B, A: array[-11..10] of real;     **Not an error: variables A, B are declared in the scope of this different case**
-                                 A[3]:= 12.90 + u*y - c;         **Not an error as u, y and c are avialble in the scopes of static ancestors**
-				 declare B: real;             **ERROR: variable B is re-declared**
-				 declare Q: integer;
-				 get_value(Q);
-				 u:= k+12 - Q*10;          **not an error, UPD: Type mismatch**
-				 break;
-			default: C[9]:= A[15]+Q;	      **not an error, UPD: C[9] is out of bound, UPD: Line 68: Array element A[15] is out of bound and Q is not declared**
-				 break;			 	
-		end
-		x:=x+u*v;
-		k:= 23;				**ERROR: variable k is assigned a value erroniously as it is the variable in for loop**
-	end
-	x:=c+y;	
-	C[18]:= a[18]+ b[18];
-	A[5]:= B[6]- 10;
-	declare A: array[10..70] of integer;	**ERROR: variable A is re-declared**
-	m:= A[5]< C[18];
-	m:= c>=x AND E[10]>=y;			**ERROR: variable E is not declared**
-	n:= 20*8-5;	
-end
-
-
+**Single driver module with two levels of nesting
+Variant of test case 3**
 
 <<<driver program>>>
 start
-	declare v_1_2_3, A:integer;
-	declare u1:boolean;
-        A:=12;
-	declare p: real;
-	p:= 23.56;
-	get_value(v_1_2_43);							**ERROR: variable v_1_2_43 is not declared**		
-	declare B, C: array [2..20] of integer;
-	[ v_1_2_3, u1]:=use module var_demo_array with parameters A,B,p;		
-	[ v_1_2_3, k]:=use module var_demo_array with parameters A,B,p;		**ERROR: variable k is not declared**
-	B:= C;
-	declare B: real;							**ERROR: variable B is re-declared**
+	declare x, y, z, k:integer;
+	declare a, b, c:integer;
+	declare u, v: boolean;
+	declare A: array[10..15] of integer;
+	u:= true;
+	a:= 5;
+	b:= 9;
+	get_value(x);
+	get_value(y);
+	z:= x + y*b +(a-b)*y+ a*2 - b*x;
+	print(z);
+	for(k in 10..15)
+        start
+              declare a, b:integer;
+              a:= 7;
+              get_value(b);
+              a:= a+b;
+              print(a);
+              z:= z+k+a*2;
+              print(z);
+        end
+	z:= x + y*b +(a-b)*y+ a*2 - b*x;
+	v:= z > 10 OR a<=b AND x<y AND u;	**follows left to right associativity**
+        print(z);
+	print(u);
+	get_value(A);
+
+**Note: Implement get_value(A) using type information of A. Your code template should first inform user of the size, range indices and type of data and read accordingly to populate the memory locations allocated for elements of A**
+
+        y:= a+x+A[13]*2 + A[14]*3 +A[15];                **bound checking at compile time must have been done before code generation**
+	print(y);
+	print(A);
+
 end
 
+** Expected output
+
+For values of x = 2 and y = 3 as run time input, print z as 9.
+
+Then print u as true (use string true or false to print output of a variable of boolean type).
+
+Repeat for 6 times for executing for loop
+      read value of b from console giving message as "Input: Enter an integer value" and prompt for the user input from a new line.
+      print value of a on the console giving mesage as "Output: 10"  (for example)
+      print value of z on the console giving mesage as "Output: 40"  (for example)
+
+Read array element values as 12, 4, -8, 9, 10, -18 as shown below and
+then print the value of y
+and print values of A - i.e. all elements of A one after the other in each line
+
+On the console your output and input messages should appear in new line for each print as shown below
+Input: Enter an integer value
+2
+Input: Enter an integer value
+3
+Output: 9
+Input: Enter an integer value
+-5
+Output: 2
+Output: 23
+Input: Enter an integer value
+3
+Output: 10
+Output: 43
+Input: Enter an integer value
+6
+Output: 13
+Output: 47
+Input: Enter an integer value
+9
+Output: 16
+Output: 54
+Input: Enter an integer value
+-8
+Output: -1
+Output: 21
+Input: Enter an integer value
+10
+Output: 17
+Output: 58
+Output: 9
+Output: true
+Input: Enter 6 array elements of integer type for range 10 to 15
+12
+4
+-8
+9
+10
+-18
+Output: 37
+Output: 12 4 -8 9 10 -18
+
+
+Similarly run the generated assembly code for other input values and verify.
+
+**

@@ -116,6 +116,9 @@ void print_semantic_errors(FILE *fp) {
         else if(e->error.type == ERROR_INCOMPATIBLE_ARRAY_OPERATION) {
             fprintf(fp, "Cannot operate on the array %s as a whole.", e->error.id_name);
         }
+        else if(e->error.type == ERROR_UNEQUAL_ARRAY_SIZES) {
+            fprintf(fp, "Type mismatch - the arrays %s and %s do not have the same size.", e->error.id_name, e->error.id_name_2);
+        }
         // Tanveer Errors
         else if(e->error.type == ERROR_MODULE_REDECLARATION) {
             fprintf(fp, "Module %s already exists (previously declared at line %d).", e->error.module_name, e->error.line_2);
