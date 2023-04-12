@@ -456,6 +456,7 @@ STEntry evaluateArrayExpression (Ast_Node* cur_ast_node) {
 }
 
 STEntry outOfBoundsCheckArrIndWithExpr (STEntry* cur_id, Ast_Node* cur_ast_node) { /////////////////// check ----------------------------------
+    cur_ast_node = cur_ast_node->child_1;
     STEntry cur_node;
     if (cur_ast_node->type == 41) {
         if (cur_ast_node->child_1->token_data->token == NUM) {
