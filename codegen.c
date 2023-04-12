@@ -51,6 +51,8 @@ void printDataSection () {
     fprintf(fp, "inputFloat:  db  '%%f', 0\n");
     fprintf(fp, "inputBool:  db  '%%hhu', 0\n");
     fprintf(fp, "outputInt:  db  '%%hd', 10, 0\n");
+    fprintf(fp, "outputInt:  db  '%%hd ', 0\n");
+    fprintf(fp, "endl:  db  10, 0\n");
     fprintf(fp, "outputFloat:  db  '%%f', 10, 0\n");
     fprintf(fp, "outputTrue:  db  'true', 0\n");
     fprintf(fp, "outputFalse:  db  'false', 0\n");
@@ -224,7 +226,7 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
                         fprintf(fp, "\tpop rax\n");
                     }
                     else if (cur_id->type == TYPE_INTEGER) {
-                        fprintf(fp, "\tmov rdi, outputInt\n");
+                        fprintf(fp, "\tmov rdi, outputIntSpace\n");
                         fprintf(fp, "\tmov si, [buffer + rbx]\n");
                         fprintf(fp, "\tpush rax\n");
                         fprintf(fp, "\tpush rbx\n");
@@ -255,6 +257,8 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
                     fprintf(fp, "\tadd dx, 1\n");
                     fprintf(fp, "\tcmp cx, dx\n");
                     fprintf(fp, "\tjge comp_label%d\n", comp_label);
+                    fprintf(fp, "\tmov rdi, endl\n");
+                    fprintf(fp, "\tcall puts\n");
                     comp_label+=2;
                 }
                 else {
