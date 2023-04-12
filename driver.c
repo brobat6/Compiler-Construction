@@ -7,8 +7,7 @@ ID: 2020A7PS0980P			    Name: Mithil Shah
 ID: 2020A7PS0120P			    Name: Kshitij Garg
 */
 
-#include "typeCheck.h"
-#include "semanticError.h"
+#include "semanticAnalyzer.h"
 
 ht* initialize () {
     readGrammarFile();

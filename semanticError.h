@@ -21,6 +21,7 @@ add_error(e);
 #define _SEMANTIC_ERROR_H
 
 typedef enum Error_Type{
+    // Shivam errors
     ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION,
     ERROR_INCOMPATIBLE_RELATIONAL_OPERATION,
     ERROR_INCOMPATIBLE_LOGICAL_OPERATION,
@@ -43,7 +44,22 @@ typedef enum Error_Type{
     VAR_NOT_OF_TYPE_ARRAY,
     NON_INTEGER_ARRAY_INDEX,
     ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION,
-    ERROR_UNEQUAL_ARRAY_SIZES
+    ERROR_UNEQUAL_ARRAY_SIZES,
+    // Tanveer errors - Symbol Table
+    ERROR_MODULE_REDECLARATION,
+    ERROR_MODULE_REDEFINITION,
+    ERROR_IDENTIFIER_ALREADY_EXISTS,
+    // Tanveer errors - Semantic Analyzer
+    ERROR_FUNCTION_RECURSIVE,
+    ERROR_FUNCTION_OUTPUT_NOT_BEING_ASSIGNED,
+    ERROR_FUNCTION_OUTPUT_BEING_ASSIGNED_EXTRA,
+    ERROR_FUNCTION_OUTPUT_TYPES_DONT_MATCH,
+    ERROR_FUNCTION_OUTPUT_ARRAY,
+    ERROR_FUNCTION_INPUT_TYPES_DONT_MATCH,
+    ERROR_FUNCTION_GETS_LESS_INPUT,
+    ERROR_FUNCTION_GETS_MORE_INPUT,
+    ERROR_FUNCTION_NOT_DECLARED
+
 }Error_Type;
 
 typedef struct ERROR Error;
@@ -53,6 +69,9 @@ struct ERROR {
     char module_name[21];
     char id_name[21];
     // Make nodes for additional data here.
+    int line_2;
+    char module_name_2[21];
+    char id_name_2[21];
 };
 
 typedef struct ERROR_LIST Error_List;
