@@ -111,7 +111,15 @@ void getValue (Ast_Node* cur_ast_node) {
 
 
         }
+        fprintf(fp, "\tpush rax\n");
+        fprintf(fp, "\tpush rbx\n");
+        fprintf(fp, "\tpush rcx\n");
+        fprintf(fp, "\tpush rdx\n");
         fprintf(fp, "\tcall scanf\n");
+        fprintf(fp, "\tpop rdx\n");
+        fprintf(fp, "\tpop rcx\n");
+        fprintf(fp, "\tpop rbx\n");
+        fprintf(fp, "\tpop rax\n");
         fprintf(fp, "\tadd rbx, %d\n", cur_node->width);
         fprintf(fp, "\tadd dx, 1\n");
         fprintf(fp, "\tcmp cx, dx\n");

@@ -4,11 +4,16 @@
 
 <<<driver program>>>
 start
-	declare A: array[-3..2] of integer;
-	y:= a+x+A[0]*2 + A[1]*3 +A[-3];
+	declare x, y, z:integer;
+    declare a, b, c:integer;
+    declare u, v: boolean;
+    declare A: array[-3..2] of integer;
+	get_value(A);
 end
 
 ** Expected output
+
+y:= a+x+A[0]*2 + A[1]*3 +A[-3];
 
 For values of x = 2 and y = 3 as run time input, print z as 9.
 Then print v as true (use string true or false to print output of a variable of boolean type).
