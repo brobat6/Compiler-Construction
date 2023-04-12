@@ -802,13 +802,14 @@ void switchCaseStatements (Ast_Node* cur_ast_node) {
         int fin_label = comp_label;
         comp_label++;
         while (cur_case_stmt) {
+            int cur_label = comp_label;
+            comp_label++;
             fprintf(fp, "\tmov bx, %d\n", cur_case_stmt->child_1->token_data->value.num);
             fprintf(fp, "\tcmp ax, bx\n");
-            fprintf(fp, "\tjne comp_label%d\n", comp_label);
+            fprintf(fp, "\tjne comp_label%d\n", cur_label);
             codeGenASTTraversal(cur_case_stmt->child_2);
             fprintf(fp, "\tjmp comp_label%d\n", fin_label);
-            fprintf(fp, "comp_label%d:\n", comp_label);
-            comp_label++;
+            fprintf(fp, "comp_label%d:\n", cur_label);
             cur_case_stmt = cur_case_stmt->child_3;
         }
         // default
@@ -821,6 +822,8 @@ void switchCaseStatements (Ast_Node* cur_ast_node) {
         int fin_label = comp_label;
         comp_label++;
         while (cur_case_stmt) {
+            int cur_label = comp_label;
+            comp_label++;
             if (cur_case_stmt->child_1->token_data->value.b == true) {
                 fprintf(fp, "\tmov bl, 1\n");
             }
@@ -828,11 +831,10 @@ void switchCaseStatements (Ast_Node* cur_ast_node) {
                 fprintf(fp, "\tmov bx, 0\n");
             }
             fprintf(fp, "\tcmp al, bl\n");
-            fprintf(fp, "\tjne comp_label%d\n", comp_label);
+            fprintf(fp, "\tjne comp_label%d\n", cur_label);
             codeGenASTTraversal(cur_case_stmt->child_2);
             fprintf(fp, "\tjmp comp_label%d\n", fin_label);
-            fprintf(fp, "comp_label%d:\n", comp_label);
-            comp_label++;
+            fprintf(fp, "comp_label%d:\n", cur_label);
             cur_case_stmt = cur_case_stmt->child_3;
         }
         fprintf(fp, "comp_label%d:\n", fin_label);
@@ -855,28 +857,38 @@ void forStatement (Ast_Node* cur_ast_node) {
     else {
         r_value = - range_for_loop->child_2->child_2->token_data->value.num;
     }
+    int cur_label = comp_label;
+    comp_label++;
     fprintf(fp, "\tmov ax, %d\n", l_value);
     fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
     fprintf(fp, "\tmov bx, %d\n", r_value);
-    fprintf(fp, "comp_label%d:\n", comp_label);
+    fprintf(fp, "comp_label%d:\n", cur_label);
     codeGenASTTraversal(cur_ast_node->child_4);
     if (l_value <= r_value) {
         fprintf(fp, "\tadd ax, 1\n");
         fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
         fprintf(fp, "\tcmp ax, bx\n");
-        fprintf(fp, "\tjle comp_label%d\n", comp_label);
+        fprintf(fp, "\tjle comp_label%d\n", cur_label);
     }
     else {
         fprintf(fp, "\tsub ax, 1\n");
         fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
         fprintf(fp, "\tcmp ax, bx\n");
-        fprintf(fp, "\tjge comp_label%d\n", comp_label);
+        fprintf(fp, "\tjge comp_label%d\n", cur_label);
     }
-    comp_label++;
 }
 
 void whileStatement (Ast_Node* cur_ast_node) {
-    
+    int cur_label = comp_label;
+    comp_label+=2;
+    fprintf(fp, "comp_label%d:\n", cur_label);
+    STEntry cur_expr_result = evaluateExpression(cur_ast_node->child_1);
+    fprintf(fp, "\tmov al, 0\n");
+    fprintf(fp, "\tcmp [buffer + %d], al\n", cur_expr_result.offset);
+    fprintf(fp, "\tje comp_label%d\n", cur_label + 1);
+    codeGenASTTraversal(cur_ast_node->child_3);
+    fprintf(fp, "\tjmp comp_label%d\n", cur_label);
+    fprintf(fp, "comp_label%d:\n", cur_label + 1);
 }
 
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
