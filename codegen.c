@@ -51,7 +51,7 @@ void printDataSection () {
     fprintf(fp, "inputFloat:  db  '%%f', 0\n");
     fprintf(fp, "inputBool:  db  '%%hhu', 0\n");
     fprintf(fp, "outputInt:  db  '%%hd', 10, 0\n");
-    fprintf(fp, "outputInt:  db  '%%hd ', 0\n");
+    fprintf(fp, "outputIntSpace:  db  '%%hd ', 0\n");
     fprintf(fp, "endl:  db  10, 0\n");
     fprintf(fp, "outputFloat:  db  '%%f', 10, 0\n");
     fprintf(fp, "outputTrue:  db  'true', 0\n");
