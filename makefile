@@ -8,7 +8,7 @@
 CC=gcc				#compiler
 TARGET=stage1exe	#target file name
 
-all: driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c symbolTable.c typeCheck.c
+all: 
 	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c symbolTable.c typeCheck.c semanticError.c -o $(TARGET)
 
 clean:
