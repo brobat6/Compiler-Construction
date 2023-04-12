@@ -41,9 +41,7 @@ STEntry getNewTemporary (Type dataType) {
     return cur;
 }
 
-void getFromOffset () {
-
-}
+void codeGenASTTraversal (Ast_Node* cur_ast_node);
 
 void checkBounds (Ast_Node* cur_ast_node) {
     // if cur id is an array and its bounds are variable, then find their value
@@ -1042,7 +1040,7 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
         break;
     case 48:
         // iterativeStmt - for loop
-        
+        forStatement(cur_ast_node);
         break;
     case 49:
         // iterativeStmt - while loop
