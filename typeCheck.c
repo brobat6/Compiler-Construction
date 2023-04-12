@@ -10,6 +10,7 @@ Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2){
         else{
             e.type=ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION;
             e.line=tk_data->lineNumber;
+            strcpy(e.id_name, tk_data->lexeme);
             add_error(e);
             return TYPE_ERROR;
         }
@@ -19,6 +20,7 @@ Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2){
         else{
             e.type=ERROR_INCOMPATIBLE_RELATIONAL_OPERATION;
             e.line=tk_data->lineNumber;
+            strcpy(e.id_name, tk_data->lexeme);
             add_error(e);
             return TYPE_ERROR;
         }
@@ -28,6 +30,7 @@ Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2){
         else{
             e.type=ERROR_INCOMPATIBLE_LOGICAL_OPERATION;
             e.line=tk_data->lineNumber;
+            strcpy(e.id_name, tk_data->lexeme);
             add_error(e);
             return TYPE_ERROR;
         }
@@ -167,6 +170,7 @@ Type typecheckdfs(Ast_Node* root){
         } else {
             right_expr = typecheckdfs(root->syn_next);
         }
+
         root->datatype=checkType(root->child_1->token_data, op, left_expr, right_expr);
         return root->datatype;
     }
@@ -467,7 +471,7 @@ Type typecheckdfs(Ast_Node* root){
         if(left_expr==TYPE_INTEGER && root->child_4==NULL){
             Error e;
             e.type=DEFAULT_CASE_IN_INTEGER_SWITCH;
-            e.line=root->child_1->token_data->lineNumber;
+            e.line=root->child_5->token_data->lineNumber;
             add_error(e);
             
             root->datatype=TYPE_ERROR;
@@ -551,7 +555,7 @@ Type typecheckdfs(Ast_Node* root){
                 if(fl==0){
                     Error e;
                     e.type=MISSING_TRUE_FALSE_CASES;
-                    e.line=root->child_1->token_data->lineNumber;
+                    e.line=root->child_5->token_data->lineNumber;
                     add_error(e);
 
                     root->datatype=TYPE_ERROR;
@@ -560,7 +564,7 @@ Type typecheckdfs(Ast_Node* root){
                 if(fl==1){
                     Error e;
                     e.type=MISSING_TRUE_CASES;
-                    e.line=root->child_1->token_data->lineNumber;
+                    e.line=root->child_5->token_data->lineNumber;
                     add_error(e);
 
                     root->datatype=TYPE_ERROR;
@@ -569,7 +573,7 @@ Type typecheckdfs(Ast_Node* root){
                 if(fl==2){
                     Error e;
                     e.type=MISSING_FALSE_CASES;
-                    e.line=root->child_1->token_data->lineNumber;
+                    e.line=root->child_5->token_data->lineNumber;
                     add_error(e);
 
                     root->datatype=TYPE_ERROR;
@@ -580,7 +584,7 @@ Type typecheckdfs(Ast_Node* root){
                 else{
                     Error e;
                     e.type=UNEXPECTED_FLAG_VALUE;
-                    e.line=root->child_1->token_data->lineNumber;
+                    e.line=root->child_5->token_data->lineNumber;
                     add_error(e);
 
                     root->datatype=TYPE_ERROR;
