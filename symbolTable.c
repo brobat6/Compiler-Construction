@@ -1,6 +1,6 @@
 #include "symbolTable.h"
 
-#define DATASEGMENTOFFSET 1000
+#define DATASEGMENTOFFSET 0
 int curOffset=DATASEGMENTOFFSET;
 STTreeNode* curSTTreeNode=NULL;
 STTreeNode* globalSTRoot=NULL; // Root of symbol table
@@ -556,7 +556,7 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
     ht_itr it = ht_iterator(root->hashTable);
     while(ht_next_entry(&it)) {
         STEntry* data = it.data;
-        fprintf(fp, "%s\t\t%s\t\t[%d-%d]\t\t", data->variableName, root->moduleName, data->declarationLineNumber, root->lineNumber.end);
+        fprintf(fp, "%-20s %-20s    [%-3d-%3d] %10s ", data->variableName, root->moduleName, data->declarationLineNumber, root->lineNumber.end,"");
         char data_type[20];
         if(data->type == TYPE_INTEGER) strcpy(data_type, "integer");
         else if(data->type == TYPE_REAL) strcpy(data_type, "real");
@@ -572,28 +572,28 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
         } else {
             strcpy(array_type, "**");
         }
-        fprintf(fp, "%s\t\t%s\t\t%s\t\t", data_type, is_array, array_type);
+        fprintf(fp, "%-20s %-15s %-10s ", data_type, is_array, array_type);
         // Array Range
         if(data->isArray) {
             if(data->isDynamic.lower) {
-                fprintf(fp, "[%s-", data->range.lower.lexeme);
+                fprintf(fp, "%-10s[%s -","", data->range.lower.lexeme);
             } else {
-                fprintf(fp, "[%d-", data->range.lower.value);
+                fprintf(fp, "%-10s[%d -","", data->range.lower.value);
             }
             if(data->isDynamic.upper) {
-                fprintf(fp, "%s]\t\t", data->range.upper.lexeme);
+                fprintf(fp, " %s]", data->range.upper.lexeme);
             } else {
-                fprintf(fp, "%d]\t\t", data->range.upper.value);
+                fprintf(fp, " %d]", data->range.upper.value);
             }
         } else {
-            fprintf(fp, "**\t\t");
+            fprintf(fp, "%-10s**%-9s","","");
         }
-        fprintf(fp, "%d\t\t%d\t\t", data->width, data->offset);
+        fprintf(fp, "%-10s%d %12d ","",data->width, data->offset);
         int nest = root->nestingLevel;
         if(data->isOutputParameter) {
             nest--;
         }
-        fprintf(fp, "%d\n", nest);
+        fprintf(fp, "%10d\n", nest);
     }
     STTreeNode* temp = root->leftMostChild;
     while(temp != NULL) {
@@ -603,7 +603,7 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
 }
 
 void print_symbol_table(STTreeNode* root, FILE* fp) {
-    fprintf(fp, "variable name\tscope(module name)\tscope(line numbers)\ttype of element\t");
-    fprintf(fp, "is_array\tstatic/dynamic array\trange\twidth\toffset\tnesting level\n");
+    fprintf(fp, "variable name    scope(module name)     scope(line numbers)  type of element        ");
+    fprintf(fp, "is_array   static/dynamic array       range              width        offset     nesting level\n");
     recursive_print_symbol_table(root, fp);
 }
