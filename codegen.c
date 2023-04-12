@@ -123,7 +123,7 @@ void getValue (Ast_Node* cur_ast_node) {
         fprintf(fp, "\tadd rbx, %d\n", cur_node->width);
         fprintf(fp, "\tadd dx, 1\n");
         fprintf(fp, "\tcmp cx, dx\n");
-        fprintf(fp, "\tjl comp_label%d\n", comp_label);
+        fprintf(fp, "\tjge comp_label%d\n", comp_label);
         comp_label++;
     }
     else {
