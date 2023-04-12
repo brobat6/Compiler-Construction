@@ -9,6 +9,7 @@ ID: 2020A7PS0120P			    Name: Kshitij Garg
 
 #include "typeCheck.h"
 #include "semanticError.h"
+#include "codegen.h"
 
 ht* initialize () {
     readGrammarFile();
@@ -87,6 +88,9 @@ int main(int argc, char *argv[]) {
             FILE* f_error = fopen("semantic_error.out", "w");
             print_semantic_errors(f_error);
             fclose(f_error);
+
+            //Code Generation 
+            codegen(ast_root);
         }
         else if(choice==4)
         {
