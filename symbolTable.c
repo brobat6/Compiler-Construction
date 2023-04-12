@@ -70,7 +70,7 @@ STEntry* recursiveCheckID(STTreeNode* node,Token_Info* t) {
     */
     if(node == NULL) return NULL;
     STEntry* check = checkID(node, t->lexeme);
-    if(check->is_for_loop_variable && check->declarationLineNumber == t->lineNumber) return check;
+    if(check != NULL && check->is_for_loop_variable && check->declarationLineNumber == t->lineNumber) return check;
     if(check == NULL || check->declarationLineNumber > t->lineNumber) {
         return recursiveCheckID(node->parent, t);
     }
