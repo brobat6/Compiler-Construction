@@ -43,11 +43,6 @@ STEntry getNewTemporary (Type dataType) {
 
 void codeGenASTTraversal (Ast_Node* cur_ast_node);
 
-void checkBounds (Ast_Node* cur_ast_node) {
-    // if cur id is an array and its bounds are variable, then find their value
-    // so store the array dynamically, set offset etc.
-}
-
 void printDataSection () {
     fprintf(fp, "\tsection .bss\n");
     fprintf(fp, "buffer:  resb  10000\n");
@@ -59,7 +54,6 @@ void printDataSection () {
     fprintf(fp, "outputFloat:  db  '%%f', 10, 0\n");
     fprintf(fp, "outputTrue:  db  'true', 0\n");
     fprintf(fp, "outputFalse:  db  'false', 0\n");
-    // out
 }
 
 void getValue (Ast_Node* cur_ast_node) {
@@ -70,6 +64,7 @@ void getValue (Ast_Node* cur_ast_node) {
     fprintf(fp, "\txor eax, eax\n");
     if (cur_node->isArray) {
         // to do after dynamic arrays ka sort ho jaaye //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     }
     else {
         if (cur_node->type == TYPE_BOOLEAN) {
@@ -781,13 +776,20 @@ void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////
     STEntry* cur_entry = recursiveCheckID(cur_ast_node->symbol_table, cur_ast_node->token_data);
     if (!cur_entry->isArray) return;
     if (cur_entry->isDynamic.lower) { // lower bound is dynamic
+        Token_Info* t=(Token_Info*)malloc(sizeof(Token_Info));
+        strcpy(t->lexeme,cur_entry->range.lower.lexeme);
+        t->lineNumber=cur_ast_node->token_data->lineNumber;
+        STEntry* lbound = recursiveCheckID(cur_ast_node->symbol_table,t);
         // cur_entry->range.lower.lexeme
     }
     else {
 
     }
     if (cur_entry->isDynamic.upper) { // lower bound is dynamic
-
+        Token_Info* t=(Token_Info*)malloc(sizeof(Token_Info));
+        strcpy(t->lexeme,cur_entry->range.lower.lexeme);
+        t->lineNumber=cur_ast_node->token_data->lineNumber;
+        STEntry* rbound = recursiveCheckID(cur_ast_node->symbol_table,t);
     }
     else {
         
@@ -868,6 +870,7 @@ void forStatement (Ast_Node* cur_ast_node) {
         fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_id->offset);
         fprintf(fp, "\tadd ax, 1\n");
         fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
+        fprintf(fp, "\tmov bx, %d\n", r_value);
         fprintf(fp, "\tcmp ax, bx\n");
         fprintf(fp, "\tjle comp_label%d\n", cur_label);
     }
@@ -875,6 +878,7 @@ void forStatement (Ast_Node* cur_ast_node) {
         fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_id->offset);
         fprintf(fp, "\tsub ax, 1\n");
         fprintf(fp, "\tmov [buffer + %d], ax\n", cur_id->offset);
+        fprintf(fp, "\tmov bx, %d\n", r_value);
         fprintf(fp, "\tcmp ax, bx\n");
         fprintf(fp, "\tjge comp_label%d\n", cur_label);
     }
