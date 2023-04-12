@@ -110,6 +110,12 @@ void print_semantic_errors(FILE *fp) {
         else if(e->error.type == NON_INTEGER_ARRAY_INDEX) {
             fprintf(fp, "Array index does not evaluate to type integer");
         }
+        else if(e->error.type == ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION) {
+            fprintf(fp, "Expression in RHS cannot be assigned to array %s.", e->error.id_name);
+        }
+        else if(e->error.type == ERROR_INCOMPATIBLE_ARRAY_OPERATION) {
+            fprintf(fp, "Cannot operate on the array %s as a whole.", e->error.id_name);
+        }
         // Tanveer Errors
         else if(e->error.type == ERROR_MODULE_REDECLARATION) {
             fprintf(fp, "Module %s already exists (previously declared at line %d).", e->error.module_name, e->error.line_2);
@@ -136,7 +142,7 @@ void print_semantic_errors(FILE *fp) {
             fprintf(fp, "%s is an array, it can never be an output parameter of a function.", e->error.id_name);
         }
         else if(e->error.type == ERROR_FUNCTION_INPUT_TYPES_DONT_MATCH) {
-            fprintf(fp, "Type of formal input parameter %s does not match the actual input parameter %s.", e->error.id_name, e->error.id_name_2);
+            fprintf(fp, "Type of formal input parameter %s does not match the actual input parameter %s.", e->error.id_name_2, e->error.id_name);
         }
         else if(e->error.type == ERROR_FUNCTION_GETS_LESS_INPUT) {
             fprintf(fp, "Module %s takes LESS input parameters than its definition.", e->error.module_name);

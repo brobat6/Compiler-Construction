@@ -6,7 +6,11 @@ Type checkType(Token_Info* tk_data, Operator op, Type t1, Type t2){
     Error e;
 
     if(op==OP_ARITH){
-        if(t1==t2 && (t1==TYPE_INTEGER || t1==TYPE_REAL)) return t1;
+        if(t1==t2 && (t1==TYPE_INTEGER || t1==TYPE_REAL)){
+            if(tk_data->token==DIV){
+                return TYPE_REAL;
+            } else return t1;
+        }
         else{
             e.type=ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION;
             e.line=tk_data->lineNumber;
@@ -63,7 +67,7 @@ int boundCheck(Token_Info* tk_data, STEntry* st_entry, int index){
 
     if(index>=lower_bound && index<=upper_bound) return 1;
     else{
-        printf("Line %d: Array %s out of bounds.\n", tk_data->lineNumber, tk_data->lexeme);
+        // printf("Line %d: Array %s out of bounds.\n", tk_data->lineNumber, tk_data->lexeme);
         Error e;
         e.type=ERROR_ARRAY_OUT_OF_BOUNDS;
         e.line=tk_data->lineNumber;
@@ -120,9 +124,9 @@ Type typecheckdfs(Ast_Node* root){
 
         Type left_expr=typecheckdfs(root->child_1);
 
-        Type right_expr=typecheckdfs(root->child_2);
+        // printf("%d %d %d %d\n", st_id->isArray, st_id->isDynamic.lower, st_id->isDynamic.upper, root->child_1->type);
 
-        if(st_id->isArray && st_id->isDynamic.lower == false && st_id->isDynamic.upper == false && root->child_1->type == 23) {
+        if(st_id->isArray && st_id->isDynamic.lower == false && st_id->isDynamic.upper == false && root->child_2->type == 23) {
             // Check for expressions of the form a := b, where a is a static array.
             Ast_Node* exp = root->child_2->child_1;
             // AnyTerm --> exp->child_1. 
@@ -171,7 +175,20 @@ Type typecheckdfs(Ast_Node* root){
                     return TYPE_ERROR;
                 }
             }
+            if(rhs_id->type==left_expr){
+                root->datatype=left_expr;
+                return root->datatype;
+            } else{
+                Error e;
+                e.type=ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION;
+                e.line=factor->child_1->token_data->lineNumber;
+                add_error(e);
+
+                root->datatype=TYPE_ERROR;
+                return TYPE_ERROR;
+            }
         }
+        Type right_expr=typecheckdfs(root->child_2);
         
         //Type check LHS and RHS of assignment.
         root->datatype = checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
@@ -183,7 +200,7 @@ Type typecheckdfs(Ast_Node* root){
         Type right_expr=typecheckdfs(root->child_2);
 
         //If unary operators like '+' or '-' are being assigned, it should be integer or real.
-        if(right_expr!=TYPE_INTEGER && right_expr!=TYPE_REAL){
+        if(right_expr==TYPE_BOOLEAN){
             Error e;
             e.type=UNARY_ASSIGNMENT_TO_NON_NUM_RNUM;
             e.line=root->child_1->token_data->lineNumber;
@@ -226,9 +243,31 @@ Type typecheckdfs(Ast_Node* root){
         return root->datatype;
     }
 
-    //Type Checking for relational expansion or array index expansion. Format is same for both rules.
-    if(root->type==36 || root->type == 40){
+    //Type Checking for relational expansion.
+    if(root->type==36) {
         if(root->child_2==NULL){
+            root->datatype=typecheckdfs(root->child_1);
+            return root->datatype; // NOTE : DO THIS EVERYWHERE !!!!!!!!!!!!!!!!!!!!!
+        } else {
+            root->datatype=typecheckdfs(root->child_2);
+            return root->datatype;
+        }
+    }
+
+    // Type checking at array index expansion. Format SIMILAR to type 36.
+    if(root->type == 40) {
+        if(root->child_2==NULL){
+            STEntry* st_id = recursiveCheckID(root->child_1->symbol_table, root->child_1->token_data);
+            if(st_id != NULL && st_id->isArray) {
+                Error e;
+                e.type = ERROR_INCOMPATIBLE_ARRAY_OPERATION;
+                e.line = root->child_1->token_data->lineNumber;
+                strcpy(e.id_name, root->child_1->token_data->lexeme);
+                add_error(e);
+
+                root->datatype = TYPE_ERROR;
+                return root->datatype;
+            }
             root->datatype=typecheckdfs(root->child_1);
             return root->datatype; // NOTE : DO THIS EVERYWHERE !!!!!!!!!!!!!!!!!!!!!
         } else {
@@ -248,8 +287,20 @@ Type typecheckdfs(Ast_Node* root){
         return root->datatype;
     }
 
+    // <moduleReuseStmt> -> <optional> USE MODULE ID WITH PARAMETERS <actual_para_list> SEMICOL
+    // Here, the only issue is that "USE MODULE ID" was giving an error wrongly, because 
+    // the code checks for all ID, whether they have been put in symbol table or not.
+    // But MODULE ID will actually be in function symbol table, and it is being 
+    // check in the semanticAnalyzer code. So we need to ignore this.
+    if(root->type == 26) {
+        typecheckdfs(root->child_1);
+        typecheckdfs(root->child_3);
+        root->datatype = TYPE_UNDEFINED;
+        return TYPE_UNDEFINED;
+    }
+
     //Type and statically bound check for assignment on array elements.
-    if(root->type == 31) {
+    if(root->type == 31 || root->type == 24) {
         Type left_expr = typecheckdfs(root->inh_1);
         Type right_expr = typecheckdfs(root->child_1);
 
@@ -270,6 +321,20 @@ Type typecheckdfs(Ast_Node* root){
 
             root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
+        }
+
+        if(root->type == 24){
+            //Then we check if type of LHS and RHS are the same.
+            if(st_entry->type!=typecheckdfs(root->child_2)){
+                Error e;
+                e.type=ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION;
+                e.line=root->inh_1->token_data->lineNumber;
+                strcpy(e.id_name, root->inh_1->token_data->lexeme);
+                add_error(e);
+
+                root->datatype=TYPE_ERROR;
+                return root->datatype;
+            }
         }
 
         //We check if array is not dynamic, because dynamic bound checking is done at code generation and here we just static bound check.

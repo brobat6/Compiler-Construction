@@ -1,0 +1,17 @@
+<<<driver program>>>
+start
+    declare a, b, c : array[2..20] of integer;
+    a := b;                                     ** should not give error **
+    c := a + b;                                 ** ERROR **
+    c := a > b;                                 ** ERROR **
+    c := a OR b;                                ** ERROR **
+    declare d : array[3..21] of integer;
+    declare e : array[2..22] of integer;
+    a := d;                                     ** NOT ERROR **
+    a := e;                                     ** ERROR **
+    declare f : array[2..20] of real;
+    f := a;                                     ** ERROR **
+    a := f;                                     ** ERROR **
+    
+    a := a                                      ** NOT ERROR **
+end
