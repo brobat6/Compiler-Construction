@@ -96,11 +96,13 @@ void getValue (Ast_Node* cur_ast_node) {
         fprintf(fp, "\txor eax, eax\n");
         if (cur_node->type == TYPE_BOOLEAN) {
             fprintf(fp, "\tmov rdi, inputBool\n");
-            fprintf(fp, "\tmov rsi, buffer + rbx\n");
+            fprintf(fp, "\tmov rsi, buffer\n");
+            fprintf(fp, "\tadd rsi, rbx\n");
         }
         else if (cur_node->type == TYPE_INTEGER) {
             fprintf(fp, "\tmov rdi, inputInt\n");
-            fprintf(fp, "\tmov rsi, buffer + rbx\n");
+            fprintf(fp, "\tmov rsi, buffer\n");
+            fprintf(fp, "\tadd rsi, rbx\n");
         }
         else if (cur_node->type == TYPE_REAL) {
 
