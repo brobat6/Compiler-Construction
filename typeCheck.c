@@ -313,17 +313,6 @@ Type typecheckdfs(Ast_Node* root){
     //Type Checking for relational expansion.
     if(root->type==36) {
         if(root->child_2==NULL){
-            STEntry* st_id = recursiveCheckID(root->child_1->symbol_table, root->child_1->token_data);
-            if(st_id != NULL && st_id->isArray) {
-                Error e;
-                e.type = ERROR_INCOMPATIBLE_ARRAY_OPERATION;
-                e.line = root->child_1->token_data->lineNumber;
-                strcpy(e.id_name, root->child_1->token_data->lexeme);
-                add_error(e);
-
-                root->datatype = TYPE_ERROR;
-                return root->datatype;
-            }
             root->datatype=typecheckdfs(root->child_1);
             return root->datatype; // NOTE : DO THIS EVERYWHERE !!!!!!!!!!!!!!!!!!!!!
         } else {

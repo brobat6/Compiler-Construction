@@ -470,7 +470,6 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         generateST(childSTNode, root->child_1);
         generateST(childSTNode, root->child_2);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
-        generateST(currSTNode, root->child_3);
         return;
     }
     // if(root->type == 46) {
@@ -675,3 +674,4 @@ void print_activation_record() {
         printf("%-25s %d\n", data->moduleName, data->function_width);
     }
 }
+
