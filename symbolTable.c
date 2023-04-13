@@ -629,23 +629,40 @@ void recursive_print_static_dynamic_arrays(STTreeNode* root) {
     while(ht_next_entry(&it)) {
         STEntry* data = it.data;
         if(data->isArray == false) continue; 
-        /* ---------------------------------------------------------------------
-            KSHITIJ PLS FILL HERE (FORMATTED OUTPUT)
-        -------------------------------------------------------------- */
+
+        printf("%-20s [%-3d-%-3d] %10s %-20s ",root->moduleName,data->declarationLineNumber,root->lineNumber.end,"",data->variableName);
+        if(data->isDynamic.lower||data->isDynamic.upper)
+            printf("%-20s","Dynamic");
+        else
+            printf("%-20s","Static");
+        
+        if(data->isDynamic.lower)
+            printf("[%s ,", data->range.lower.lexeme);
+        else
+            printf("[%d ,", data->range.lower.value);
+
+        if(data->isDynamic.upper)
+            printf(" %s]", data->range.upper.lexeme);
+        else
+            printf(" %d]", data->range.upper.value);
+        
+        char data_type[20];
+        if(data->type == TYPE_INTEGER) strcpy(data_type, "integer");
+        else if(data->type == TYPE_REAL) strcpy(data_type, "real");
+        else if(data->type == TYPE_BOOLEAN) strcpy(data_type, "boolean");
+        else strcpy(data_type, "error_type");
+
+        printf("%15s%-20s\n","",data_type);
     }
     STTreeNode* temp = root->leftMostChild;
     while(temp != NULL) {
-        print_static_dynamic_arrays(temp);
+        recursive_print_static_dynamic_arrays(temp);
         temp = temp->sibling;
     }
 }
 
 void print_static_dynamic_arrays(STTreeNode* root) {
-
-    /* ---------------------------------------------------------------------
-            KSHITIJ MAKE HEADING HERE
-        -------------------------------------------------------------- */
-
+    printf("%-20s %-20s %-20s %-20s %-20s %-20s\n","scope(module name)","scope(line numbers)","Variable Name","Static/Dynamic","range","type of element");
     recursive_print_static_dynamic_arrays(root);
 }
 
@@ -657,5 +674,4 @@ void print_activation_record() {
         printf("%-25s %d\n", data->moduleName, data->function_width);
     }
 }
-
 
