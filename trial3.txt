@@ -2,14 +2,8 @@
 
 <<<driver program>>>
 start
-	declare x, y, z:integer;
-	declare b: boolean;
-	declare loop_var:integer;
-    loop_var:=3;
-	y:= 19;
-	z:= 56;
-    x:=2;
-    z:= x*4-z+loop_var;
+	declare z:integer;
+    z:= 2-3+1;
     print(z);
 end
 

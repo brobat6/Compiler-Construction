@@ -54,7 +54,6 @@ void printDataSection () {
     fprintf(fp, "outputIntSpace:  db  '%%hd ', 0\n");
     fprintf(fp, "endl:  db  10, 0\n");
     fprintf(fp, "outputFloat:  db  '%%f', 10, 0\n");
-    fprintf(fp, "outputFloatSpace:  db  '%%f', 0\n");
     fprintf(fp, "outputTrue:  db  'true', 0\n");
     fprintf(fp, "outputFalse:  db  'false', 0\n");
     fprintf(fp, "outOfBounds:  db  'Array index out of bounds - Execution stopped', 0\n");
@@ -108,10 +107,11 @@ void getValue (Ast_Node* cur_ast_node) {
             fprintf(fp, "\tadd rsi, rbx\n");
         }
         else if (cur_node->type == TYPE_REAL) {
-            fprintf(fp, "\tmov al, 1\n");
-            fprintf(fp, "\tmov rdi, inputFloat\n");
-            fprintf(fp, "\tmov rsi, buffer\n");
-            fprintf(fp, "\tadd rsi, rbx\n");
+
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
         }
         fprintf(fp, "\tpush rax\n");
         fprintf(fp, "\tpush rbx\n");
@@ -138,9 +138,7 @@ void getValue (Ast_Node* cur_ast_node) {
             fprintf(fp, "\tmov rsi, buffer + %d\n", offset_req);
         }
         else if (cur_node->type == TYPE_REAL) {
-            fprintf(fp, "\tmov al, 1\n");
-            fprintf(fp, "\tmov rdi, inputFloat\n");
-            fprintf(fp, "\tmov rsi, buffer + %d\n", offset_req);
+
         }
         fprintf(fp, "\tcall scanf\n");
     }
@@ -154,7 +152,7 @@ void storeAtOffset (int offset, Type dataType) {
         fprintf(fp, "\tmov [buffer + %d], al\n", offset);
     }
     else if (dataType == TYPE_REAL) {
-        fprintf(fp, "\tmovss [buffer + %d], xmm0\n", offset);
+
     }
 }
 
@@ -179,10 +177,8 @@ void printHelper (STEntry cur_entry) { /////////////////////////////////////////
         fprintf(fp, "\tcall printf\n");
     }
     else if (cur_entry.type == TYPE_REAL) {
-        fprintf(fp, "\tmov al, 1\n");
-        fprintf(fp, "\tmov rdi, outputFloat\n");
-        fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", cur_entry.offset);
-        fprintf(fp, "\tcall printf\n");////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        fprintf(fp, "\tcall printf\n");
     }
 }
 
@@ -243,8 +239,10 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
                         fprintf(fp, "\tpop rax\n");
                     }
                     else if (cur_id->type == TYPE_REAL) {
-                        fprintf(fp, "\tmov rdi, outputFloatSpace\n");
-                        fprintf(fp, "\tmovss xmm0, [buffer + rbx]\n");
+
+
+                        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
                         fprintf(fp, "\tpush rax\n");
                         fprintf(fp, "\tpush rbx\n");
                         fprintf(fp, "\tpush rcx\n");
@@ -277,9 +275,7 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
                 }
                 else {
                     cur_temp = getNewTemporary(TYPE_REAL);
-                    fprintf(fp, "\tmovss xmm0, %f\n", cur_ast_node->child_1->token_data->value.rnum);
-                    storeAtOffset(cur_temp.offset, TYPE_REAL);
-                    printHelper(cur_temp);
+                    storeAtOffset(cur_temp.offset, TYPE_REAL);/////////////////////////////////////////////////////////////
                 }
             }
         }
@@ -330,9 +326,8 @@ void printValue (Ast_Node* cur_ast_node) { /////////////////////////////////////
                 fprintf(fp, "\tcall printf\n");
             }
             else if (cur_id->type == TYPE_REAL) {
-                fprintf(fp, "\tmov rdi, outputInt\n");
-                fprintf(fp, "\tmovss xmm0, [buffer + rbx]\n");
-                fprintf(fp, "\tcall printf\n");
+                fprintf(fp, "\tmov eax, [buffer + bx]\n");//////////////////////////////////////////////////////////////////////////////////////
+                fprintf(fp, "\tmov [buffer + rbx], eax\n");
             }
         }
     }
@@ -504,7 +499,7 @@ STEntry outOfBoundsCheckArrIndWithExpr (STEntry* cur_id, Ast_Node* cur_ast_node)
         storeAtOffset(new_node.offset, TYPE_INTEGER);
     }
     else if (cur_id->type == TYPE_REAL) {
-        fprintf(fp, "\tmovss xmm0, [buffer + rbx]\n");
+        fprintf(fp, "\tmov eax, [buffer + rbx]\n");//////////////////////////////////////////////////////////////////////////////////////////////////////
         storeAtOffset(new_node.offset, TYPE_REAL);
     }
     return new_node;
@@ -519,10 +514,13 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
             return cur_temp;
         }
         else if (cur_ast_node->token_data->token == RNUM) {
-            STEntry cur_temp = getNewTemporary(TYPE_REAL);
-            fprintf(fp, "\tmovss xmm0, %f\n", cur_ast_node->token_data->value.rnum);
-            storeAtOffset(cur_temp.offset, TYPE_REAL);
-            return cur_temp;
+
+
+
+                // cur_ast_node->token_data->value.rnum
+
+
+
         }
         else if (cur_ast_node->token_data->token == ID) {
             return *recursiveCheckID(cur_ast_node->symbol_table, cur_ast_node->token_data);
@@ -552,12 +550,7 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
                 return cur_temp;
             }
             else if (cur_node.type == TYPE_REAL) {
-                STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", cur_node.offset);
-                fprintf(fp, "\tmovss xmm0, 0\n");
-                fprintf(fp, "\tsubss xmm0, xmm1\n");
-                storeAtOffset(cur_temp.offset, TYPE_REAL);
-                return cur_temp;
+
             }
         }
         else { // var_id_num
@@ -570,12 +563,13 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
                 return cur_temp;
             }
             else if (cur_ast_node->child_2->token_data->token == RNUM) {
-                STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm1, %f\n", cur_ast_node->child_2->token_data->value.rnum);
-                fprintf(fp, "\tmovss xmm0, 0\n");
-                fprintf(fp, "\tsubss xmm0, xmm1\n");
-                storeAtOffset(cur_temp.offset, TYPE_REAL);
-                return cur_temp;
+
+
+
+                // cur_ast_node->child_2->token_data->value.rnum
+
+
+
             }
             else if (cur_ast_node->child_2->token_data->token == ID) {
                 STEntry* cur_node = recursiveCheckID(cur_ast_node->symbol_table, cur_ast_node->child_2->token_data);
@@ -588,11 +582,13 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
                     return cur_temp;
                 }
                 else if (cur_node->type == TYPE_REAL) {
-                    STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                    fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", cur_node->offset);
-                    fprintf(fp, "\tmovss xmm0, 0\n");
-                    fprintf(fp, "\tsubss xmm0, xmm1\n");
-                    storeAtOffset(cur_temp.offset, TYPE_REAL);
+
+
+
+                    // dddddddddddddd
+
+
+
                 }
             }
         }
@@ -609,10 +605,13 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
                 return cur_temp;
             }
             else if (cur_ast_node->child_2->token_data->token == RNUM) {
-                STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm0, %f\n", cur_ast_node->child_2->token_data->value.rnum);
-                storeAtOffset(cur_temp.offset, TYPE_REAL);
-                return cur_temp;
+
+
+
+                // cur_ast_node->child_2->token_data->value.rnum
+
+
+
             }
             else if (cur_ast_node->child_2->token_data->token == ID) {
                 return *recursiveCheckID(cur_ast_node->symbol_table, cur_ast_node->child_2->token_data);
@@ -661,19 +660,19 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
     }
     else if (cur_ast_node->type == 36) {
         if (cur_ast_node->child_2) { // N8 is not null
+
+
+
+            // 2 cases, one if node_1 and node_2 are integers and other if they are real
+
+
+
             STEntry node_1 = evaluateExpression(cur_ast_node->child_1);
             STEntry node_2 = evaluateExpression(cur_ast_node->child_2);
             STEntry cur_temp = getNewTemporary(TYPE_BOOLEAN);
-            if (node_1.type == TYPE_INTEGER) {
-                fprintf(fp, "\tmov bx, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmov cx, [buffer + %d]\n", node_2.offset);
-                fprintf(fp, "\tcmp bx, cx\n");
-            }
-            else {
-                fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmovss xmm2, [buffer + %d]\n", node_2.offset);
-                fprintf(fp, "\tcmpss xmm1, xmm2\n");
-            }
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", node_1.offset);
+            fprintf(fp, "\tmov cx, [buffer + %d]\n", node_2.offset);
+            fprintf(fp, "\tcmp bx, cx\n");
             if (cur_ast_node->child_2->child_1->token_data->token == LT || cur_ast_node->child_2->child_1->token_data->token == GE) {
                 if (cur_ast_node->child_2->child_1->token_data->token == LT) {
                     fprintf(fp, "\tmov al, 0\n");
@@ -729,34 +728,26 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
     }
     else if (cur_ast_node->type == 38 && cur_ast_node->child_2 == NULL) {
         if (cur_ast_node->syn_next) { // N4 is not null
+
+
+
+            // 2 cases, one if node_1 and node_2 are integers and other if they are real
+
+
+
             STEntry node_1 = evaluateExpression(cur_ast_node->child_1); // term
             STEntry node_2 = evaluateExpression(cur_ast_node->syn_next); // n4
-            if (node_1.type == TYPE_INTEGER) {
-                STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
-                fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == PLUS) {
-                    fprintf(fp, "\tadd ax, bx\n");
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == MINUS) {
-                    fprintf(fp, "\tsub ax, bx\n");
-                }
-                storeAtOffset(cur_temp.offset, TYPE_INTEGER);
-                return cur_temp;
+            STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
+            fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
+            if (cur_ast_node->syn_next->child_1->token_data->token == PLUS) {
+                fprintf(fp, "\tadd ax, bx\n");
             }
-            else {
-                STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == PLUS) {
-                    fprintf(fp, "\taddss xmm0, xmm1\n");
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == MINUS) {
-                    fprintf(fp, "\tsubss xmm0, xmm1\n");
-                }
-                storeAtOffset(cur_temp.offset, TYPE_REAL);
-                return cur_temp;
+            else if (cur_ast_node->syn_next->child_1->token_data->token == MINUS) {
+                fprintf(fp, "\tsub ax, bx\n");
             }
+            storeAtOffset(cur_temp.offset, TYPE_INTEGER);
+            return cur_temp;
         }
         else { // N4 is null
             return evaluateExpression(cur_ast_node->child_1);
@@ -764,45 +755,27 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
     }
     else if (cur_ast_node->type == 38 && cur_ast_node->child_2 != NULL) {
         if (cur_ast_node->syn_next) { // N4 is not null
+
+
+
+            // 2 cases, one if node_1 and node_2 are integers and other if they are real
+
+
+
+        
             STEntry node_1 = evaluateExpression(cur_ast_node->child_2);
             STEntry node_2 = evaluateExpression(cur_ast_node->syn_next);
-            if (node_1.type == TYPE_INTEGER) {
-                STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
-                fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == PLUS) {
-                    fprintf(fp, "\tadd ax, bx\n");
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == MINUS) {
-                    fprintf(fp, "\tsub ax, bx\n");
-                }
-                storeAtOffset(cur_temp.offset, TYPE_INTEGER);
-                return cur_temp;
+            STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
+            fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
+            if (cur_ast_node->syn_next->child_1->token_data->token == PLUS) {
+                fprintf(fp, "\tadd ax, bx\n");
             }
-            else {
-                STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == PLUS) {
-                    fprintf(fp, "\taddss xmm0, xmm1\n");
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == MINUS) {
-                    fprintf(fp, "\tsubss xmm0, xmm1\n");
-                }
-                storeAtOffset(cur_temp.offset, TYPE_REAL);
-                return cur_temp;
+            else if (cur_ast_node->syn_next->child_1->token_data->token == MINUS) {
+                fprintf(fp, "\tsub ax, bx\n");
             }
-            // STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
-            // fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
-            // fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
-            // if (cur_ast_node->syn_next->child_1->token_data->token == PLUS) {
-            //     fprintf(fp, "\tadd ax, bx\n");
-            // }
-            // else if (cur_ast_node->syn_next->child_1->token_data->token == MINUS) {
-            //     fprintf(fp, "\tsub ax, bx\n");
-            // }
-            // storeAtOffset(cur_temp.offset, TYPE_INTEGER);
-            // return cur_temp;
+            storeAtOffset(cur_temp.offset, TYPE_INTEGER);
+            return cur_temp;
         }
         else { // N4 is null
             return evaluateExpression(cur_ast_node->child_2);
@@ -810,35 +783,27 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
     }
     else if (cur_ast_node->type == 39 && cur_ast_node->child_2 == NULL) {
         if (cur_ast_node->syn_next) { // N5 is not null
+
+
+
+            // 2 cases, one if node_1 and node_2 are integers and other if they are real
+
+
+
             STEntry node_1 = evaluateExpression(cur_ast_node->child_1); // term
             STEntry node_2 = evaluateExpression(cur_ast_node->syn_next); // n4
-            if (node_1.type == TYPE_INTEGER) {
-                STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
-                fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == MUL) {
-                    fprintf(fp, "\timul bx\n");
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == DIV) {
-                    fprintf(fp, "\tcwd\n");
-                    fprintf(fp, "\tidiv bx\n");
-                }
-                storeAtOffset(cur_temp.offset, TYPE_INTEGER);
-                return cur_temp;
+            STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
+            fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
+            if (cur_ast_node->syn_next->child_1->token_data->token == MUL) {
+                fprintf(fp, "\timul bx\n");
             }
-            else {
-                STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == MUL) {
-                    fprintf(fp, "\tmulss xmm0, xmm1\n");//////////////////////////////////////////////////////////////////////////
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == DIV) {
-                    fprintf(fp, "\tdivss xmm0, xmm1\n");/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                }
-                storeAtOffset(cur_temp.offset, TYPE_REAL);
-                return cur_temp;
+            else if (cur_ast_node->syn_next->child_1->token_data->token == DIV) {
+                fprintf(fp, "\tcwd\n");
+                fprintf(fp, "\tidiv bx\n");
             }
+            storeAtOffset(cur_temp.offset, TYPE_INTEGER);
+            return cur_temp;
         }
         else { // N5 is null
             return evaluateExpression(cur_ast_node->child_1);
@@ -846,47 +811,28 @@ STEntry evaluateExpression (Ast_Node* cur_ast_node) {
     }
     else if (cur_ast_node->type == 39 && cur_ast_node->child_2 != NULL) {
         if (cur_ast_node->syn_next) { // N5 is not null
+
+
+
+            // 2 cases, one if node_1 and node_2 are integers and other if they are real
+
+
+
+        
             STEntry node_1 = evaluateExpression(cur_ast_node->child_2);
             STEntry node_2 = evaluateExpression(cur_ast_node->syn_next);
-            if (node_1.type == TYPE_INTEGER) {
-                STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
-                fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == MUL) {
-                    fprintf(fp, "\timul bx\n");
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == DIV) {
-                    fprintf(fp, "\tcwd\n");
-                    fprintf(fp, "\tidiv bx\n");
-                }
-                storeAtOffset(cur_temp.offset, TYPE_INTEGER);
-                return cur_temp;
+            STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
+            fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
+            fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
+            if (cur_ast_node->syn_next->child_1->token_data->token == MUL) {
+                fprintf(fp, "\timul bx\n");
             }
-            else {
-                STEntry cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", node_1.offset);
-                fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", node_2.offset);
-                if (cur_ast_node->syn_next->child_1->token_data->token == MUL) {
-                    fprintf(fp, "\tmulss xmm0, xmm1\n");//////////////////////////////////////////////////////////////////////////
-                }
-                else if (cur_ast_node->syn_next->child_1->token_data->token == DIV) {
-                    fprintf(fp, "\tdivss xmm0, xmm1\n");/////////////////////////////////////////////////////////////////////////////////////////////////////////
-                }
-                storeAtOffset(cur_temp.offset, TYPE_REAL);
-                return cur_temp;
+            else if (cur_ast_node->syn_next->child_1->token_data->token == DIV) {
+                fprintf(fp, "\tcwd\n");
+                fprintf(fp, "\tidiv bx\n");
             }
-            // STEntry cur_temp = getNewTemporary(TYPE_INTEGER);
-            // fprintf(fp, "\tmov ax, [buffer + %d]\n", node_1.offset);
-            // fprintf(fp, "\tmov bx, [buffer + %d]\n", node_2.offset);
-            // if (cur_ast_node->syn_next->child_1->token_data->token == MUL) {
-            //     fprintf(fp, "\timul bx\n");
-            // }
-            // else if (cur_ast_node->syn_next->child_1->token_data->token == DIV) {
-            //     fprintf(fp, "\tcwd\n");
-            //     fprintf(fp, "\tidiv bx\n");
-            // }
-            // storeAtOffset(cur_temp.offset, TYPE_INTEGER);
-            // return cur_temp;
+            storeAtOffset(cur_temp.offset, TYPE_INTEGER);
+            return cur_temp;
         }
         else { // N5 is null
             return evaluateExpression(cur_ast_node->child_2);
@@ -948,8 +894,8 @@ void assignStatement (Ast_Node* cur_ast_node) {
             fprintf(fp, "\tmov [buffer + rbx], ax\n");
         }
         else if (l_entry->type == TYPE_REAL) {
-            fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", r_value.offset);
-            fprintf(fp, "\tmovss [buffer + rbx], xmm0\n");
+            fprintf(fp, "\tmov eax, [buffer + bx]\n");//////////////////////////////////////////////////////////////////////////////////////
+            fprintf(fp, "\tmov [buffer + rbx], eax\n");
         }
     }
     else if (cur_ast_node->type == 23) {
@@ -979,8 +925,11 @@ void assignStatement (Ast_Node* cur_ast_node) {
                 fprintf(fp, "\tmov [buffer + rbx], si\n");
             }
             else if (l_entry->type == TYPE_REAL) {
-                fprintf(fp, "\tmovss xmm0, [buffer + rax]\n");
-                fprintf(fp, "\tmovss [buffer + rbx], xmm0\n");
+
+
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
             }
             fprintf(fp, "\tadd rbx, %d\n", l_entry->width);
             fprintf(fp, "\tadd rax, %d\n", l_entry->width);
@@ -1001,8 +950,8 @@ void assignStatement (Ast_Node* cur_ast_node) {
                 fprintf(fp, "\tmov [buffer + rbx], ax\n");
             }
             else if (l_entry->type == TYPE_REAL) {
-                fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", r_value.offset);
-                fprintf(fp, "\tmovss [buffer + rbx], xmm0\n");
+                fprintf(fp, "\tmov eax, [buffer + rbx]\n");//////////////////////////////////////////////////////////////////////////////////////
+                fprintf(fp, "\tmov [buffer + rbx], eax\n");
             }
         }
     }
@@ -1177,6 +1126,8 @@ void whileStatement (Ast_Node* cur_ast_node) {
 }
 
 void writeErrorCodes () {
+    // fprintf(fp, "outOfBounds:  db  'Array index out of bounds - Execution stopped', 0\n");
+    // fprintf(fp, "incorrectBounds:  db  'Array bounds incorrect - Execution stopped', 0\n");
     fprintf(fp, "ArrayOutOfBoundsError:\n");
     fprintf(fp, "\tmov rdi, outOfBounds\n");
     fprintf(fp, "\tcall puts\n");
@@ -1193,8 +1144,7 @@ void writeErrorCodes () {
 
 void moduleReuseStatement (Ast_Node* cur_ast_node) {
     Ast_Node* actual_para_list = cur_ast_node->child_3;
-    FunctionSTEntry* fptr;
-    // fptr = ht_fetch(functionST, cur_ast_node->child_2->token_data->lexeme);
+    FunctionSTEntry* fptr = ht_fetch(functionST, cur_ast_node->child_2->token_data->lexeme);
     ParamListNode* formal_para_list = fptr->inputParamList->first;
 
     while (actual_para_list) {
@@ -1203,235 +1153,29 @@ void moduleReuseStatement (Ast_Node* cur_ast_node) {
         STEntry cur_temp;
         if (singular_para_list->type == 28) {
             if (singular_para_list->child_1->child_2 == NULL) {
-                STEntry* cur_id = NULL;
-                if (singular_para_list->child_1->child_1 && singular_para_list->child_1->child_1->token_data->token == ID) {
-                    recursiveCheckID(singular_para_list->child_1->child_1->symbol_table, singular_para_list->child_1->child_1->token_data);
-                }
-                if (cur_id && cur_id->isArray) {
-                    cur_temp = *cur_id;
-                    // cur_temp = evaluateExpression(singular_para_list->child_1);
-                }
-                else {
-                    cur_temp = evaluateExpression(singular_para_list->child_1);
-                }
+                cur_temp = evaluateExpression(singular_para_list->child_1);
             }
             else {
-                cur_temp = outOfBoundsCheckArrIndWithExpr(recursiveCheckID(singular_para_list->child_1->symbol_table, singular_para_list->child_1->token_data), singular_para_list->child_2);
                 // outOfBoundsCheckArrIndWithExpr
             }
         }
         else if (singular_para_list->type == 29) {
             if (singular_para_list->child_1->token_data->token == NUM) {
-                cur_temp = getNewTemporary(TYPE_INTEGER);
                 fprintf(fp, "\tmov ax, %d\n", -singular_para_list->child_1->token_data->value.num);
                 fprintf(fp, "\tmov [buffer + %d], ax\n", cur_temp.offset);
             }
             else if (singular_para_list->child_1->token_data->token == RNUM) {
-                cur_temp = getNewTemporary(TYPE_REAL);
-                fprintf(fp, "\tmovss xmm0, %d\n", -singular_para_list->child_1->token_data->value.rnum);
-                fprintf(fp, "\tmovss [buffer + %d], xmm0\n", cur_temp.offset);
+                /////////////////////////////////////////////////////////////////////////////
             }
             else {
-                STEntry temp = outOfBoundsCheckArrIndWithExpr(recursiveCheckID(singular_para_list->child_1->symbol_table, singular_para_list->child_1->token_data), singular_para_list->child_2);
-                if (temp.type == TYPE_INTEGER) {
-                    cur_temp = getNewTemporary(TYPE_INTEGER);
-                    fprintf(fp, "\tmov bx, [buffer + %d]\n", temp.offset);
-                    fprintf(fp, "\tmov ax, 0\n");
-                    fprintf(fp, "\tsub ax, bx\n");
-                    fprintf(fp, "\tmov [buffer + %d], ax\n", cur_temp.offset);
-                }
-                else {
-                    cur_temp = getNewTemporary(TYPE_REAL);
-                    fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", temp.offset);
-                    fprintf(fp, "\tmovss xmm0, 0\n");
-                    fprintf(fp, "\tsubss xmm0, xmm1\n");
-                    fprintf(fp, "\tmovss [buffer + %d], xmm0\n", cur_temp.offset);
-                }
-            }
-        }
-        STEntry l_entry = cur_temp;
-        STEntry r_entry = *formal_para_list->entry;
-        if (l_entry.isArray) {
-            // ARRAY ASSIGN
-            STEntry temp = r_entry;
-            r_entry = l_entry;
-            l_entry = temp;
-            fprintf(fp, "\tmov ax, [buffer + %d]\n", l_entry.range.lower.value);
-            fprintf(fp, "\tmov bx, [buffer + %d]\n", l_entry.range.upper.value);
-            fprintf(fp, "\tsub bx, ax\n");
-            fprintf(fp, "\tmov cx, [buffer + %d]\n", r_entry.range.lower.value);
-            fprintf(fp, "\tmov dx, [buffer + %d]\n", r_entry.range.upper.value);
-            fprintf(fp, "\tsub dx, cx\n");
-            fprintf(fp, "\tcmp bx, dx\n");
-            fprintf(fp, "\tjne UncompatibleArrayAssignment\n");
-
-            fprintf(fp, "\tmov cx, bx\n");
-            fprintf(fp, "\tmov dx, 0\n");
-            fprintf(fp, "\tmov rbx, %d\n", l_entry.offset);
-            fprintf(fp, "\tmov rax, %d\n", r_entry.offset);
-            fprintf(fp, "comp_label%d:\n", comp_label);
-            if (l_entry.type == TYPE_BOOLEAN) {
-                fprintf(fp, "\tmov sil, [buffer + rax]\n");
-                fprintf(fp, "\tmov [buffer + rbx], sil\n");
-            }
-            else if (l_entry.type == TYPE_INTEGER) {
-                fprintf(fp, "\tmov si, [buffer + rax]\n");
-                fprintf(fp, "\tmov [buffer + rbx], si\n");
-            }
-            else if (l_entry.type == TYPE_REAL) {
-                fprintf(fp, "\tmovss xmm0, [buffer + rax]\n");
-                fprintf(fp, "\tmovss [buffer + rbx], xmm0\n");
-            }
-            fprintf(fp, "\tadd rbx, %d\n", l_entry.width);
-            fprintf(fp, "\tadd rax, %d\n", l_entry.width);
-            fprintf(fp, "\tadd dx, 1\n");
-            fprintf(fp, "\tcmp cx, dx\n");
-            fprintf(fp, "\tjge comp_label%d\n", comp_label);
-            comp_label++;
-        }
-        else {
-            if (l_entry.type == TYPE_BOOLEAN) {
-                fprintf(fp, "\tmov al, [buffer + %d]\n", l_entry.offset);
-                fprintf(fp, "\tmov [buffer + %d], al\n", r_entry.offset);
-            }
-            else if (l_entry.type == TYPE_INTEGER) {
-                fprintf(fp, "\tmov ax, [buffer + %d]\n", l_entry.offset);
-                fprintf(fp, "\tmov [buffer + %d], ax\n", r_entry.offset);
-            }
-            else if (l_entry.type == TYPE_REAL) {
-                fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", l_entry.offset);
-                fprintf(fp, "\tmovss [buffer + %d], xmm0\n", r_entry.offset);
-            }
-        }
-
-        formal_para_list = formal_para_list->next;
-        actual_para_list = actual_para_list->syn_next;
-    }
-
-    fprintf(fp, "\tjmp %s\n", cur_ast_node->child_2->token_data->lexeme);
-
-
-
-
-
-    // To copy array back
-    actual_para_list = cur_ast_node->child_3;
-    formal_para_list = fptr->inputParamList->first;
-
-    while (actual_para_list) {
-        // evaluate actual para list and send to formal -- array assignments check
-        Ast_Node* singular_para_list = actual_para_list->child_1;
-        STEntry cur_temp;
-        if (singular_para_list->type == 28) {
-            if (singular_para_list->child_1->child_2 == NULL) {
-                STEntry* cur_id = NULL;
-                if (singular_para_list->child_1->child_1 && singular_para_list->child_1->child_1->token_data->token == ID) {
-                    // recursiveCheckID(singular_para_list->child_1->child_1->symbol_table, singular_para_list->child_1->child_1->token_data);
-                }
-                if (cur_id && cur_id->isArray) {
-                    cur_temp = *cur_id;
-                    // cur_temp = evaluateExpression(singular_para_list->child_1);
-                }
-                else {
-                    // cur_temp = evaluateExpression(singular_para_list->child_1);
-                }
-            }
-            else {
-                cur_temp = outOfBoundsCheckArrIndWithExpr(recursiveCheckID(singular_para_list->child_1->symbol_table, singular_para_list->child_1->token_data), singular_para_list->child_2);
                 // outOfBoundsCheckArrIndWithExpr
             }
         }
-        else if (singular_para_list->type == 29) {
-            if (singular_para_list->child_1->token_data->token == NUM) {
-                cur_temp = getNewTemporary(TYPE_INTEGER);
-                // fprintf(fp, "\tmov ax, %d\n", -singular_para_list->child_1->token_data->value.num);
-                // fprintf(fp, "\tmov [buffer + %d], ax\n", cur_temp.offset);
-            }
-            else if (singular_para_list->child_1->token_data->token == RNUM) {
-                cur_temp = getNewTemporary(TYPE_REAL);
-                // fprintf(fp, "\tmovss xmm0, %d\n", -singular_para_list->child_1->token_data->value.rnum);
-                // fprintf(fp, "\tmovss [buffer + %d], xmm0\n", cur_temp.offset);
-            }
-            else {
-                STEntry temp;
-                // STEntry temp = outOfBoundsCheckArrIndWithExpr(recursiveCheckID(singular_para_list->child_1->symbol_table, singular_para_list->child_1->token_data), singular_para_list->child_2);
-                if (temp.type == TYPE_INTEGER) {
-                    cur_temp = getNewTemporary(TYPE_INTEGER);
-                    // fprintf(fp, "\tmov bx, [buffer + %d]\n", temp.offset);
-                    // fprintf(fp, "\tmov ax, 0\n");
-                    // fprintf(fp, "\tsub ax, bx\n");
-                    // fprintf(fp, "\tmov [buffer + %d], ax\n", cur_temp.offset);
-                }
-                else {
-                    cur_temp = getNewTemporary(TYPE_REAL);
-                    // fprintf(fp, "\tmovss xmm1, [buffer + %d]\n", temp.offset);
-                    // fprintf(fp, "\tmovss xmm0, 0\n");
-                    // fprintf(fp, "\tsubss xmm0, xmm1\n");
-                    // fprintf(fp, "\tmovss [buffer + %d], xmm0\n", cur_temp.offset);
-                }
-            }
-        }
-        STEntry l_entry = cur_temp;
-        STEntry r_entry = *formal_para_list->entry;
-        if (l_entry.isArray) {
-            // ARRAY ASSIGN
-            // STEntry temp = r_entry;
-            // r_entry = l_entry;
-            // l_entry = temp;
-            fprintf(fp, "\tmov ax, [buffer + %d]\n", l_entry.range.lower.value);
-            fprintf(fp, "\tmov bx, [buffer + %d]\n", l_entry.range.upper.value);
-            fprintf(fp, "\tsub bx, ax\n");
-            fprintf(fp, "\tmov cx, [buffer + %d]\n", r_entry.range.lower.value);
-            fprintf(fp, "\tmov dx, [buffer + %d]\n", r_entry.range.upper.value);
-            fprintf(fp, "\tsub dx, cx\n");
-            fprintf(fp, "\tcmp bx, dx\n");
-            fprintf(fp, "\tjne UncompatibleArrayAssignment\n");
-
-            fprintf(fp, "\tmov cx, bx\n");
-            fprintf(fp, "\tmov dx, 0\n");
-            fprintf(fp, "\tmov rbx, %d\n", l_entry.offset);
-            fprintf(fp, "\tmov rax, %d\n", r_entry.offset);
-            fprintf(fp, "comp_label%d:\n", comp_label);
-            if (l_entry.type == TYPE_BOOLEAN) {
-                fprintf(fp, "\tmov sil, [buffer + rax]\n");
-                fprintf(fp, "\tmov [buffer + rbx], sil\n");
-            }
-            else if (l_entry.type == TYPE_INTEGER) {
-                fprintf(fp, "\tmov si, [buffer + rax]\n");
-                fprintf(fp, "\tmov [buffer + rbx], si\n");
-            }
-            else if (l_entry.type == TYPE_REAL) {
-                fprintf(fp, "\tmovss xmm0, [buffer + rax]\n");
-                fprintf(fp, "\tmovss [buffer + rbx], xmm0\n");
-            }
-            fprintf(fp, "\tadd rbx, %d\n", l_entry.width);
-            fprintf(fp, "\tadd rax, %d\n", l_entry.width);
-            fprintf(fp, "\tadd dx, 1\n");
-            fprintf(fp, "\tcmp cx, dx\n");
-            fprintf(fp, "\tjge comp_label%d\n", comp_label);
-            comp_label++;
-        }
-        else {
-            if (l_entry.type == TYPE_BOOLEAN) {
-                // fprintf(fp, "\tmov al, [buffer + %d]\n", l_entry.offset);
-                // fprintf(fp, "\tmov [buffer + %d], al\n", r_entry.offset);
-            }
-            else if (l_entry.type == TYPE_INTEGER) {
-                // fprintf(fp, "\tmov ax, [buffer + %d]\n", l_entry.offset);
-                // fprintf(fp, "\tmov [buffer + %d], ax\n", r_entry.offset);
-            }
-            else if (l_entry.type == TYPE_REAL) {
-                // fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", l_entry.offset);
-                // fprintf(fp, "\tmovss [buffer + %d], xmm0\n", r_entry.offset);
-            }
-        }
 
         formal_para_list = formal_para_list->next;
         actual_para_list = actual_para_list->syn_next;
     }
-
-
-
+    fprintf(fp, "\tjmp %s\n", cur_ast_node->child_2->token_data->lexeme);
 
     // array assignment
 
@@ -1440,27 +1184,10 @@ void moduleReuseStatement (Ast_Node* cur_ast_node) {
     left_assign_list = left_assign_list->child_1;
     ParamListNode* output_para_list = fptr->outputParamList->first;
     while (left_assign_list) {
-        STEntry* cur_l_id = recursiveCheckID(left_assign_list->child_1->symbol_table, left_assign_list->child_1->token_data);
-        STEntry* cur_r_id = output_para_list->entry;
-
-        if (cur_l_id->type == TYPE_BOOLEAN) {
-            fprintf(fp, "\tmov al, [buffer + %d]\n", cur_r_id->offset);
-            fprintf(fp, "\tmov [buffer + %d], al\n", cur_l_id->offset);
-        }
-        else if (cur_l_id->type == TYPE_INTEGER) {
-            fprintf(fp, "\tmov ax, [buffer + %d]\n", cur_r_id->offset);
-            fprintf(fp, "\tmov [buffer + %d], ax\n", cur_l_id->offset);
-        }
-        else if (cur_l_id->type == TYPE_REAL) {
-            fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", cur_r_id->offset);
-            fprintf(fp, "\tmovss [buffer + %d], xmm0\n", cur_l_id->offset);
-        }
-
         // evaluate actual para list and send to formal -- array assignments check
         output_para_list = output_para_list->next;
         left_assign_list = left_assign_list->syn_next;
     }
-
 }
 
 void codeGenASTTraversal (Ast_Node* cur_ast_node) {
