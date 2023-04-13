@@ -40,6 +40,16 @@ void add_error(Error error) {
     }
 }
 
+int number_of_semantic_errors() {
+    int cnt = 0;
+    Error_List* e = error_list;
+    while(e != NULL) {
+        cnt++;
+        e = e->next;
+    }
+    return cnt;
+}
+
 void print_semantic_errors(FILE *fp) {
     Error_List* e = error_list;
     if(e == NULL) {

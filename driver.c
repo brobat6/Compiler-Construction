@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
             start_lexer(fp, 30, true);
             parse_tree_root = parseInputSourceCode(lookup_table, fp, true);
             fclose(fp);
-            printParseTree(parse_tree_root, stdout);
+            printParseTree(parse_tree_root);
             break;
         case 3:
             fp = fopen(argv[1], "r+");
@@ -121,12 +121,49 @@ int main(int argc, char* argv[]) {
             print_static_dynamic_arrays(symbol_table_root);
             break;
         case 8:
-            // typecheckdfs(ast_root);
-            // semanticAnalyzer(ast_root);
-            // print_semantic_errors(stdout);
+            start = clock();
+            fp = fopen(argv[1], "r+");
+            start_lexer(fp, 30, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, false);
+            fclose(fp);
+            if(number_of_parsing_errors() > 0) {
+                // Do nothing.
+            } else {
+                ast_root = wrapper_create_AST(parse_tree_root->firstchild);
+                symbol_table_root = generateSymbolTable(ast_root);
+                typecheckdfs(ast_root);
+                semanticAnalyzer(ast_root);
+                print_semantic_errors(stdout);
+                if(number_of_semantic_errors() > 0) {
+                    // Do nothing.
+                }
+            }
+            end = clock();
+            double total_time = (double) (end - start);
+            double total_time_seconds = total_time / CLOCKS_PER_SEC;
+            printf("Total time taken by the integrated compiler:\n");
+            printf("Total CPU time : %2.6f ticks.\n", total_time);
+            printf("Total CPU time in seconds : %2.6f.\n", total_time_seconds);
             break;
         case 9:
-
+            fp = fopen(argv[1], "r+");
+            start_lexer(fp, 30, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, false);
+            fclose(fp);
+            if(number_of_parsing_errors() > 0) {
+                printf("There are syntactical errors in the code. Please run option 2 or 7 to see the errors.\n");
+            } else {
+                ast_root = wrapper_create_AST(parse_tree_root->firstchild);
+                symbol_table_root = generateSymbolTable(ast_root);
+                typecheckdfs(ast_root);
+                semanticAnalyzer(ast_root);
+                if(number_of_semantic_errors() > 0) {
+                    printf("There are semantic errors in the code. Please run option 8 to see the errors.\n");
+                } else {
+                    // Code Gen goes here!!!
+                    
+                }
+            }
             break;
         default:
             printf("Invalid input. Please specify a choice between 0 and 9 only.\n");

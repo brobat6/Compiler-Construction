@@ -90,4 +90,6 @@ void print_semantic_errors(FILE *fp);
 
 void reset_error_list();
 
+int number_of_semantic_errors();
+
 #endif

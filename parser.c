@@ -604,7 +604,7 @@ void printTreeNode(treeNode* treenode, FILE* tree_fp)
     }
 }
 
-void printParseTree(treeNode* root, char* outputfile)
+void printParseTree(treeNode* root)
 {
     if(isError) return ;
     treeNode * curTreeNode=root;
