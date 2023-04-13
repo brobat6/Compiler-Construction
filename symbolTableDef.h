@@ -71,7 +71,10 @@ typedef struct FunctionSTEntry{
     char moduleName[21];
     int declaration_line_no;
     bool defined;
+    bool declared_exclusively;
+    int definition_line_no;
     int function_width;
+    int first_call_line_no;
     ParamList* inputParamList;
     ParamList* outputParamList;
 }FunctionSTEntry;

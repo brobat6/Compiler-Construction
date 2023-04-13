@@ -3,6 +3,7 @@
 #ifndef _SYMBOLTABLE_H
 #define _SYMBOLTABLE_H
 
+ht* return_function_ST();
 STTreeNode* createSTTreeNode();
 void addSTChild(STTreeNode *parent,STTreeNode *child);
 STEntry* createSTEntry(STEntry* prevEntry);

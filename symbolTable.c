@@ -7,6 +7,10 @@ STTreeNode* globalSTRoot=NULL; // Root of symbol table
 STEntry* tempEntry;
 ht* functionST; // Function symbol table
 
+ht* return_function_ST() {
+    return functionST;
+}
+
 STTreeNode* createSTTreeNode(){             ///can use current AST node for data;
     STTreeNode* newNode = (STTreeNode*)malloc(sizeof(STTreeNode));
     newNode->hashTable=init_ht();
@@ -208,6 +212,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
     if(root->type == 3) {
         // module declaration
         FunctionSTEntry* func = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+        func->first_call_line_no = 1000000000;
+        func->declared_exclusively = true;
         strcpy(func->moduleName, root->child_1->token_data->lexeme);
         func->defined = false;
         func->declaration_line_no = root->token_data->lineNumber;
@@ -238,9 +244,12 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         childSTNode->offset = curOffset;
         // 2. Function ST Table
         FunctionSTEntry* functionEntry = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+        functionEntry->declared_exclusively = false;
+        functionEntry->first_call_line_no = 1000000000;
         strcpy(functionEntry->moduleName, "driver");
         functionEntry->defined = true;
         functionEntry->declaration_line_no = start_line_no;
+        functionEntry->definition_line_no = start_line_no;;
         if(checkFunctionID(functionEntry->moduleName) != NULL) {
             // This should ideally never happen. Since driver module cannot be redeclared, 
             // such an issue would be identified in lexer stage itself.
@@ -269,19 +278,24 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         FunctionSTEntry* func = checkFunctionID(root->child_1->token_data->lexeme);
         if(func == NULL) {
             func = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+            func->declared_exclusively = false;
             strcpy(func->moduleName, root->child_1->token_data->lexeme);
+            func->first_call_line_no = 1000000000;
             func->defined = true;
             func->declaration_line_no = root->token_data->lineNumber;
+            func->definition_line_no = root->token_data->lineNumber;
             ht_store(functionST, func->moduleName, func);
         } else if(func->defined == true) {
             Error e;
             e.type = ERROR_MODULE_REDEFINITION;
             e.line = root->token_data->lineNumber;
             strcpy(e.module_name, func->moduleName);
+            add_error(e);
+            return;
         } else {
             func->defined = true;
+            func->definition_line_no = root->token_data->lineNumber;
         }
-
         // 1. Check that the function has been declared. [OLD CODE]
         // FunctionSTEntry* func = checkFunctionID(root->child_1->token_data->lexeme);
         // if(func == NULL) {

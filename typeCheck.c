@@ -98,7 +98,20 @@ Type typecheckdfs(Ast_Node* root){
     // DEF MODULE ID ... 
     // Don't want to check types in input_plist or ret
     if(root->type == 6) {
+
+        // To fix errors with function overloading.
+        FunctionSTEntry* func = checkFunctionID(root->child_1->token_data->lexeme);
+        if(func->definition_line_no != root->token_data->lineNumber) {
+            return TYPE_UNDEFINED;
+        }
+
         return typecheckdfs(root->child_4);
+    }
+
+    // DECLARE MODULE ID SEMICOL
+    // Ignore ID here. This statement has already been checked in Symbol Table construction.
+    if(root->type == 3) {
+        return TYPE_UNDEFINED;
     }
 
     //Type checking at assignment operation.
@@ -112,12 +125,15 @@ Type typecheckdfs(Ast_Node* root){
             e.type=VAR_NOT_INITIALIZED;
             e.line=root->child_1->token_data->lineNumber;
             strcpy(e.id_name,root->child_1->token_data->lexeme);
-            add_error(e);
+            
+            // Because if type = 24 i.e. lvalueARR statement, then error would be added twice.
+            if(root->child_2->type == 23) add_error(e);
+
+            typecheckdfs(root->child_2);
             
             root->datatype = TYPE_ERROR;
             return TYPE_ERROR;
         }
-        st_id->hasBeenAssigned=true;
 
         //Checkis if assignment is being done to loop variable.
         if(st_id->is_for_loop_variable==true){
@@ -148,6 +164,9 @@ Type typecheckdfs(Ast_Node* root){
                 e.line = root->child_1->token_data->lineNumber;
                 strcpy(e.id_name, root->child_1->token_data->lexeme);
                 add_error(e);
+
+                typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
+
                 root->datatype = TYPE_ERROR;
                 return TYPE_ERROR;
             }
@@ -158,9 +177,13 @@ Type typecheckdfs(Ast_Node* root){
                 e.line = root->child_1->token_data->lineNumber;
                 strcpy(e.id_name, root->child_1->token_data->lexeme);
                 add_error(e);
+
+                typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
+
                 root->datatype = TYPE_ERROR;
                 return TYPE_ERROR;
             }
+            // At this point we are convinced that the expression in RHS is a singleton.
             STEntry* rhs_id = recursiveCheckID(factor->child_1->symbol_table, factor->child_1->token_data);
             if(rhs_id == NULL) {
                 Error e;
@@ -168,6 +191,9 @@ Type typecheckdfs(Ast_Node* root){
                 e.line=factor->child_1->token_data->lineNumber;
                 strcpy(e.id_name,factor->child_1->token_data->lexeme);
                 add_error(e);
+
+                // typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
+
                 root->datatype = TYPE_ERROR;
                 return TYPE_ERROR;
             }
@@ -177,6 +203,9 @@ Type typecheckdfs(Ast_Node* root){
                 e.line = root->child_1->token_data->lineNumber;
                 strcpy(e.id_name, root->child_1->token_data->lexeme);
                 add_error(e);
+
+                // typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
+
                 root->datatype = TYPE_ERROR;
                 return TYPE_ERROR;
             }
@@ -190,15 +219,25 @@ Type typecheckdfs(Ast_Node* root){
                     strcpy(e.id_name, root->child_1->token_data->lexeme);
                     strcpy(e.id_name_2, rhs_id->variableName);
                     add_error(e);
+
+                    // typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
+
                     root->datatype = TYPE_ERROR;
                     return TYPE_ERROR;
                 }
             }
             if(rhs_id->type==left_expr){
+
+                // typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
+                st_id->hasBeenAssigned=true;
+
                 root->datatype=left_expr;
                 return root->datatype;
             } else{
                 if(rhs_id->type == TYPE_ERROR) {
+
+                    // typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
+
                     root->datatype = TYPE_ERROR;
                     return root->datatype;
                 }
@@ -206,6 +245,8 @@ Type typecheckdfs(Ast_Node* root){
                 e.type=ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION;
                 e.line=factor->child_1->token_data->lineNumber;
                 add_error(e);
+
+                // typecheckdfs(root->child_2); // So that other errors on RHS of := are also displayed.
 
                 root->datatype=TYPE_ERROR;
                 return TYPE_ERROR;
@@ -215,6 +256,9 @@ Type typecheckdfs(Ast_Node* root){
         // printf("%d, %d\n", left_expr, right_expr);
         //Type check LHS and RHS of assignment.
         root->datatype = checkType(root->child_1->token_data, OP_ASSIGN, left_expr, right_expr);
+
+        st_id->hasBeenAssigned=true;
+
         return root->datatype;
     }
 
@@ -330,6 +374,9 @@ Type typecheckdfs(Ast_Node* root){
         //We try to find if the array exists else we throw an error when left_expr is called.
         STEntry* st_entry=recursiveCheckID(root->symbol_table, root->inh_1->token_data);
         if(left_expr!=TYPE_INTEGER && left_expr!=TYPE_REAL){
+
+            if(root->type == 24) typecheckdfs(root->child_2); // So that we still report errors on right side of :=.
+
             root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
         }
@@ -341,6 +388,8 @@ Type typecheckdfs(Ast_Node* root){
             e.line=root->inh_1->token_data->lineNumber;
             strcpy(e.id_name, root->inh_1->token_data->lexeme);
             add_error(e);
+
+            if(root->type == 24) typecheckdfs(root->child_2); // So that we still report errors on right side of :=.
 
             root->datatype=TYPE_ERROR;
             return TYPE_ERROR;
@@ -594,6 +643,7 @@ Type typecheckdfs(Ast_Node* root){
             Error e;
             e.type=INVALID_SWITCH_TYPE_FOR_CASES;
             e.line=root->child_1->token_data->lineNumber;
+            strcpy(e.id_name, root->child_1->token_data->lexeme);
             add_error(e);
             
             root->datatype=TYPE_ERROR;
@@ -607,11 +657,11 @@ Type typecheckdfs(Ast_Node* root){
         if(left_expr==TYPE_BOOLEAN && root->child_4!=NULL){
             Error e;
             e.type=DEFAULT_CASE_IN_BOOLEAN_SWITCH;
-            e.line=root->child_1->token_data->lineNumber;
+            e.line=root->child_4->token_data->lineNumber;
             add_error(e);
             
-            root->datatype=TYPE_ERROR;
-            return TYPE_ERROR;
+            // root->datatype=TYPE_ERROR;
+            // return TYPE_ERROR;
         }
 
         //Check that integer switch-case has a default type, else throw an error.
@@ -621,8 +671,8 @@ Type typecheckdfs(Ast_Node* root){
             e.line=root->child_5->token_data->lineNumber;
             add_error(e);
             
-            root->datatype=TYPE_ERROR;
-            return TYPE_ERROR;
+            // root->datatype=TYPE_ERROR;
+            // return TYPE_ERROR;
         }
         
         //Here we recurse on all the case statements belonging to the switch and type check on them. The flag is used as a loop variable which

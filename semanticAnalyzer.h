@@ -23,5 +23,6 @@ bool function_is_recursive(char module_name[]);
 void throw_function_is_recursive_error(char module_name[], int line_no);
 void functionChecker(Ast_Node* root);
 void semanticAnalyzer(Ast_Node* root);
+void redundant_call_checker();
 
 #endif
