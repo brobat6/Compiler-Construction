@@ -910,10 +910,11 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     // 130. <caseStmts> -> CASE <value> COLON <statements> BREAK SEMICOL <N9>
         root->type = 47;
         root->inh_1 = prev;
-        temp = curr->firstchild->next;
+        temp = curr->firstchild->next; 
         root->child_1 = generateAST(temp, NULL); // value
         temp = temp->next->next;
         root->child_2 = generateAST(temp, NULL); // statements
+        root->token_data = createHeapTokenInfo(temp->next->next->token);
         temp = temp->next->next->next;
         root->child_3 = generateAST(temp, prev); // N9
         break;
@@ -925,6 +926,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->child_1 = generateAST(temp, NULL); // value
         temp = temp->next->next;
         root->child_2 = generateAST(temp, NULL); // statements
+        root->token_data = createHeapTokenInfo(temp->next->next->token);
         temp = temp->next->next->next;
         root->child_3 = generateAST(temp, prev); // N9
         break;
@@ -953,6 +955,7 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
         root->inh_1 = prev;
         root->token_data = createHeapTokenInfo(curr->firstchild->token);
         root->child_1 = generateAST(curr->firstchild->next->next, NULL);
+        root->child_2 = generateAST(curr->firstchild->next->next->next->next, NULL); // SEMICOL (for line no.)
         break;
     case 137:
     // 137. <default> -> @
