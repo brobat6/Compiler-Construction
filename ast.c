@@ -1,5 +1,7 @@
 #include "ast.h"
 
+int total_ast_memory;
+
 const char* const ast_node_id[] = {
     "terminal", // 0
     "program", // 1
@@ -130,6 +132,7 @@ DONT CALL THIS!!! CALL THE WRAPPER FUNCTION (AT THE END OF THE FILE)!!!!
 */
 Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
     Ast_Node* root = createASTNode();
+    total_ast_memory++;
 
     bool return_null = false; // For productions like rule 3.
     
@@ -1041,14 +1044,19 @@ Ast_Node* generateAST(treeNode* curr, Ast_Node* prev) {
 
     if(return_null) {
         free(root);
+        total_ast_memory--;
         return NULL;
     }
 
     return root;
 }
 
+int get_total_ast_memory() {
+    return total_ast_memory;
+}
 
 Ast_Node* wrapper_create_AST(treeNode* parse_root) {
+    total_ast_memory = 0;
     Ast_Node* ast_root = generateAST(parse_root, NULL);
     free(parse_root);
     return ast_root;

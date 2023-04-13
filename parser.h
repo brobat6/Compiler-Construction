@@ -38,4 +38,6 @@ void printParseTree(treeNode* root, char* outputfile);
 
 void deallocateFromParser ();
 
+int number_of_parsing_errors();
+
 #endif

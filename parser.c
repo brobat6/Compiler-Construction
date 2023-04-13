@@ -378,6 +378,7 @@ void deallocateParseTable () {
 }
 
 treeNode* parseInputSourceCode (ht* lookup_table, FILE* fp, bool printError) {
+    reset_total_tree_memory();
     llHead* stack = initializeHead();
     // Inserting $ onto the stack
     grammar_symbol* dollar_terminal = ht_fetch(terminal_ht, "$");
@@ -606,18 +607,12 @@ void printTreeNode(treeNode* treenode, FILE* tree_fp)
 void printParseTree(treeNode* root, char* outputfile)
 {
     if(isError) return ;
-    FILE* tree_fp = fopen(outputfile, "w+");
-    if (tree_fp == NULL) {
-        printf("Output file doesn't exist!\n");
-        exit(0);
-    }
     treeNode * curTreeNode=root;
-    fprintf(tree_fp, "Lexeme CurrentNodeLineNo. TokenName ValueIfNumber ParentNodeSymbol IsLeafNode(YES/NO) NodeSymbol\n");
+    fprintf(stdout, "Lexeme CurrentNodeLineNo. TokenName ValueIfNumber ParentNodeSymbol IsLeafNode(YES/NO) NodeSymbol\n");
     if (root == NULL) {
         return;
     }
-    printTreeNode(root->firstchild, tree_fp);
-    fclose(tree_fp);
+    printTreeNode(root->firstchild, stdout);
 }
 
 void deallocateFromParser () {
@@ -625,4 +620,8 @@ void deallocateFromParser () {
     delete_ht(terminal_ht);
     deallocateParseTable();
     deallocateGrammar();
+}
+
+int number_of_parsing_errors() {
+    return isError;
 }
