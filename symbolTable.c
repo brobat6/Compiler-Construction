@@ -7,6 +7,10 @@ STTreeNode* globalSTRoot=NULL; // Root of symbol table
 STEntry* tempEntry;
 ht* functionST; // Function symbol table
 
+ht* return_function_ST() {
+    return functionST;
+}
+
 STTreeNode* createSTTreeNode(){             ///can use current AST node for data;
     STTreeNode* newNode = (STTreeNode*)malloc(sizeof(STTreeNode));
     newNode->hashTable=init_ht();
@@ -208,6 +212,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
     if(root->type == 3) {
         // module declaration
         FunctionSTEntry* func = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+        func->first_call_line_no = 1000000000;
+        func->declared_exclusively = true;
         strcpy(func->moduleName, root->child_1->token_data->lexeme);
         func->defined = false;
         func->declaration_line_no = root->token_data->lineNumber;
@@ -238,9 +244,12 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         childSTNode->offset = curOffset;
         // 2. Function ST Table
         FunctionSTEntry* functionEntry = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+        functionEntry->declared_exclusively = false;
+        functionEntry->first_call_line_no = 1000000000;
         strcpy(functionEntry->moduleName, "driver");
         functionEntry->defined = true;
         functionEntry->declaration_line_no = start_line_no;
+        functionEntry->definition_line_no = start_line_no;;
         if(checkFunctionID(functionEntry->moduleName) != NULL) {
             // This should ideally never happen. Since driver module cannot be redeclared, 
             // such an issue would be identified in lexer stage itself.
@@ -269,19 +278,24 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         FunctionSTEntry* func = checkFunctionID(root->child_1->token_data->lexeme);
         if(func == NULL) {
             func = (FunctionSTEntry*)malloc(sizeof(FunctionSTEntry));
+            func->declared_exclusively = false;
             strcpy(func->moduleName, root->child_1->token_data->lexeme);
+            func->first_call_line_no = 1000000000;
             func->defined = true;
             func->declaration_line_no = root->token_data->lineNumber;
+            func->definition_line_no = root->token_data->lineNumber;
             ht_store(functionST, func->moduleName, func);
         } else if(func->defined == true) {
             Error e;
             e.type = ERROR_MODULE_REDEFINITION;
             e.line = root->token_data->lineNumber;
             strcpy(e.module_name, func->moduleName);
+            add_error(e);
+            return;
         } else {
             func->defined = true;
+            func->definition_line_no = root->token_data->lineNumber;
         }
-
         // 1. Check that the function has been declared. [OLD CODE]
         // FunctionSTEntry* func = checkFunctionID(root->child_1->token_data->lexeme);
         // if(func == NULL) {
@@ -335,8 +349,6 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             STEntry* entry = createSTEntry(tempEntry);
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
-            entry->offset = curOffset;
-            curOffset += entry->width;
             // Currently adding input/output lists in CHILD symbol table.
             if(checkID(elder_child_st_node, entry->variableName) != NULL) {
                 Error e;
@@ -346,6 +358,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
                 strcpy(e.id_name, entry->variableName);
                 add_error(e);
             } else {
+                entry->offset = curOffset;
+                curOffset += entry->width;
                 ht_store(elder_child_st_node->hashTable, entry->variableName, entry);
                 add_to_parameter_list(func->inputParamList, entry);
             }
@@ -362,8 +376,6 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             entry->isOutputParameter = true;
             strcpy(entry->variableName, temp->child_1->token_data->lexeme);
             entry->declarationLineNumber = temp->child_1->token_data->lineNumber;
-            entry->offset = curOffset;
-            curOffset += entry->width;
             // Currently adding input/output lists in CHILD symbol table.
             // Change if necessary !!!!!!
             if(checkID(younger_child_st_node, entry->variableName) != NULL) {
@@ -374,6 +386,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
                 strcpy(e.id_name, entry->variableName);
                 add_error(e);
             } else {
+                entry->offset = curOffset;
+                curOffset += entry->width;
                 ht_store(younger_child_st_node->hashTable, entry->variableName, entry);
                 add_to_parameter_list(func->outputParamList, entry);
             }
@@ -397,8 +411,6 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
             STEntry* newEntry = createSTEntry(tempEntry);
             strcpy(newEntry->variableName, temp->child_1->token_data->lexeme);
             newEntry->declarationLineNumber = temp->child_1->token_data->lineNumber; 
-            newEntry->offset = curOffset;
-            curOffset += newEntry->width;
             if(checkID(currSTNode, newEntry->variableName) != NULL) {
                 // ERROR!!!!! 
                 Error e;
@@ -408,6 +420,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
                 strcpy(e.id_name, newEntry->variableName);
                 add_error(e);
             } else {
+                newEntry->offset = curOffset;
+                curOffset += newEntry->width;
                 ht_store(currSTNode->hashTable, newEntry->variableName, newEntry);
             }
             temp = temp->syn_next;
@@ -456,6 +470,7 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root) {
         generateST(childSTNode, root->child_1);
         generateST(childSTNode, root->child_2);
         childSTNode->nodeWidth = (curOffset - childSTNode->offset);
+        generateST(currSTNode, root->child_3);
         return;
     }
     // if(root->type == 46) {
@@ -547,6 +562,7 @@ STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input param
     tempEntry = (STEntry*)malloc(sizeof(STEntry));
     strcpy(STRoot->moduleName,"ROOT");
     functionST = init_ht();
+    reset_error_list();
 
     generateST(STRoot, ASTRoot);
 
@@ -577,9 +593,9 @@ void recursive_print_symbol_table(STTreeNode* root, FILE* fp) {
         // Array Range
         if(data->isArray) {
             if(data->isDynamic.lower) {
-                fprintf(fp, "%-10s[%s -","", data->range.lower.lexeme);
+                fprintf(fp, "%-10s[%s ,","", data->range.lower.lexeme);
             } else {
-                fprintf(fp, "%-10s[%d -","", data->range.lower.value);
+                fprintf(fp, "%-10s[%d ,","", data->range.lower.value);
             }
             if(data->isDynamic.upper) {
                 fprintf(fp, " %s]", data->range.upper.lexeme);
@@ -607,4 +623,55 @@ void print_symbol_table(STTreeNode* root, FILE* fp) {
     fprintf(fp, "variable name    scope(module name)     scope(line numbers)  type of element        ");
     fprintf(fp, "is_array   static/dynamic array       range              width        offset     nesting level\n");
     recursive_print_symbol_table(root, fp);
+}
+
+void recursive_print_static_dynamic_arrays(STTreeNode* root) {
+    ht_itr it = ht_iterator(root->hashTable);
+    while(ht_next_entry(&it)) {
+        STEntry* data = it.data;
+        if(data->isArray == false) continue; 
+
+        printf("%-20s [%-3d-%-3d] %10s %-20s ",root->moduleName,data->declarationLineNumber,root->lineNumber.end,"",data->variableName);
+        if(data->isDynamic.lower||data->isDynamic.upper)
+            printf("%-20s","Dynamic");
+        else
+            printf("%-20s","Static");
+        
+        if(data->isDynamic.lower)
+            printf("[%s ,", data->range.lower.lexeme);
+        else
+            printf("[%d ,", data->range.lower.value);
+
+        if(data->isDynamic.upper)
+            printf(" %s]", data->range.upper.lexeme);
+        else
+            printf(" %d]", data->range.upper.value);
+        
+        char data_type[20];
+        if(data->type == TYPE_INTEGER) strcpy(data_type, "integer");
+        else if(data->type == TYPE_REAL) strcpy(data_type, "real");
+        else if(data->type == TYPE_BOOLEAN) strcpy(data_type, "boolean");
+        else strcpy(data_type, "error_type");
+
+        printf("%15s%-20s\n","",data_type);
+    }
+    STTreeNode* temp = root->leftMostChild;
+    while(temp != NULL) {
+        recursive_print_static_dynamic_arrays(temp);
+        temp = temp->sibling;
+    }
+}
+
+void print_static_dynamic_arrays(STTreeNode* root) {
+    printf("%-20s %-20s %-20s %-20s %-20s %-20s\n","scope(module name)","scope(line numbers)","Variable Name","Static/Dynamic","range","type of element");
+    recursive_print_static_dynamic_arrays(root);
+}
+
+void print_activation_record() {
+    ht_itr it = ht_iterator(functionST);
+    printf("Name of function    Total Memory Requirement (in bytes)\n");
+    while(ht_next_entry(&it)) {
+        FunctionSTEntry* data = it.data;
+        printf("%-25s %d\n", data->moduleName, data->function_width);
+    }
 }

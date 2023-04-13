@@ -71,7 +71,7 @@ void functionChecker(Ast_Node* root) {
             add_error(e);
         } else {
             // Function has been declared previously
-            if(function_is_recursive(module_name)) {
+            if(strcmp(module_name, root->symbol_table->moduleName) == 0) {
                 // Recursion.
                 Error e;
                 e.type = ERROR_FUNCTION_RECURSIVE;
@@ -81,7 +81,9 @@ void functionChecker(Ast_Node* root) {
                 add_error(e);
             } else {
                 // No recursion.
-
+                if(line_no < func->first_call_line_no) {
+                    func->first_call_line_no = line_no;
+                }
                 // 1. Check output parameter list.
                 if(func->outputParamList->size == 0) {
                     if(root->child_1 != NULL) {
@@ -139,6 +141,8 @@ void functionChecker(Ast_Node* root) {
                                 e.line = line_no;
                                 strcpy(e.id_name, temp2->child_1->token_data->lexeme);
                                 add_error(e);
+                            } else {
+                                actual->hasBeenAssigned = true;
                             }
                             temp1 = temp1->next;
                             temp2 = temp2->syn_next;
@@ -186,7 +190,10 @@ void functionChecker(Ast_Node* root) {
                         // strcpy(e.id_name, temp2->child_1->child_1->child_1->token_data);
                         // add_error(e);
                     } else {
-                        if(actual->type != temp1->entry->type || actual->isArray != temp1->entry->isArray) {
+                        // big_flag : to check if sizes match in case sizes are statically computable
+                        bool big_flag = actual->isArray && temp1->entry->isArray && actual->isDynamic.lower == false && actual->isDynamic.upper == false && temp1->entry->isDynamic.lower == false && temp1->entry->isDynamic.upper == false && (actual->range.upper.value - actual->range.lower.value) != (temp1->entry->range.upper.value - temp1->entry->range.lower.value);
+                        // printf("%d %d\n", line_no, big_flag);
+                        if(actual->type != temp1->entry->type || actual->isArray != temp1->entry->isArray || big_flag) {
                             // Type mismatch.
                             Error e;
                             e.type = ERROR_FUNCTION_INPUT_TYPES_DONT_MATCH;
@@ -196,6 +203,7 @@ void functionChecker(Ast_Node* root) {
                             add_error(e);
                         } else {
                             // NOTE : UNIMPLEMENTED CODE FOR LOWER/UPPER BOUND CHECKING.
+                            // UPD : Implemented above in big_flag.
                         }
                     }
                     temp1 = temp1->next;
@@ -220,12 +228,56 @@ void functionChecker(Ast_Node* root) {
             }
         }
     }
+    if(root->type == 6) {
+        /*
+        <module> -> DEF MODULE ID ENDDEF TAKES INPUT SQBO <input_plist> SQBC SEMICOL <ret> <moduleDef>
+        Need to check in the output parameter list, that every output parameter has been assigned
+        a value atleast once. If not, it is an error.
+        */
+        int line_no = root->token_data->lineNumber;
+        char module_name[21];
+        strcpy(module_name, root->child_1->token_data->lexeme); 
+        FunctionSTEntry* func = checkFunctionID(module_name);
+        if(line_no != func->definition_line_no) return;
+        // func can't be NULL as generateST would have populated it.
+        ParamListNode* temp = func->outputParamList->first;
+        while(temp != NULL) {
+            if(temp->entry->hasBeenAssigned == false) {
+                Error e;
+                e.type = ERROR_FUNCTION_RETURN_PARAMETER_NOT_BEING_ASSIGNED;
+                e.line = root->child_4->child_3->token_data->lineNumber;
+                strcpy(e.id_name, temp->entry->variableName);
+                strcpy(e.module_name, module_name);
+                add_error(e);
+            }
+            temp = temp->next;
+        }
+    }
+    if(root->type == 46) {
+        // <conditionalStmt> -> SWITCH BO ID BC START <caseStmts> <default> END
+
+    }
     functionChecker(root->child_1);
     functionChecker(root->child_2);
     functionChecker(root->child_3);
     functionChecker(root->child_4);
     functionChecker(root->child_5);
     functionChecker(root->syn_next);
+}
+
+void redundant_call_checker() {
+    ht_itr it = ht_iterator(return_function_ST());
+    while(ht_next_entry(&it)) {
+        FunctionSTEntry* data = it.data;
+        if(data->first_call_line_no > data->definition_line_no && data->first_call_line_no != 1000000000 && data->declared_exclusively) {
+            // printf("%s %d %d\n", data->moduleName, data->first_call_line_no, data->definition_line_no);
+            Error e;
+            e.type = ERROR_REDUNDANT_FUNCTION_DECLARATION;
+            e.line = data->definition_line_no;
+            strcpy(e.module_name, data->moduleName);
+            add_error(e);
+        }
+    }
 }
 
 void semanticAnalyzer(Ast_Node* root) {
@@ -238,4 +290,5 @@ void semanticAnalyzer(Ast_Node* root) {
     function_trace_stack->prev = NULL;
     
     functionChecker(root);
+    redundant_call_checker();
 }

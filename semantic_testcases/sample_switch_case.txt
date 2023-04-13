@@ -1,0 +1,18 @@
+<<<driver program>>>
+start
+    declare x : integer;
+    x := 2;
+    switch(x)
+    start
+        case 1 :
+            declare m : integer;
+            m := 3;
+            x := m + 1;                 ** not an error **
+            break;
+        case true :
+            m := 4;                     ** error **
+            break;
+        default :
+            break;
+    end
+end

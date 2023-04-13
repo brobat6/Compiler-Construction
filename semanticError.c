@@ -2,6 +2,10 @@
 
 Error_List* error_list;
 
+void reset_error_list() {
+    error_list = NULL;
+}
+
 void add_error(Error error) {
     Error_List* new_error = (Error_List*)malloc(sizeof(Error_List));
     new_error->error = error;
@@ -36,6 +40,16 @@ void add_error(Error error) {
     }
 }
 
+int number_of_semantic_errors() {
+    int cnt = 0;
+    Error_List* e = error_list;
+    while(e != NULL) {
+        cnt++;
+        e = e->next;
+    }
+    return cnt;
+}
+
 void print_semantic_errors(FILE *fp) {
     Error_List* e = error_list;
     if(e == NULL) {
@@ -48,16 +62,16 @@ void print_semantic_errors(FILE *fp) {
         
         // Shivam Errors
         if(e->error.type == ERROR_INCOMPATIBLE_ARITHMETIC_OPERATION) {
-            fprintf(fp, "Arithmetic operand type mismatch error about '%s' operator.", e->error.id_name);
+            fprintf(fp, "Type mismatch about arithmetic operator '%s'.", e->error.id_name);
         }
         else if(e->error.type == ERROR_INCOMPATIBLE_RELATIONAL_OPERATION) {
-            fprintf(fp, "Relational operand type mismatch error about '%s' operator.", e->error.id_name);
+            fprintf(fp, "Type mismatch about relational operator '%s'.", e->error.id_name);
         }
         else if(e->error.type == ERROR_INCOMPATIBLE_LOGICAL_OPERATION) {
-            fprintf(fp, "Logical operand type mismatch error about '%s' operator.", e->error.id_name);
+            fprintf(fp, "Type mismatch about logical operator '%s'.", e->error.id_name);
         }
         else if(e->error.type == ERROR_INCOMPATIBLE_ASSIGNMENT_OPERATION) {
-            fprintf(fp, "Operand type mismatch error about ':=' operator.");
+            fprintf(fp, "Type mismatch error about assignment operator ':='.");
         }
         else if(e->error.type == ERROR_UNKNOWN_OPERATOR) {
             fprintf(fp, "Unknown operator type.");
@@ -111,23 +125,26 @@ void print_semantic_errors(FILE *fp) {
             fprintf(fp, "Array index does not evaluate to type integer");
         }
         else if(e->error.type == ERROR_INCOMPATIBLE_ARRAY_ASSIGNMENT_OPERATION) {
-            fprintf(fp, "Expression in RHS cannot be assigned to array %s.", e->error.id_name);
+            fprintf(fp, "Type mismatch - Expression in RHS cannot be assigned to array %s.", e->error.id_name);
         }
         else if(e->error.type == ERROR_INCOMPATIBLE_ARRAY_OPERATION) {
-            fprintf(fp, "Cannot operate on the array %s as a whole.", e->error.id_name);
+            fprintf(fp, "Type mismatch - cannot operate on the array %s as a whole.", e->error.id_name);
+        }
+        else if(e->error.type == ERROR_UNEQUAL_ARRAY_SIZES) {
+            fprintf(fp, "Type mismatch - the arrays %s and %s do not have the same size.", e->error.id_name, e->error.id_name_2);
         }
         // Tanveer Errors
         else if(e->error.type == ERROR_MODULE_REDECLARATION) {
             fprintf(fp, "Module %s already exists (previously declared at line %d).", e->error.module_name, e->error.line_2);
         }
         else if(e->error.type == ERROR_MODULE_REDEFINITION) {
-            fprintf(fp, "Module %s has already been defined previously.", e->error.module_name);
+            fprintf(fp, "Module %s cannot be overloaded.", e->error.module_name);
         }
         else if(e->error.type == ERROR_IDENTIFIER_ALREADY_EXISTS) {
             fprintf(fp, "Variable %s already exists (previously declared at line %d).", e->error.id_name, e->error.line_2);
         }
         else if(e->error.type == ERROR_FUNCTION_RECURSIVE) {
-            fprintf(fp, "Recursive function calls are not allowed!");
+            fprintf(fp, "Recursive function call.");
         }
         else if(e->error.type == ERROR_FUNCTION_OUTPUT_NOT_BEING_ASSIGNED) {
             fprintf(fp, "Number of parameters returned by module %s is MORE than the number of parameters on LHS of assignment.", e->error.module_name);
@@ -136,13 +153,13 @@ void print_semantic_errors(FILE *fp) {
             fprintf(fp, "Number of parameters returned by module %s is LESS than the number of parameters on LHS of assignment.", e->error.module_name);
         }
         else if(e->error.type == ERROR_FUNCTION_OUTPUT_TYPES_DONT_MATCH) {
-            fprintf(fp, "The type of function output parameter %s is not the same as that of %s, to which the output is being assigned.", e->error.id_name, e->error.id_name_2);
+            fprintf(fp, "Type mismatch between formal output parameter %s and actual output parameter %s.", e->error.id_name_2, e->error.id_name);
         }
         else if(e->error.type == ERROR_FUNCTION_OUTPUT_ARRAY) {
             fprintf(fp, "%s is an array, it can never be an output parameter of a function.", e->error.id_name);
         }
         else if(e->error.type == ERROR_FUNCTION_INPUT_TYPES_DONT_MATCH) {
-            fprintf(fp, "Type of formal input parameter %s does not match the actual input parameter %s.", e->error.id_name_2, e->error.id_name);
+            fprintf(fp, "Type mismatch between formal input parameter %s and actual input parameter %s.", e->error.id_name_2, e->error.id_name);
         }
         else if(e->error.type == ERROR_FUNCTION_GETS_LESS_INPUT) {
             fprintf(fp, "Module %s takes LESS input parameters than its definition.", e->error.module_name);
@@ -152,6 +169,12 @@ void print_semantic_errors(FILE *fp) {
         }
         else if(e->error.type == ERROR_FUNCTION_NOT_DECLARED) {
             fprintf(fp, "Module %s has not been declared but is being called.", e->error.module_name);
+        }
+        else if(e->error.type == ERROR_FUNCTION_RETURN_PARAMETER_NOT_BEING_ASSIGNED) {
+            fprintf(fp, "Output parameter %s is not assigned any value in the entire module %s.", e->error.id_name, e->error.module_name);
+        }
+        else if(e->error.type == ERROR_REDUNDANT_FUNCTION_DECLARATION) {
+            fprintf(fp, "Module %s definition and its declaration both appear before its call.", e->error.module_name);
         }
         else {
             fprintf(fp, "There is an error but the print statement has not been implemented yet.");

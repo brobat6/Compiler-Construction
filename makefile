@@ -6,10 +6,10 @@
 #Name: Tanveer Singh		ID:2020A7PS0084P
 
 CC=gcc				#compiler
-TARGET=a	#target file name
+TARGET=compiler		#target file name
 
 all: 
-	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c symbolTable.c typeCheck.c semanticError.c codegen.c semanticAnalyzer.c -o $(TARGET)
+	$(CC) driver.c ht.c lexer.c linkedList.c grammarSymbol.c tree.c parser.c ast.c symbolTable.c typeCheck.c semanticError.c semanticAnalyzer.c codegen.c -o $(TARGET)
 
 clean:
 	rm -rf $(TARGET)

@@ -52,14 +52,16 @@ typedef enum Error_Type{
     ERROR_IDENTIFIER_ALREADY_EXISTS,
     // Tanveer errors - Semantic Analyzer
     ERROR_FUNCTION_RECURSIVE,
-    ERROR_FUNCTION_OUTPUT_NOT_BEING_ASSIGNED,
+    ERROR_FUNCTION_OUTPUT_NOT_BEING_ASSIGNED, // don't confuse with function output not being assigned anything! this is for function CALL
     ERROR_FUNCTION_OUTPUT_BEING_ASSIGNED_EXTRA,
     ERROR_FUNCTION_OUTPUT_TYPES_DONT_MATCH,
     ERROR_FUNCTION_OUTPUT_ARRAY,
     ERROR_FUNCTION_INPUT_TYPES_DONT_MATCH,
     ERROR_FUNCTION_GETS_LESS_INPUT,
     ERROR_FUNCTION_GETS_MORE_INPUT,
-    ERROR_FUNCTION_NOT_DECLARED
+    ERROR_FUNCTION_NOT_DECLARED,
+    ERROR_FUNCTION_RETURN_PARAMETER_NOT_BEING_ASSIGNED, // if a return parameter is not assigned any value in the duration of the function
+    ERROR_REDUNDANT_FUNCTION_DECLARATION
 
 }Error_Type;
 
@@ -85,5 +87,9 @@ struct ERROR_LIST {
 void add_error(Error error);
 
 void print_semantic_errors(FILE *fp);
+
+void reset_error_list();
+
+int number_of_semantic_errors();
 
 #endif

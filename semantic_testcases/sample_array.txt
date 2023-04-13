@@ -12,6 +12,6 @@ start
     declare f : array[2..20] of real;
     f := a;                                     ** ERROR **
     a := f;                                     ** ERROR **
-
+    
     a := a                                      ** NOT ERROR **
 end

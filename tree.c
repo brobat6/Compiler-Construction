@@ -9,6 +9,16 @@ ID: 2020A7PS0120P			    Name: Kshitij Garg
 
 #include "tree.h"
 
+int total_tree_memory;
+
+void reset_total_tree_memory() {
+  total_tree_memory = 0;
+}
+
+int get_total_tree_memory() {
+  return total_tree_memory;
+}
+
 treeNode* createTreeNode(grammar_symbol * gs, struct token_info token)
 {
     treeNode* new = (treeNode*)malloc(sizeof(treeNode));
@@ -20,6 +30,7 @@ treeNode* createTreeNode(grammar_symbol * gs, struct token_info token)
     new->prev=NULL;
     new->parent=NULL;
     new->grammar_rule=-1;
+    total_tree_memory++;
     return new;
 }
 

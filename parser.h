@@ -34,8 +34,10 @@ treeNode* parseInputSourceCode (ht* lookup_table, FILE* fp, bool printError);
 
 void printTreeNode(treeNode* treenode, FILE* tree_fp);
 
-void printParseTree(treeNode* root, char* outputfile);
+void printParseTree(treeNode* root);
 
 void deallocateFromParser ();
+
+int number_of_parsing_errors();
 
 #endif

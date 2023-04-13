@@ -32,4 +32,8 @@ treeNode* nextLeaf (treeNode* cur_node);
 
 void deallocateTree(treeNode* root);
 
+void reset_total_tree_memory();
+
+int get_total_tree_memory();
+
 #endif
