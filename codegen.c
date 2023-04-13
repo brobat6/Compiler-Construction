@@ -182,6 +182,7 @@ void printHelper (STEntry cur_entry) { /////////////////////////////////////////
         fprintf(fp, "\tmov al, 1\n");
         fprintf(fp, "\tmov rdi, outputFloat\n");
         fprintf(fp, "\tmovss xmm0, [buffer + %d]\n", cur_entry.offset);
+        fprintf(fp, "\tcvtss2sd xmm0, xmm0\n");
         fprintf(fp, "\tcall printf\n");////////////////////////////////////////////////////////////////////////////
     }
 }
@@ -1023,7 +1024,7 @@ void setArrayBounds (Ast_Node* cur_ast_node) { /////////////////////////////////
     if (!cur_entry->isArray) return;
     if (cur_entry->isDynamic.lower || cur_entry->isDynamic.upper) {
         cur_entry->offset = cur_offset;
-        cur_offset+=200;
+        cur_offset+=300;
     }
     STEntry l_val = getNewTemporary(TYPE_INTEGER);
     STEntry r_val = getNewTemporary(TYPE_INTEGER);
@@ -1685,11 +1686,9 @@ void codeGenASTTraversal (Ast_Node* cur_ast_node) {
     }
 }
 
-void codegen (Ast_Node* root) {
-    fp = fopen("code.asm", "w+");
+void codegen (Ast_Node* root, FILE* fp_asm) {
+    fp = fp_asm;
     initialiseStorage();
     codeGenASTTraversal(root);
     printDataSection();
-    fclose(fp);
-    printf("Chalgaya\n");
 }

@@ -3,10 +3,11 @@
 
 <<<driver program>>>
 start
-	declare a : integer;
+	declare a : array[3..5] of integer;
     get_value(a);
+    declare b : array[-5..-3] of integer;
+    b := a;
     print(a);
-    declare b, c : boolean;
-    c := b OR a;
+    print(b);
 end
 
