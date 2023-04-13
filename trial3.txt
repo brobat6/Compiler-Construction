@@ -9,6 +9,7 @@ start
 	y:= 19;
 	z:= 56;
     x:=2;
+    declare A: array [1..10] of integer;
     z:= x*4-z+loop_var;
     print(z);
 end
