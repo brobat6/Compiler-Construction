@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
             fclose(fp);
             ast_root = wrapper_create_AST(parse_tree_root->firstchild);
             symbol_table_root = generateSymbolTable(ast_root);
-            recursive_print_static_dynamic_arrays(symbol_table_root);
+            print_static_dynamic_arrays(symbol_table_root);
             break;
         case 8:
             // typecheckdfs(ast_root);
