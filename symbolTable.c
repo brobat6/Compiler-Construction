@@ -623,3 +623,39 @@ void print_symbol_table(STTreeNode* root, FILE* fp) {
     fprintf(fp, "is_array   static/dynamic array       range              width        offset     nesting level\n");
     recursive_print_symbol_table(root, fp);
 }
+
+void recursive_print_static_dynamic_arrays(STTreeNode* root) {
+    ht_itr it = ht_iterator(root->hashTable);
+    while(ht_next_entry(&it)) {
+        STEntry* data = it.data;
+        if(data->isArray == false) continue; 
+        /* ---------------------------------------------------------------------
+            KSHITIJ PLS FILL HERE (FORMATTED OUTPUT)
+        -------------------------------------------------------------- */
+    }
+    STTreeNode* temp = root->leftMostChild;
+    while(temp != NULL) {
+        print_static_dynamic_arrays(temp);
+        temp = temp->sibling;
+    }
+}
+
+void print_static_dynamic_arrays(STTreeNode* root) {
+
+    /* ---------------------------------------------------------------------
+            KSHITIJ MAKE HEADING HERE
+        -------------------------------------------------------------- */
+
+    recursive_print_static_dynamic_arrays(root);
+}
+
+void print_activation_record() {
+    ht_itr it = ht_iterator(functionST);
+    printf("Name of function    Total Memory Requirement (in bytes)\n");
+    while(ht_next_entry(&it)) {
+        FunctionSTEntry* data = it.data;
+        printf("%-25s %d\n", data->moduleName, data->function_width);
+    }
+}
+
+

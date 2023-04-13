@@ -19,5 +19,8 @@ void generateST(STTreeNode* currSTNode, Ast_Node* root);
 STTreeNode* generateSymbolTable(Ast_Node* ASTRoot);
 void recursive_print_symbol_table(STTreeNode* root, FILE* fp);
 void print_symbol_table(STTreeNode* root, FILE* fp);
+void print_activation_record();
+void recursive_print_static_dynamic_arrays(STTreeNode* root);
+void print_static_dynamic_arrays(STTreeNode* root);
 
 #endif

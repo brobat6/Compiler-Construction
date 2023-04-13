@@ -19,19 +19,6 @@ void deallocateStructures (ht* lookup_table) {
 
 int main(int argc, char* argv[]) {
 
-    bool parser_d = false;
-    bool ast_d = false;
-    bool symbol_d = false;
-    bool semantic_d = false;
-    bool codegen_d = false;
-
-    double parser_t = 0.0;
-    double ast_t = 0.0;
-    double symbol_t = 0.0;
-    double semantic_t = 0.0;
-    double codegen_t = 0.0;
-    double total_t = 0.0;
-
     int syntax_errors = -1;
     int semantic_errors = -1;
 
@@ -109,17 +96,29 @@ int main(int argc, char* argv[]) {
         case 5:
             fp = fopen(argv[1], "r+");
             start_lexer(fp, 30, true);
-            parse_tree_root = parseInputSourceCode(lookup_table, fp, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, false);
             fclose(fp);
             ast_root = wrapper_create_AST(parse_tree_root->firstchild);
             symbol_table_root = generateSymbolTable(ast_root);
             print_symbol_table(symbol_table_root, stdout);
             break;
         case 6:
-
+            fp = fopen(argv[1], "r+");
+            start_lexer(fp, 30, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, false);
+            fclose(fp);
+            ast_root = wrapper_create_AST(parse_tree_root->firstchild);
+            symbol_table_root = generateSymbolTable(ast_root);
+            print_activation_record();
             break;
         case 7:
-
+            fp = fopen(argv[1], "r+");
+            start_lexer(fp, 30, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, false);
+            fclose(fp);
+            ast_root = wrapper_create_AST(parse_tree_root->firstchild);
+            symbol_table_root = generateSymbolTable(ast_root);
+            recursive_print_static_dynamic_arrays(symbol_table_root);
             break;
         case 8:
             // typecheckdfs(ast_root);
