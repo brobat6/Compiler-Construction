@@ -1,4 +1,5 @@
 #include "semanticAnalyzer.h"
+#include "codegen.h"
 
 ht* initialize () {
     readGrammarFile();
@@ -161,7 +162,9 @@ int main(int argc, char* argv[]) {
                     printf("There are semantic errors in the code. Please run option 8 to see the errors.\n");
                 } else {
                     // Code Gen goes here!!!
-                    
+                    FILE* cg = fopen(argv[2], "w+");
+                    codegen(ast_root, cg);
+                    fclose(cg);
                 }
             }
             break;
