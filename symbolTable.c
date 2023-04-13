@@ -561,6 +561,7 @@ STTreeNode* generateSymbolTable(Ast_Node* ASTRoot){      ////confirm input param
     tempEntry = (STEntry*)malloc(sizeof(STEntry));
     strcpy(STRoot->moduleName,"ROOT");
     functionST = init_ht();
+    reset_error_list();
 
     generateST(STRoot, ASTRoot);
 

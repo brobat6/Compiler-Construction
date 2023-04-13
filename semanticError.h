@@ -88,4 +88,6 @@ void add_error(Error error);
 
 void print_semantic_errors(FILE *fp);
 
+void reset_error_list();
+
 #endif

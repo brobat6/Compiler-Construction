@@ -2,6 +2,10 @@
 
 Error_List* error_list;
 
+void reset_error_list() {
+    error_list = NULL;
+}
+
 void add_error(Error error) {
     Error_List* new_error = (Error_List*)malloc(sizeof(Error_List));
     new_error->error = error;
