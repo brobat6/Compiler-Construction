@@ -1,0 +1,15 @@
+**Basic program for nested for loop**
+<<<driver program>>>
+start
+declare sum,i: integer;
+sum:=0;
+for(i in 1..5)
+start
+    declare j:integer;
+    for(j in 1..5)
+    start
+        sum:=sum+1;
+    end
+end
+print(sum);
+end

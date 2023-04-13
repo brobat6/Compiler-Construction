@@ -1,0 +1,38 @@
+**Code Generation test case 3: Computing expressions using integer, boolean and static array data types**
+
+**Single driver module with single level nesting **
+
+<<<driver program>>>
+start
+	declare x, y, z:integer;
+    declare a, b, c:integer;
+    declare u, v: boolean;
+    a:=3;
+    b:=2;
+    declare A: array[a..b] of integer;
+end
+
+** Expected output
+
+For values of x = 2 and y = 3 as run time input, print z as 9.
+Then print v as true (use string true or false to print output of a variable of boolean type).
+Read array element values as 12, 4, -8, 9, 10, -18 as shown below and then print the values of A - all elements of A one after the other  
+
+On the console your output should appear in new line for each print as shown below
+
+Output: 9
+Output: true
+Input: Enter 6 array elements of integer type for range 10 to 15
+12
+4
+-8
+9
+10
+-18
+Output: 67
+Output: 12 4 -8 9 10 -18
+
+
+Similarly run the generated assembly code for other input values and verify.
+
+**

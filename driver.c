@@ -52,8 +52,6 @@ int main(int argc, char* argv[]) {
 
         int choice;
         scanf("%d", &choice);
-
-        switch(choice)
         {
         case 0:
             return 0;

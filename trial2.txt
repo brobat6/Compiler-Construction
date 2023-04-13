@@ -1,0 +1,32 @@
+<<<driver program>>>
+start
+
+	** declare a,b,c : integer;
+    get_value(a);
+    print(a);
+    get_value(b);
+    print(b);
+    c := a + b;
+    print(c); **
+
+    **declare a,b,c : boolean;
+    get_value(a);
+    print(a);
+    get_value(b);
+    print(b);
+    c := a OR b;
+    print(c);
+    c := a AND b;
+    print(c);**
+
+    declare a,b,c : boolean;
+    get_value(a);
+    print(a);
+    get_value(b);
+    print(b);
+    c := 1>2 AND b;
+    print(c);
+    c := 1>2 OR b;
+    print(c);
+end
+
