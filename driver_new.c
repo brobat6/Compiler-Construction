@@ -19,7 +19,36 @@ void deallocateStructures (ht* lookup_table) {
 
 int main(int argc, char* argv[]) {
 
+    bool parser_d = false;
+    bool ast_d = false;
+    bool symbol_d = false;
+    bool semantic_d = false;
+    bool codegen_d = false;
 
+    double parser_t = 0.0;
+    double ast_t = 0.0;
+    double symbol_t = 0.0;
+    double semantic_t = 0.0;
+    double codegen_t = 0.0;
+    double total_t = 0.0;
+
+    int syntax_errors = -1;
+    int semantic_errors = -1;
+
+    clock_t start, end;
+
+    ht* lookup_table = initialize();
+
+    FILE* fp = fopen(argv[1], "r+");
+    if(fp == NULL) {
+        printf("Test file doesn't exist!\n");
+        return 0;
+    }
+    fclose(fp);
+
+    treeNode* parse_tree_root;
+    Ast_Node* ast_root;
+    STTreeNode* symbol_table_root;
 
     while(true) {
         printf("0. To exit from the loop.\n");
@@ -39,22 +68,39 @@ int main(int argc, char* argv[]) {
         switch(choice)
         {
         case 0:
-            
+            return 0;
             break;
         case 1:
-
+            fp = fopen(argv[1], "r+");
+            printLexemes(fp, 30, lookup_table);
+            fclose(fp);
             break;
         case 2:
-
+            fp = fopen(argv[1], "r+");
+            start_lexer(fp, 30, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, true);
+            fclose(fp);
+            printParseTree(parse_tree_root, stdout);
             break;
         case 3:
-
+            fp = fopen(argv[1], "r+");
+            start_lexer(fp, 30, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, true);
+            fclose(fp);
+            ast_root = wrapper_create_AST(parse_tree_root->firstchild);
+            traverseAST(ast_root, NULL, stdout);
             break;
         case 4:
 
             break;
         case 5:
-
+            fp = fopen(argv[1], "r+");
+            start_lexer(fp, 30, true);
+            parse_tree_root = parseInputSourceCode(lookup_table, fp, true);
+            fclose(fp);
+            ast_root = wrapper_create_AST(parse_tree_root->firstchild);
+            symbol_table_root = generateSymbolTable(ast_root);
+            print_symbol_table(symbol_table_root, stdout);
             break;
         case 6:
 
@@ -63,7 +109,9 @@ int main(int argc, char* argv[]) {
 
             break;
         case 8:
-
+            // typecheckdfs(ast_root);
+            // semanticAnalyzer(ast_root);
+            // print_semantic_errors(stdout);
             break;
         case 9:
 
